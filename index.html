@@ -8,6 +8,10 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+
     <style>
         /* TEMAS E VARIÁVEIS */
         :root {
@@ -229,7 +233,6 @@
 
     <div id="toast-container"></div>
 
-    <!-- SIDEBAR -->
     <aside class="sidebar">
         <div class="sidebar-header">
             <div class="agency-profile" onclick="promptAgencyPassword()" title="Editar Perfil da Agência">
@@ -285,7 +288,6 @@
 
     <main class="main-workspace" id="workspace-area"></main>
 
-    <!-- MODAL EQUIPE -->
     <div class="modal-overlay" id="teamModal">
         <div class="modal">
             <h2>Cadastrar Colaborador</h2>
@@ -320,7 +322,6 @@
         </div>
     </div>
 
-    <!-- MODAL AGÊNCIA -->
     <div class="modal-overlay" id="agencyModal">
         <div class="modal">
             <h2>Configurar Agência</h2>
@@ -342,7 +343,6 @@
         </div>
     </div>
 
-    <!-- MODAL CLIENTE -->
     <div class="modal-overlay" id="clientModal">
         <div class="modal">
             <h2 id="client-modal-title">Novo Cliente</h2>
@@ -410,7 +410,6 @@
         </div>
     </div>
 
-    <!-- MODAL TAREFA (ESTEIRA) -->
     <div class="modal-overlay" id="taskModal">
         <div class="modal">
             <h2>Novo Conteúdo (Esteira)</h2>
@@ -449,7 +448,6 @@
         </div>
     </div>
 
-    <!-- MODAL FREELA -->
     <div class="modal-overlay" id="freelaModal">
         <div class="modal">
             <h2>Cadastrar Demanda Avulsa (Freela)</h2>
@@ -487,7 +485,6 @@
         </div>
     </div>
 
-    <!-- MODAL REUNIÃO -->
     <div class="modal-overlay" id="meetingModal">
         <div class="modal">
             <h2>Agendar Reunião</h2>
@@ -509,6 +506,23 @@
     </div>
 
     <script>
+        /* --- INTEGRAÇÃO FIREBASE (Tempo Real) --- */
+        const firebaseConfig = {
+            apiKey: "AIzaSyAmHlkIH8QsaLgUGhPBwiBasjxAft9EDcw",
+            authDomain: "saturno-hub.firebaseapp.com",
+            databaseURL: "https://saturno-hub-default-rtdb.firebaseio.com",
+            projectId: "saturno-hub",
+            storageBucket: "saturno-hub.firebasestorage.app",
+            messagingSenderId: "959036369949",
+            appId: "1:959036369949:web:3893580fec77063bef6af4",
+            measurementId: "G-J8V8FSWKTW"
+        };
+
+        if (!firebase.apps.length) {
+            firebase.initializeApp(firebaseConfig);
+        }
+        const db = firebase.firestore();
+
         /* --- DADOS LOCAIS --- */
         let clients = JSON.parse(localStorage.getItem('sat_final_cli')) || [];
         let tasks = JSON.parse(localStorage.getItem('sat_final_tsk')) || [];
@@ -573,6 +587,7 @@
         }
 
         function saveData() {
+            // Backup Local Imediato
             localStorage.setItem('sat_final_cli', JSON.stringify(clients));
             localStorage.setItem('sat_final_tsk', JSON.stringify(tasks));
             localStorage.setItem('sat_final_freelas', JSON.stringify(freelas));
@@ -580,6 +595,12 @@
             localStorage.setItem('sat_final_team', JSON.stringify(team));
             localStorage.setItem('sat_final_subs', JSON.stringify(subs));
             localStorage.setItem('sat_final_agency', JSON.stringify(agency));
+            
+            // Sincroniza com a nuvem Firebase
+            db.collection("saturno_dados").doc("hub_operacional").set({
+                clients, tasks, freelas, meetings, team, subs, agency
+            }).catch(err => console.error("Erro ao salvar no Firebase: ", err));
+
             updateBadges();
             renderSidebar();
             routeView();
@@ -1366,9 +1387,45 @@
             showToast('Perfil da Agência atualizado!');
         }
 
-        // Inicialização Final
-        populateTeamSelects();
-        saveData();
+        /* --- INICIALIZAÇÃO FINAL (ESCUTANDO O BANCO EM TEMPO REAL) --- */
+        function initApp() {
+            db.collection("saturno_dados").doc("hub_operacional").onSnapshot((doc) => {
+                if (doc.exists) {
+                    const data = doc.data();
+                    clients = data.clients || [];
+                    tasks = data.tasks || [];
+                    freelas = data.freelas || [];
+                    meetings = data.meetings || [];
+                    team = data.team || [];
+                    subs = data.subs || [];
+                    agency = data.agency || { name: 'Saturno Studio', logo: '' };
+                    
+                    // Salva no LocalStorage como backup caso a internet caia
+                    localStorage.setItem('sat_final_cli', JSON.stringify(clients));
+                    localStorage.setItem('sat_final_tsk', JSON.stringify(tasks));
+                    localStorage.setItem('sat_final_freelas', JSON.stringify(freelas));
+                    localStorage.setItem('sat_final_meetings', JSON.stringify(meetings));
+                    localStorage.setItem('sat_final_team', JSON.stringify(team));
+                    localStorage.setItem('sat_final_subs', JSON.stringify(subs));
+                    localStorage.setItem('sat_final_agency', JSON.stringify(agency));
+                }
+                
+                // Atualiza a tela de todo mundo que estiver com o sistema aberto
+                populateTeamSelects();
+                updateBadges();
+                renderSidebar();
+                routeView();
+            }, (error) => {
+                console.error("Erro ao conectar com Firebase. Carregando modo Offline.", error);
+                populateTeamSelects();
+                updateBadges();
+                renderSidebar();
+                routeView();
+            });
+        }
+        
+        // Dá o pontapé inicial no sistema
+        initApp();
     </script>
 </body>
 </html>
