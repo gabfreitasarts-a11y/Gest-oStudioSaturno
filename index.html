@@ -583,10 +583,7 @@
                 preview.src = reader.result;
                 preview.style.display = 'block';
             }
-            reader.readAsDataURL(file);
-        }
-
-        function saveData() {
+            function saveData() {
             // Backup Local Imediato
             localStorage.setItem('sat_final_cli', JSON.stringify(clients));
             localStorage.setItem('sat_final_tsk', JSON.stringify(tasks));
