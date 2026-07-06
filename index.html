@@ -594,12 +594,30 @@
             localStorage.setItem('sat_final_meetings', JSON.stringify(meetings));
             localStorage.setItem('sat_final_team', JSON.stringify(team));
             localStorage.setItem('sat_final_subs', JSON.stringify(subs));
-            localStorage.setItem('sat_final_agency', JSON.stringify(agency));
             
-            // Sincroniza com a nuvem Firebase
+            // CORREÇÃO: Garante que a agência seja um objeto limpo e puro antes de salvar
+            const dadosAgenciaLimpos = {
+                name: agency.name || 'Saturno Studio',
+                logo: agency.logo || ''
+            };
+            
+            localStorage.setItem('sat_final_agency', JSON.stringify(dadosAgenciaLimpos));
+            
+            // Sincroniza com a nuvem Firebase usando o objeto limpo
             db.collection("saturno_dados").doc("hub_operacional").set({
-                clients, tasks, freelas, meetings, team, subs, agency
-            }).catch(err => console.error("Erro ao salvar no Firebase: ", err));
+                clients, 
+                tasks, 
+                freelas, 
+                meetings, 
+                team, 
+                subs, 
+                agency: dadosAgenciaLimpos
+            }).then(() => {
+                console.log("Dados sincronizados com o Firebase com sucesso!");
+            }).catch(err => {
+                console.error("Erro ao salvar no Firebase: ", err);
+            });
+        }
 
             updateBadges();
             renderSidebar();
