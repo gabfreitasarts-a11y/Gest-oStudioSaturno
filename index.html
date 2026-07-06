@@ -584,7 +584,7 @@
                 preview.style.display = 'block';
             }
             function saveData() {
-            // 1. Backup Local Imediato (Garante que nada se perca no seu navegador)
+            // 1. Backup Local Imediato (Prevenção de perdas)
             localStorage.setItem('sat_final_cli', JSON.stringify(clients || []));
             localStorage.setItem('sat_final_tsk', JSON.stringify(tasks || []));
             localStorage.setItem('sat_final_freelas', JSON.stringify(freelas || []));
@@ -594,17 +594,19 @@
 
             // 2. CORREÇÃO CRÍTICA: Isola e limpa os dados da agência para não enviar lixo HTML
             let dadosAgenciaLimpos = { name: 'Saturno Studio', logo: '' };
-            if (typeof agency === 'object' && agency !== null && !agency.nodeType) {
-                dadosAgenciaLimpos.name = agency.name || 'Saturno Studio';
-                dadosAgenciaLimpos.logo = agency.logo || '';
-            } else if (document.getElementById('ag-name')) {
-                // Se 'agency' virou um elemento HTML por erro do navegador, pegamos direto dos inputs
-                dadosAgenciaLimpos.name = document.getElementById('ag-name').value || 'Saturno Studio';
+            
+            // Verifica se a variável global não virou um elemento HTML do navegador
+            if (window.agency && typeof window.agency === 'object' && !window.agency.nodeType) {
+                dadosAgenciaLimpos.name = window.agency.name || 'Saturno Studio';
+                dadosAgenciaLimpos.logo = window.agency.logo || '';
+            } else {
+                // Se virou elemento HTML, busca direto dos campos salvos na tela
+                dadosAgenciaLimpos.name = document.getElementById('ag-name')?.value || 'Saturno Studio';
                 dadosAgenciaLimpos.logo = document.getElementById('ag-logo-b64')?.value || '';
             }
             localStorage.setItem('sat_final_agency', JSON.stringify(dadosAgenciaLimpos));
 
-            // 3. Limpa e mapeia as outras listas para remover qualquer propriedade oculta inválida do JS
+            // 3. Garante objetos puros e limpos para o Firestore aceitar de primeira
             const dadosParaEnviar = {
                 clients: Array.isArray(clients) ? clients.map(c => ({...c})) : [],
                 tasks: Array.isArray(tasks) ? tasks.map(t => ({...t})) : [],
@@ -615,785 +617,36 @@
                 agency: dadosAgenciaLimpos
             };
 
-            // 4. Envia para a Nuvem de forma limpa e segura
+            // 4. Envia para o Firestore
             db.collection("saturno_dados").doc("hub_operacional").set(dadosParaEnviar)
             .then(() => {
                 console.log("✅ Sincronizado com o Firebase com sucesso!");
             })
             .catch(err => {
-                console.error("❌ Erro fatal ao salvar no Firebase: ", err);
+                console.error("❌ Erro ao salvar no Firebase: ", err);
             });
         }
 
-            updateBadges();
-            renderSidebar();
-            routeView();
-        }
-
-        function updateBadges() {
-            const pendingFreelas = freelas.filter(f => f.stage === 'todo' || f.stage === 'doing').length;
-            const bF = document.getElementById('badge-freela');
-            if(bF) { bF.innerText = pendingFreelas; bF.style.display = pendingFreelas > 0 ? 'flex' : 'none'; }
-            
-            const today = new Date().toISOString().split('T')[0];
-            const upMeetings = meetings.filter(m => m.date >= today).length;
-            const bM = document.getElementById('badge-meetings');
-            if(bM) { bM.innerText = upMeetings; bM.style.display = upMeetings > 0 ? 'flex' : 'none'; }
-        }
-
-        function populateTeamSelects() {
-            let opts = '<option value="">Equipe Geral</option>';
-            team.forEach(t => opts += `<option value="${t.id}">${t.name} (${t.role})</option>`);
-            ['c-team-owner', 't-owner', 'f-owner'].forEach(id => {
-                const el = document.getElementById(id);
-                if(el) { const val = el.value; el.innerHTML = opts; el.value = val; }
-            });
-        }
-
-        /* --- NAVEGAÇÃO --- */
-        function switchMainView(view) {
-            mainView = view;
-            if(view !== 'client') activeClient = null;
-            document.querySelectorAll('.nav-item').forEach(e => e.classList.remove('active'));
-            if(document.getElementById(`nav-${view}`)) document.getElementById(`nav-${view}`).classList.add('active');
-            renderSidebar(); routeView();
-        }
-
-        function routeView() {
-            const area = document.getElementById('workspace-area');
-            area.innerHTML = '';
-            area.className = 'main-workspace fade-in';
-            setTimeout(()=>area.classList.remove('fade-in'), 400);
-
-            if(mainView === 'dashboard') renderDashboard(area);
-            else if(mainView === 'finance') renderFinance(area); 
-            else if(mainView === 'freelas') renderFreelas(area);
-            else if(mainView === 'team') renderTeam(area);
-            else if(mainView === 'meetings') renderMeetings(area);
-            else if(mainView === 'nf') renderNotasFiscais(area);
-            else if(mainView === 'client') renderClientWorkspace(area);
-        }
-
-        /* --- SIDEBAR --- */
-        function renderSidebar() {
-            document.getElementById('agency-name-display').innerText = agency.name;
-            if(agency.logo) { document.getElementById('agency-logo-display').innerHTML = `<img src="${agency.logo}" alt="Logo">`; } 
-            else { document.getElementById('agency-logo-display').innerHTML = getInitials(agency.name); }
-
-            const list = document.getElementById('sidebar-client-list');
-            list.innerHTML = '';
-            
-            clients.forEach(c => {
-                const target = (c.freq || 0) * 2;
-                const sched = tasks.filter(t => t.clientId === c.id && t.stage === 'sched').length;
-                const pct = target > 0 ? Math.min(Math.round((sched / target)*100), 100) : 0;
-                
-                let colorClass = 'var(--danger)'; let stTxt = 'Atrasado';
-                if(pct >= 100) { colorClass = 'var(--color-sched)'; stTxt = 'No Alvo'; }
-                else if(pct >= 50) { colorClass = 'var(--color-review)'; stTxt = 'Rodando'; }
-
-                let ownerBadge = '';
-                if (c.teamOwner) {
-                    const tm = team.find(t => t.id === c.teamOwner);
-                    if (tm) {
-                        const pendingTasks = tasks.filter(t => t.clientId === c.id && t.owner === tm.id && t.stage !== 'sched').length;
-                        const notifDot = pendingTasks > 0 ? `<div style="position:absolute; top:-2px; right:-2px; width:8px; height:8px; background:var(--danger); border-radius:50%; border:1px solid var(--bg-card);"></div>` : '';
-                        ownerBadge = `
-                            <div style="position:relative; display:inline-flex;" title="Resp: ${tm.name}">
-                                <div style="width:20px; height:20px; border-radius:50%; background:${tm.color || 'var(--accent)'}; color:#fff; display:flex; align-items:center; justify-content:center; font-size:0.55rem; font-weight:bold; border:2px solid var(--bg-card); overflow:hidden;">
-                                    ${tm.img ? `<img src="${tm.img}" style="width:100%;height:100%;object-fit:cover;">` : getInitials(tm.name)}
-                                </div>
-                                ${notifDot}
-                            </div>
-                        `;
-                    }
-                }
-
-                const avatarHTML = c.img ? `<img src="${c.img}">` : getInitials(c.name);
-
-                const item = document.createElement('div');
-                item.className = `client-item ${activeClient === c.id ? 'active' : ''}`;
-                item.onclick = () => {
-                    document.querySelectorAll('.nav-item').forEach(e => e.classList.remove('active'));
-                    mainView = 'client'; activeClient = c.id; 
-                    renderSidebar(); routeView();
-                };
-                
-                item.innerHTML = `
-                    <div class="avatar">${avatarHTML}</div>
-                    <div class="client-name-wrapper">
-                        <div style="display:flex; justify-content:space-between; align-items:center;">
-                            <div style="display:flex; align-items:center; gap:6px;">
-                                <h4>${c.name}</h4>
-                                ${ownerBadge}
-                            </div>
-                            <span style="background:rgba(138,43,226,0.1); padding:2px 4px; border-radius:4px; font-weight:700; color:${colorClass}; font-size:0.65rem;">${pct}%</span>
-                        </div>
-                        <div style="display:flex; justify-content:space-between; font-size:0.65rem; color:var(--text-muted); margin-top:2px;">
-                            <span>${c.finDesc || 'S/Plano'}</span>
-                            <span style="color:${colorClass}">${stTxt}</span>
-                        </div>
-                        <div style="width:100%; height:3px; background:var(--bg-input); border-radius:2px; margin-top:4px;">
-                            <div style="width:${pct}%; height:100%; background:${colorClass}; border-radius:2px;"></div>
-                        </div>
-                    </div>
-                `;
-                list.appendChild(item);
-            });
-        }
-
-        /* --- DASHBOARD GERAL --- */
-        function renderDashboard(container) {
-            let globalTarget = 0, globalSched = 0;
-            let countCopy = 0, countDesign = 0, countReview = 0;
-            
-            clients.forEach(c => {
-                globalTarget += (c.freq || 0) * 2;
-                const cTasks = tasks.filter(t => t.clientId === c.id);
-                globalSched += cTasks.filter(t => t.stage === 'sched').length;
-                countCopy += cTasks.filter(t => t.stage === 'copy').length;
-                countDesign += cTasks.filter(t => t.stage === 'design').length;
-                countReview += cTasks.filter(t => t.stage === 'review').length;
-            });
-
-            const globalHealth = globalTarget > 0 ? Math.round((globalSched / globalTarget) * 100) : 0;
-            const healthColor = globalHealth >= 100 ? 'var(--color-sched)' : (globalHealth > 50 ? 'var(--color-review)' : 'var(--danger)');
-
-            container.innerHTML = `
-                <div class="workspace-header">
-                    <div class="client-meta"><h2>📊 Dashboard Operacional</h2><span style="color:var(--text-muted); font-size:0.9rem;">Visão global de produção da equipe.</span></div>
-                    <button class="theme-toggle" onclick="toggleTheme()" title="Alterar Tema">🌓</button>
-                </div>
-                <div class="dash-container">
-                    <div class="dash-metrics slide-up">
-                        <div class="metric-card"><span>Posts em Produção</span><h3>${countCopy+countDesign+countReview} <span style="font-size:1rem; color:var(--text-muted); font-weight:400;">peças</span></h3></div>
-                        <div class="metric-card"><span>Posts Finalizados / Meta</span><h3>${globalSched} <span style="font-size:1rem; color:var(--text-muted); font-weight:400;">/ ${globalTarget}</span></h3></div>
-                        <div class="metric-card" style="border-bottom: 4px solid ${healthColor}">
-                            <span>Saúde Geral das Esteiras</span>
-                            <h3 style="color:${healthColor}">${globalHealth}%</h3>
-                        </div>
-                    </div>
-
-                    <div class="dash-tables-grid slide-up" style="animation-delay: 0.1s;">
-                        <div class="dash-panel" style="grid-column: 1 / -1;">
-                            <h3>Distribuição de Etapas (Agência)</h3>
-                            <div class="chart-container"><canvas id="prodChart"></canvas></div>
-                        </div>
-                    </div>
-                </div>
-            `;
-
-            setTimeout(() => {
-                const ctx = document.getElementById('prodChart').getContext('2d');
-                if(chartInstance) chartInstance.destroy();
-                const legendColor = currentTheme === 'dark' ? '#8b929e' : '#64748b';
-                chartInstance = new Chart(ctx, {
-                    type: 'doughnut',
-                    data: { labels: ['Roteiro/Copy', 'Arte/Edição', 'Em Aprovação', 'Prontos'], datasets: [{ data: [countCopy, countDesign, countReview, globalSched], backgroundColor: ['#ec4899', '#3b82f6', '#f59e0b', '#10b981'], borderWidth: 0, hoverOffset: 4 }] },
-                    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { color: legendColor, padding: 20, font: { family: "'Plus Jakarta Sans', sans-serif" } } } }, cutout: '70%' }
-                });
-            }, 100);
-        }
-
-        /* --- FINANCEIRO RESTRITO --- */
-        function renderFinance(container) {
-            if(!financeUnlocked) {
-                container.innerHTML = `
-                    <div class="workspace-header">
-                        <div class="client-meta"><h2>💳 Balanço Restrito</h2></div>
-                        <button class="theme-toggle" onclick="toggleTheme()" title="Alterar Tema">🌓</button>
-                    </div>
-                    <div style="flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:16px;">
-                        <svg width="48" height="48" fill="none" stroke="var(--text-muted)" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z"></path></svg>
-                        <h3 style="color:var(--text-main);">Acesso de Administrador</h3>
-                        <input type="password" id="fin-pass-input" placeholder="Digite a Senha" style="background:var(--bg-input); border:1px solid var(--border); padding:12px; border-radius:8px; color:var(--text-main); text-align:center; width:250px; letter-spacing:4px;" onkeypress="if(event.key==='Enter') unlockFinance()">
-                        <button class="btn-primary" style="width:250px;" onclick="unlockFinance()">Desbloquear</button>
-                    </div>
-                `;
-                return;
-            }
-
-            let mrr = clients.reduce((acc, c) => acc + (parseFloat(c.finValue) || 0), 0);
-            let ext = freelas.filter(f => f.stage === 'done').reduce((acc, f) => acc + (parseFloat(f.val) || 0), 0);
-            let receita = mrr + ext;
-            let despesaEquipe = team.reduce((acc, t) => acc + (parseFloat(t.val) || 0), 0);
-            let despesaFerramentas = subs.reduce((acc, s) => acc + (parseFloat(s.val) || 0), 0);
-            let lucro = receita - despesaEquipe - despesaFerramentas;
-
-            let subsHTML = subs.map(s => `
-                <div style="display:flex; justify-content:space-between; align-items:center; padding:12px; background:var(--bg-input); border:1px solid var(--border); border-radius:8px; margin-bottom:8px;">
-                    <div><strong>${s.name}</strong><br><span style="font-size:0.7rem; color:var(--text-muted)">Assinatura/Custo Fixo</span></div>
-                    <div style="display:flex; align-items:center; gap:16px;">
-                        <span style="color:var(--danger); font-weight:600;">- ${formatBRL(s.val)}</span>
-                        <button onclick="deleteSub('${s.id}')" style="background:none; border:none; color:var(--text-muted); cursor:pointer;">✕</button>
-                    </div>
-                </div>
-            `).join('');
-
-            container.innerHTML = `
-                <div class="workspace-header">
-                    <div class="client-meta"><h2>💳 Balanço Financeiro Restrito</h2><span style="color:var(--text-muted); font-size:0.9rem;">Visão exclusiva de auditoria, faturamento e lucro líquido.</span></div>
-                    <div style="display:flex; gap:12px;">
-                        <button class="btn-outline" onclick="lockFinance()">🔒 Bloquear</button>
-                        <button class="theme-toggle" onclick="toggleTheme()" title="Alterar Tema">🌓</button>
-                    </div>
-                </div>
-                <div class="dash-container slide-up">
-                    <div class="dash-metrics">
-                        <div class="metric-card" style="border-bottom: 4px solid var(--color-sched);"><span>Receita Total (MRR + Freelas)</span><h3 style="color:var(--color-sched)">${formatBRL(receita)}</h3></div>
-                        <div class="metric-card" style="border-bottom: 4px solid var(--danger);"><span>Despesas de Equipe</span><h3 style="color:var(--danger)">- ${formatBRL(despesaEquipe)}</h3></div>
-                        <div class="metric-card" style="border-bottom: 4px solid var(--color-review);"><span>Assinaturas & Ferramentas</span><h3 style="color:var(--color-review)">- ${formatBRL(despesaFerramentas)}</h3></div>
-                        <div class="metric-card" style="border-bottom: 4px solid var(--accent); background:var(--bg-sidebar);"><span>Lucro Líquido Previsto</span><h3 style="color:var(--accent)">${formatBRL(lucro)}</h3></div>
-                    </div>
-
-                    <div class="dash-tables-grid">
-                        <div class="dash-panel">
-                            <h3>Gestão de Assinaturas & Plataformas</h3>
-                            <div style="display:flex; gap:8px; margin-bottom:16px;">
-                                <input type="text" id="sub-name" placeholder="Ex: ChatGPT, Drive, Canva" style="flex:1; padding:10px; background:var(--bg-input); border:1px solid var(--border); border-radius:8px; color:var(--text-main);">
-                                <input type="number" id="sub-val" placeholder="Valor R$" style="width:100px; padding:10px; background:var(--bg-input); border:1px solid var(--border); border-radius:8px; color:var(--text-main);">
-                                <button class="btn-primary" onclick="addSub()">Adicionar</button>
-                            </div>
-                            <div class="fin-table-wrapper">${subsHTML || '<p style="color:var(--text-muted); font-size:0.85rem;">Nenhuma assinatura cadastrada.</p>'}</div>
-                        </div>
-                    </div>
-                </div>
-            `;
-        }
-
-        function promptAgencyPassword() {
-            const pass = prompt("Digite a senha administrativa para editar a agência:");
-            if (pass !== null) { 
-                if(pass === ADMIN_PASS) {
-                    openAgencyModal();
-                } else {
-                    alert('Senha incorreta.');
-                }
-            }
-        }
-
-        function unlockFinance() {
-            const input = document.getElementById('fin-pass-input').value;
-            if(input === ADMIN_PASS) {
-                financeUnlocked = true;
-                renderFinance(document.getElementById('workspace-area'));
-                showToast('Acesso Permitido');
-            } else { alert('Senha incorreta.'); }
-        }
-        function lockFinance() { financeUnlocked = false; routeView(); }
-        function addSub() {
-            const name = document.getElementById('sub-name').value;
-            const val = document.getElementById('sub-val').value;
-            if(!name || !val) return;
-            subs.push({ id: 's'+Date.now(), name, val: parseFloat(val) });
-            saveData();
-        }
-        function deleteSub(id) { subs = subs.filter(s=>s.id!==id); saveData(); }
-
-        /* --- NOTAS FISCAIS --- */
-        function renderNotasFiscais(container) {
-            let nfHTML = clients.filter(c => c.needsNf === 'Sim').map(c => `
-                <tr class="slide-up">
-                    <td>
-                        <div style="display:flex; align-items:center; gap:8px;">
-                            <div class="avatar" style="width:24px;height:24px;font-size:0.6rem;">${c.img ? `<img src="${c.img}">` : getInitials(c.name)}</div>
-                            <strong>${c.name}</strong>
-                        </div>
-                    </td>
-                    <td>${c.cnpj || '<span style="color:var(--danger)">S/ CNPJ</span>'}</td>
-                    <td>${formatBRL(c.finValue || 0)}</td>
-                    <td>Dia ${c.finDay || '-'}</td>
-                    <td><button class="btn-outline" style="padding: 6px 12px; font-size:0.75rem; border-color: ${c.nfStatus === 'Emitida' ? 'var(--color-sched)' : 'var(--border)'}; color: ${c.nfStatus === 'Emitida' ? 'var(--color-sched)' : 'var(--text-main)'}; background: ${c.nfStatus === 'Emitida' ? 'rgba(16,185,129,0.1)' : 'transparent'};" onclick="toggleNfStatus('${c.id}')">${c.nfStatus === 'Emitida' ? '✓ Emitida' : 'Marcar Emitida'}</button></td>
-                </tr>
-            `).join('');
-
-            container.innerHTML = `
-                <div class="workspace-header">
-                    <div class="client-meta"><h2>🧾 Gestão de Notas Fiscais</h2><span style="color:var(--text-muted); font-size:0.9rem;">Emissão e acompanhamento de NF mensal.</span></div>
-                    <button class="theme-toggle" onclick="toggleTheme()" title="Alterar Tema">🌓</button>
-                </div>
-                <div class="dash-container slide-up">
-                    <div class="dash-panel" style="grid-column: 1 / -1;">
-                        <table class="fin-table">
-                            <thead><tr><th>Cliente</th><th>CNPJ</th><th>Valor Faturado</th><th>Vencimento</th><th>Ação / Status</th></tr></thead>
-                            <tbody>${nfHTML || '<tr><td colspan="5">Nenhum cliente configurado para emitir NF. Altere as configurações financeiras do cliente.</td></tr>'}</tbody>
-                        </table>
-                    </div>
-                </div>
-            `;
-        }
-        function toggleNfStatus(id) { const c = clients.find(i => i.id === id); c.nfStatus = c.nfStatus === 'Emitida' ? 'Pendente' : 'Emitida'; if(c.nfStatus === 'Emitida') showToast(`✅ Nota fiscal marcada como emitida para ${c.name}`); saveData(); }
-
-        /* --- EQUIPE / COLABORADORES --- */
-        function renderTeam(container) {
-            let teamHTML = team.map(t => `
-                <div class="team-card slide-up">
-                    <div class="team-card-actions">
-                        <button class="btn-icon" onclick="openTeamModalPassword('${t.id}')">
-                            <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
-                        </button>
-                        <button class="btn-icon danger" onclick="deleteTeamPassword('${t.id}')">
-                            <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
-                        </button>
-                    </div>
-                    <div class="avatar" style="width:80px; height:80px; margin:0 auto 16px auto; font-size:1.8rem; border: 3px solid ${t.color || 'transparent'};">${t.img ? `<img src="${t.img}">` : getInitials(t.name)}</div>
-                    <h4>${t.name}</h4>
-                    <span class="role" style="color: ${t.color || 'var(--accent)'}; border-color: ${t.color || 'var(--accent)'};">${t.role || 'Geral'}</span>
-                </div>
-            `).join('');
-
-            container.innerHTML = `
-                <div class="workspace-header">
-                    <div class="client-meta"><h2>👥 Equipe e Colaboradores</h2><span style="color:var(--text-muted); font-size:0.9rem;">Gestão do seu time interno de produção.</span></div>
-                    <div style="display:flex; gap:12px;">
-                        <button class="btn-primary" onclick="openTeamModal()">+ Novo Colaborador</button>
-                        <button class="theme-toggle" onclick="toggleTheme()" title="Alterar Tema">🌓</button>
-                    </div>
-                </div>
-                <div class="dash-container"><div class="team-grid">${teamHTML || '<p style="color:var(--text-muted);">Nenhum colaborador cadastrado. Adicione sua equipe!</p>'}</div></div>
-            `;
-        }
-
-        // Funções com Senha para Equipe
-        function openTeamModalPassword(id) {
-            const pass = prompt("Digite a senha administrativa para editar o colaborador:");
-            if (pass !== null) {
-                if(pass === ADMIN_PASS) { openTeamModal(id); } else { alert('Senha incorreta.'); }
-            }
-        }
-        function deleteTeamPassword(id) {
-            const pass = prompt("Digite a senha administrativa para excluir o colaborador:");
-            if (pass !== null) {
-                if(pass === ADMIN_PASS) { deleteTeam(id); } else { alert('Senha incorreta.'); }
-            }
-        }
-
-        function openTeamModal(id=null) {
-            document.getElementById('teamModal').style.display='flex';
-            document.getElementById('team-form').reset();
-            const p = document.getElementById('tm-preview'); p.style.display = 'none'; p.src = ''; document.getElementById('tm-img-b64').value = '';
-
-            if(id) {
-                const t = team.find(i=>i.id===id);
-                document.getElementById('tm-id').value = t.id; document.getElementById('tm-name').value = t.name;
-                document.getElementById('tm-role').value = t.role || ''; document.getElementById('tm-type').value = t.type || 'Fixo';
-                document.getElementById('tm-color').value = t.color || '#8a2be2';
-                document.getElementById('tm-val').value = t.val || '';
-                if(t.img) { document.getElementById('tm-img-b64').value = t.img; p.src = t.img; p.style.display = 'block'; }
-            } else { document.getElementById('tm-id').value = ''; document.getElementById('tm-color').value = '#8a2be2'; }
-        }
-
-        function saveTeam(e) {
-            e.preventDefault();
-            const id = document.getElementById('tm-id').value || 'tm'+Date.now();
-            const tData = { id, name: document.getElementById('tm-name').value, img: document.getElementById('tm-img-b64').value, color: document.getElementById('tm-color').value, role: document.getElementById('tm-role').value, type: document.getElementById('tm-type').value, val: document.getElementById('tm-val').value };
-            const idx = team.findIndex(i=>i.id===id);
-            if(idx > -1) team[idx] = tData; else team.push(tData);
-            closeModal('teamModal'); populateTeamSelects(); saveData(); showToast('Colaborador Salvo!');
-        }
-        function deleteTeam(id) { if(confirm("Remover colaborador? O histórico financeiro dele será perdido.")){ team = team.filter(t=>t.id!==id); populateTeamSelects(); saveData(); } }
-
-        /* --- FREELAS / AVULSOS --- */
-        function renderFreelas(container) {
-            const total = freelas.length;
-            const done = freelas.filter(f => f.stage === 'done').length;
-            const pct = total > 0 ? Math.round((done / total) * 100) : 0;
-
-            container.innerHTML = `
-                <div class="workspace-header">
-                    <div class="client-meta"><h2>⚡ Fábrica de Freelas</h2><span style="color:var(--text-muted); font-size:0.9rem;">Demandas avulsas. Progresso Global: <strong style="color:var(--text-main);">${done}/${total} concluídos</strong></span></div>
-                    <div style="display:flex; align-items:center; gap:16px;">
-                        <div style="width: 150px;">
-                            <div style="display:flex; justify-content:space-between; font-size:0.75rem; font-weight:600; margin-bottom:4px; color:var(--text-muted);"><span>Avanço</span> <span style="color:var(--color-sched);">${pct}%</span></div>
-                            <div class="meter-bg"><div class="meter-bar" style="width:${pct}%; background:var(--color-sched);"></div></div>
-                        </div>
-                        <button class="btn-primary" onclick="openFreelaModal()">+ Novo Freela</button>
-                        <button class="theme-toggle" onclick="toggleTheme()" title="Alterar Tema">🌓</button>
-                    </div>
-                </div>
-                <div class="workspace-body slide-up"><div class="panel-right" style="border:none; background:transparent; box-shadow:none;"><div class="production-grid" id="freela-kanban"></div></div></div>
-            `;
-
-            const kArea = document.getElementById('freela-kanban');
-            const cols = [{ id: 'todo', title: 'A Produzir', color: '#ef4444' }, { id: 'doing', title: 'Produzindo', color: '#facc15' }, { id: 'done', title: 'Entregue / Aprovado', color: '#10b981' }];
-
-            cols.forEach(col => {
-                const colF = freelas.filter(f => f.stage === col.id);
-                let cards = '';
-                colF.forEach(f => {
-                    let opts = cols.map(c => `<option value="${c.id}" ${f.stage === c.id ? 'selected':''}>${c.title}</option>`).join('');
-                    
-                    let refHTML = '';
-                    if(f.imgBase64) {
-                        refHTML = `<div class="post-preview-img"><img src="${f.imgBase64}" style="width:100%;height:100%;object-fit:cover;border-radius:6px;"></div>`;
-                    } else if (f.link) {
-                        refHTML = `<a href="${f.link.includes('http') ? f.link : 'https://'+f.link}" class="post-attachment" target="_blank"><svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg> Link Útil</a>`;
-                    }
-
-                    let cardClass = f.stage === 'todo' ? 'freela-todo' : (f.stage === 'doing' ? 'freela-doing' : '');
-                    let dateBadge = f.date ? `<div class="post-date" style="color: ${isDueSoon(f.date) && f.stage !== 'done' ? 'var(--danger)' : ''}">📅 Entrega: ${f.date.split('-').reverse().join('/')}</div>` : '';
-                    let ownerObj = team.find(tm=>tm.id===f.owner);
-                    let ownerName = ownerObj ? ownerObj.name : 'Equipe';
-                    let ownerColor = ownerObj ? ownerObj.color : 'var(--accent)';
-                    let ownerAvatar = ownerObj && ownerObj.img ? `<img src="${ownerObj.img}">` : getInitials(ownerName);
-
-                    cards += `
-                        <div class="post-card ${cardClass}">
-                            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
-                                <span class="post-val">${formatBRL(f.val || 0)}</span>
-                                ${isDueSoon(f.date) && f.stage !== 'done' ? '<span style="font-size:0.6rem; color:var(--danger); font-weight:bold; background:rgba(239,68,68,0.1); padding:2px 6px; border-radius:4px;">⚠️ PRAZO CURTO</span>' : ''}
-                            </div>
-                            <h5 onclick="openFreelaModal('${f.id}')">${f.title}</h5>
-                            ${dateBadge} ${refHTML}
-                            <div class="post-footer">
-                                <div class="assignee"><div class="avatar" style="background:${ownerColor}">${ownerAvatar}</div> ${ownerName}</div>
-                                <select class="stage-select" onchange="moveFreela('${f.id}', this.value, '${f.title}')">${opts}</select>
-                            </div>
-                            <div style="text-align:right; margin-top:8px;"><button onclick="deleteFreela('${f.id}')" style="background:none; border:none; color:var(--danger); cursor:pointer; font-size:0.75rem;">Excluir</button></div>
-                        </div>
-                    `;
-                });
-                kArea.innerHTML += `<div class="prod-column"><div class="prod-column-header" style="color:${col.color}"><div style="display:flex; align-items:center; gap:8px;"><div class="dot" style="background:${col.color}"></div> ${col.title}</div><span style="background:var(--bg-card); padding:2px 8px; border-radius:10px; font-size:0.7rem; color:var(--text-main);">${colF.length}</span></div><div class="col-content">${cards}</div></div>`;
-            });
-        }
-
-        /* --- REUNIÕES --- */
-        function renderMeetings(container) {
-            const todayStr = new Date().toISOString().split('T')[0];
-            const up = meetings.filter(m => m.date >= todayStr).sort((a,b) => new Date(a.date) - new Date(b.date));
-            
-            let upHTML = up.map(m => {
-                let cName = m.client ? (clients.find(c=>c.id===m.client)?.name || 'Interna') : 'Interna';
-                return `
-                <div class="post-card slide-up" style="display:flex; justify-content:space-between; align-items:center;">
-                    <div>
-                        <div style="color:var(--accent); font-size:0.75rem; font-weight:700; margin-bottom:4px;">${cName}</div>
-                        <h4 style="color:var(--text-main); margin-bottom:4px;">${m.title}</h4>
-                        <div style="font-size:0.8rem; color:var(--text-muted);">📅 ${m.date.split('-').reverse().join('/')} às ⏰ ${m.time}</div>
-                    </div>
-                    <div style="display:flex; gap:10px; align-items:center;">
-                        ${m.link ? `<a href="${m.link}" target="_blank" class="btn-outline" style="padding:6px 12px; font-size:0.8rem; color:var(--color-design); border-color:var(--color-design);">Entrar na Call</a>` : ''}
-                        <button class="btn-cancel" onclick="deleteMeeting('${m.id}')" style="padding:6px 12px; font-size:0.8rem; border-color:var(--danger); color:var(--danger);">✕</button>
-                    </div>
-                </div>`;
-            }).join('');
-
-            container.innerHTML = `
-                <div class="workspace-header">
-                    <div class="client-meta"><h2>📅 Reuniões & Calls</h2><span style="color:var(--text-muted); font-size:0.9rem;">Agenda da Agência.</span></div>
-                    <div style="display:flex; gap:12px;"><button class="btn-primary" onclick="openMeetingModal()">+ Agendar Reunião</button><button class="theme-toggle" onclick="toggleTheme()" title="Tema">🌓</button></div>
-                </div>
-                <div class="workspace-body" style="flex-direction:column; overflow-y:auto;">
-                    <div style="max-width: 800px; width: 100%;">
-                        <h3 style="color:var(--text-main); margin-bottom:16px;">Próximas Reuniões</h3>
-                        ${upHTML || '<p style="color:var(--text-muted); font-size:0.9rem;">Nenhuma reunião futura agendada.</p>'}
-                    </div>
-                </div>
-            `;
-        }
-
-        /* --- CLIENT WORKSPACE --- */
-        function renderClientWorkspace(container) {
-            const c = clients.find(i => i.id === activeClient);
-            const target = (c.freq || 0) * 2;
-            const schedPosts = tasks.filter(t => t.clientId === c.id && t.stage === 'sched').length;
-            const pct = target > 0 ? Math.min(Math.round((schedPosts / target)*100), 100) : 0;
-            const colorBar = pct >= 100 ? 'var(--color-sched)' : (pct >= 50 ? 'var(--color-review)' : 'var(--danger)');
-            const avatarHTML = c.img ? `<img src="${c.img}">` : getInitials(c.name);
-            const whatsLink = c.finPhone ? `https://wa.me/55${c.finPhone.replace(/\D/g,'')}?text=Ol%C3%A1!%20Passando%20para%20lembrar%20da%20mensalidade%20da%20ag%C3%AAncia.` : '#';
-            const resp = team.find(t=>t.id===c.teamOwner);
-            const respHTML = resp ? `<div class="assignee"><div class="avatar" style="background:${resp.color || 'var(--accent)'}">${resp.img ? `<img src="${resp.img}">`: getInitials(resp.name)}</div> ${resp.name}</div>` : 'Equipe Geral';
-
-            container.innerHTML = `
-                <div class="workspace-header">
-                    <div class="client-meta">
-                        <h2><div class="avatar" style="width:48px;height:48px;font-size:1.3rem;">${avatarHTML}</div> ${c.name}</h2>
-                        <div class="client-info-badges">
-                            <div class="info-badge">Resp: <strong>${respHTML}</strong></div>
-                            <div class="info-badge">Instagram: <strong>${c.profile || '-'}</strong></div>
-                            <div class="info-badge">Postagem: <strong>${c.poster || 'Agência'}</strong></div>
-                        </div>
-                    </div>
-                    <div style="display:flex; align-items:center; gap:16px;">
-                        <div class="dropdown">
-                            <button class="btn-outline">
-                                <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg> 
-                                Opções ▼
-                            </button>
-                            <div class="dropdown-content">
-                                <button onclick="openClientModal('${c.id}')"><svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg> Editar Perfil</button>
-                                <button onclick="deleteClient('${c.id}')" class="danger-btn" style="color:var(--danger);"><svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg> Excluir Cliente</button>
-                            </div>
-                        </div>
-                        <div class="buffer-meter-box">
-                            <div class="meter-label"><span>Meta de Frente (2 Sem.)</span><span style="color:${colorBar}">${pct}%</span></div>
-                            <div class="meter-bg"><div class="meter-bar" style="width:${pct}%; background:${colorBar}"></div></div>
-                        </div>
-                        <button class="theme-toggle" onclick="toggleTheme()" title="Alterar Tema">🌓</button>
-                    </div>
-                </div>
-
-                <div class="workspace-body slide-up">
-                    <div class="panel-left">
-                        <div class="box">
-                            <div class="box-header"><h3>🚀 Checklist Inicial</h3></div>
-                            <div class="checklist-group">
-                                <div class="chk-item ${c.chk?.group ? 'done':''}" onclick="toggleChk('group')"><div class="chk-circle"></div> 1. Grupo do WhatsApp</div>
-                                <div class="chk-item ${c.chk?.briefing ? 'done':''}" onclick="toggleChk('briefing')"><div class="chk-circle"></div> 2. Enviar Briefing</div>
-                                <div class="chk-item ${c.chk?.strategy ? 'done':''}" onclick="toggleChk('strategy')"><div class="chk-circle"></div> 3. Enviar Estratégia</div>
-                                <div class="chk-item ${c.chk?.pic ? 'done':''}" onclick="toggleChk('pic')"><div class="chk-circle"></div> 4. Foto de Perfil</div>
-                                <div class="chk-item ${c.chk?.bio ? 'done':''}" onclick="toggleChk('bio')"><div class="chk-circle"></div> 5. Criar Bio</div>
-                                <div class="chk-item ${c.chk?.highlights ? 'done':''}" onclick="toggleChk('highlights')"><div class="chk-circle"></div> 6. Capas Destaque</div>
-                            </div>
-                        </div>
-                        <div class="box">
-                            <div class="box-header"><h3>📝 Briefing / Diretrizes</h3></div>
-                            <div style="font-size:0.8rem; color:var(--text-main); line-height:1.5;">${c.notes || 'Sem anotações.'}</div>
-                        </div>
-                        <div class="box">
-                            <div class="box-header"><h3>💸 Financeiro Mensal</h3></div>
-                            <div class="fin-detail"><span>Plano</span> <strong>${c.finDesc || '-'}</strong></div>
-                            <div class="fin-detail"><span>Valor</span> <strong>${formatBRL(c.finValue || 0)}</strong></div>
-                            <div class="fin-detail"><span>Venc.</span> <strong>Dia ${c.finDay || '-'}</strong></div>
-                            <div class="fin-detail" style="border:none;"><span>Status</span> <span class="status-badge ${c.finStatus === 'Em Dia' ? 'status-ok' : 'status-late'}">${c.finStatus || '-'}</span></div>
-                            <a href="${whatsLink}" target="_blank" class="btn-whatsapp">
-                                <svg width="18" height="18" fill="currentColor" viewBox="0 0 24 24"><path d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.582 2.128 2.182-.573c.978.58 1.911.928 3.145.929 3.178 0 5.767-2.587 5.768-5.766.001-3.187-2.575-5.77-5.764-5.771zm3.392 8.244c-.144.405-.837.774-1.17.824-.299.045-.677.063-1.092-.069-.252-.08-.575-.187-.988-.365-1.739-.751-2.874-2.502-2.961-2.617-.087-.116-.708-.94-.708-1.793s.448-1.273.607-1.446c.159-.173.346-.217.462-.217l.332.006c.106.005.249-.04.39.298.144.347.491 1.2.534 1.287.043.087.072.188.014.304-.058.116-.087.188-.173.289l-.26.304c-.087.086-.177.18-.076.322.101.144.453.712 1.033 1.234.75.674 1.349.882 1.493.968.144.087.231.072.318-.029l.364-.428c.116-.144.231-.116.362-.072.13.044.837.398.981.47.144.072.241.109.276.166.035.058.035.341-.109.746z"/></svg>
-                                Cobrar Cliente
-                            </a>
-                        </div>
-                    </div>
-
-                    <div class="panel-right">
-                        <div class="kanban-header-actions">
-                            <span style="font-size:0.9rem; color:var(--text-muted); font-weight:600;">🔥 Esteira de Produção</span>
-                            <button class="btn-primary" onclick="openTaskModal()">+ Novo Post</button>
-                        </div>
-                        <div class="production-grid" id="kanban-area"></div>
-                    </div>
-                </div>
-            `;
-            renderClientKanban();
-        }
-
-        function renderClientKanban() {
-            const kArea = document.getElementById('kanban-area');
-            const clientTasks = tasks.filter(t => t.clientId === activeClient);
-            kArea.innerHTML = '';
-            const cols = [{ id: 'copy', title: '1. Roteiro/Copy', color: 'var(--color-copy)' }, { id: 'design', title: '2. Arte/Edição', color: 'var(--color-design)' }, { id: 'review', title: '3. Aprovação', color: 'var(--color-review)' }, { id: 'sched', title: '4. Programado', color: 'var(--color-sched)' }];
-
-            cols.forEach(col => {
-                const colTasks = clientTasks.filter(t => t.stage === col.id);
-                let cards = '';
-                
-                colTasks.forEach(t => {
-                    let pClass = t.priority === 'alta' ? 'p-alta' : t.priority === 'media' ? 'p-media' : 'p-baixa';
-                    let opts = cols.map(c => `<option value="${c.id}" ${t.stage === c.id ? 'selected':''}>${c.title}</option>`).join('');
-                    
-                    let refHTML = '';
-                    if(t.imgBase64) {
-                        refHTML = `<div class="post-preview-img"><img src="${t.imgBase64}" style="width:100%;height:100%;object-fit:cover;border-radius:6px;"></div>`;
-                    } else if (t.link) {
-                        refHTML = `<a href="${t.link.includes('http') ? t.link : 'https://'+t.link}" class="post-attachment" target="_blank"><svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg> Link de Referência</a>`;
-                    }
-
-                    const dueClass = isDueSoon(t.date) && t.stage !== 'sched' ? 'due-alert' : '';
-                    let dateBadge = t.date ? `<div class="post-date" style="color: ${isDueSoon(t.date) && t.stage !== 'sched' ? 'var(--danger)' : ''}">📅 Entrega: ${t.date.split('-').reverse().join('/')}</div>` : '';
-                    let ownerObj = team.find(tm=>tm.id===t.owner);
-                    let ownerName = ownerObj ? ownerObj.name : 'Equipe';
-                    let ownerColor = ownerObj ? ownerObj.color : 'var(--border)';
-                    let ownerAvatar = ownerObj && ownerObj.img ? `<img src="${ownerObj.img}">` : getInitials(ownerName);
-
-                    cards += `
-                        <div class="post-card ${dueClass}">
-                            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
-                                <span class="priority-tag ${pClass}">${t.priority}</span>
-                                ${isDueSoon(t.date) && t.stage !== 'sched' ? '<span style="font-size:0.6rem; color:var(--danger); font-weight:bold; background:rgba(239,68,68,0.1); padding:2px 6px; border-radius:4px;">⚠️ PRAZO CURTO</span>' : ''}
-                            </div>
-                            <h5 onclick="openTaskModal('${t.id}')">${t.title}</h5>
-                            ${dateBadge}
-                            ${refHTML}
-                            <div class="post-footer">
-                                <div class="assignee"><div class="avatar" style="background:${ownerColor}">${ownerAvatar}</div> <span style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:80px;">${ownerName}</span></div>
-                                <select class="stage-select" onchange="moveTask('${t.id}', this.value, '${t.title}')">${opts}</select>
-                            </div>
-                            <div style="text-align:right; margin-top:8px;">
-                                <button onclick="deleteTask('${t.id}')" style="background:none; border:none; color:var(--danger); cursor:pointer; font-size:0.75rem;">Excluir Post</button>
-                            </div>
-                        </div>
-                    `;
-                });
-                kArea.innerHTML += `<div class="prod-column"><div class="prod-column-header" style="color:${col.color}"><div style="display:flex; align-items:center; gap:8px;"><div class="dot" style="background:${col.color}"></div> ${col.title}</div><span style="background:var(--bg-card); padding:2px 8px; border-radius:10px; font-size:0.7rem; color:var(--text-main);">${colTasks.length}</span></div><div class="col-content">${cards}</div></div>`;
-            });
-        }
-
-        /* --- AÇÕES DE DADOS COM NOTIFICAÇÃO --- */
-        function toggleChk(field) { const c = clients.find(i => i.id === activeClient); if(!c.chk) c.chk = {}; c.chk[field] = !c.chk[field]; saveData(); }
-        
-        function moveTask(id, stage, title) { 
-            const t = tasks.find(i => i.id === id); 
-            t.stage = stage; 
-            if(stage === 'design' || stage === 'copy') showToast(`🚀 Produção iniciada: ${title}`);
-            if(stage === 'sched') showToast(`✅ Peça Programada: ${title}`);
-            saveData(); 
-        }
-
-        function moveFreela(id, stage, title) { 
-            const f = freelas.find(i => i.id === id); 
-            f.stage = stage; 
-            if(stage === 'doing') showToast(`⚡ Freela em andamento: ${title}`);
-            if(stage === 'done') showToast(`💸 Freela Entregue: ${title}`);
-            saveData(); 
-        }
-
-        /* --- MODAL CLIENTE --- */
-        function openClientModal(id=null) {
-            populateTeamSelects();
-            document.getElementById('clientModal').style.display='flex';
-            document.getElementById('client-form').reset();
-            const p = document.getElementById('c-preview'); p.style.display = 'none'; p.src = ''; document.getElementById('c-img-b64').value = '';
-
-            if(id) {
-                const c = clients.find(i=>i.id===id);
-                document.getElementById('client-id').value = c.id;
-                document.getElementById('c-name').value = c.name;
-                document.getElementById('c-profile').value = c.profile || '';
-                document.getElementById('c-login').value = c.login || '';
-                document.getElementById('c-freq').value = c.freq || 3;
-                document.getElementById('c-poster').value = c.poster || 'Agência Saturno';
-                document.getElementById('c-team-owner').value = c.teamOwner || ''; 
-                document.getElementById('c-notes').value = c.notes || '';
-                document.getElementById('c-fin-desc').value = c.finDesc || '';
-                document.getElementById('c-fin-value').value = c.finValue || '';
-                document.getElementById('c-fin-day').value = c.finDay || '';
-                document.getElementById('c-fin-phone').value = c.finPhone || '';
-                document.getElementById('c-fin-status').value = c.finStatus || 'Em Dia';
-                document.getElementById('c-needs-nf').value = c.needsNf || 'Nao';
-                document.getElementById('c-cnpj').value = c.cnpj || '';
-                
-                if(c.img) { document.getElementById('c-img-b64').value = c.img; p.src = c.img; p.style.display = 'block'; }
-                document.getElementById('client-modal-title').innerText = 'Editar Cliente';
-            } else {
-                document.getElementById('client-id').value = '';
-                document.getElementById('client-modal-title').innerText = 'Novo Cliente';
-            }
-        }
-
-        function saveClient(e) {
-            e.preventDefault();
-            const id = document.getElementById('client-id').value || 'c'+Date.now();
-            const cData = {
-                id, name: document.getElementById('c-name').value, img: document.getElementById('c-img-b64').value,
-                profile: document.getElementById('c-profile').value, login: document.getElementById('c-login').value, freq: parseInt(document.getElementById('c-freq').value),
-                poster: document.getElementById('c-poster').value, teamOwner: document.getElementById('c-team-owner').value, notes: document.getElementById('c-notes').value,
-                finDesc: document.getElementById('c-fin-desc').value, finValue: document.getElementById('c-fin-value').value, finDay: document.getElementById('c-fin-day').value, 
-                finPhone: document.getElementById('c-fin-phone').value, finStatus: document.getElementById('c-fin-status').value, needsNf: document.getElementById('c-needs-nf').value, cnpj: document.getElementById('c-cnpj').value,
-                nfStatus: clients.find(i=>i.id===id)?.nfStatus || 'Pendente', chk: clients.find(i=>i.id===id)?.chk || { group:false, briefing:false, strategy:false, pic:false, bio:false, highlights:false }
-            };
-            const idx = clients.findIndex(i=>i.id===id);
-            if(idx > -1) clients[idx] = cData; else { clients.push(cData); activeClient = id; mainView = 'client'; }
-            closeModal('clientModal'); saveData(); showToast(`Cliente ${cData.name} salvo!`);
-        }
-        function deleteClient(id) { if(confirm("Apagar cliente e todas as suas peças?")) { clients = clients.filter(c=>c.id!==id); tasks = tasks.filter(t=>t.clientId!==id); activeClient = null; mainView = 'dashboard'; saveData(); } }
-
-        /* --- MODAL TAREFA (ESTEIRA) --- */
-        function openTaskModal(id=null) {
-            document.getElementById('taskModal').style.display='flex';
-            document.getElementById('task-form').reset();
-            const p = document.getElementById('t-preview'); p.style.display = 'none'; p.src = ''; document.getElementById('t-img-b64').value = '';
-
-            if(id) {
-                const t = tasks.find(i=>i.id===id);
-                document.getElementById('t-id').value = t.id; document.getElementById('t-title').value = t.title;
-                document.getElementById('t-owner').value = t.owner; document.getElementById('t-priority').value = t.priority;
-                document.getElementById('t-date').value = t.date || '';
-                document.getElementById('t-link').value = t.link || ''; document.getElementById('t-stage').value = t.stage;
-                if(t.imgBase64) { document.getElementById('t-img-b64').value = t.imgBase64; p.src = t.imgBase64; p.style.display = 'block'; }
-            } else {
-                document.getElementById('t-id').value = '';
-            }
-        }
-        function saveTask(e) {
-            e.preventDefault();
-            const id = document.getElementById('t-id').value || 't'+Date.now();
-            const tData = { 
-                id, clientId: activeClient, title: document.getElementById('t-title').value, 
-                owner: document.getElementById('t-owner').value, priority: document.getElementById('t-priority').value, 
-                date: document.getElementById('t-date').value, imgBase64: document.getElementById('t-img-b64').value,
-                link: document.getElementById('t-link').value, stage: document.getElementById('t-stage').value 
-            };
-            const idx = tasks.findIndex(i=>i.id===id);
-            if(idx>-1) tasks[idx]=tData; else { tasks.push(tData); showToast(`📌 Tarefa Adicionada: ${tData.title}`); }
-            closeModal('taskModal'); saveData();
-        }
-        function deleteTask(id) { if(confirm("Excluir peça de conteúdo?")){ tasks = tasks.filter(t=>t.id!==id); saveData(); } }
-
-        /* --- MODAL FREELA --- */
-        function openFreelaModal(id=null) {
-            document.getElementById('freelaModal').style.display='flex';
-            document.getElementById('freela-form').reset();
-            const p = document.getElementById('f-preview'); p.style.display = 'none'; p.src = ''; document.getElementById('f-img-b64').value = '';
-
-            if(id) {
-                const f = freelas.find(i=>i.id===id);
-                document.getElementById('f-id').value = f.id; document.getElementById('f-title').value = f.title;
-                document.getElementById('f-val').value = f.val; document.getElementById('f-owner').value = f.owner;
-                document.getElementById('f-date').value = f.date || '';
-                document.getElementById('f-link').value = f.link || ''; document.getElementById('f-stage').value = f.stage;
-                if(f.imgBase64) { document.getElementById('f-img-b64').value = f.imgBase64; p.src = f.imgBase64; p.style.display = 'block'; }
-            } else {
-                document.getElementById('f-id').value = '';
-            }
-        }
-        function saveFreela(e) {
-            e.preventDefault();
-            const id = document.getElementById('f-id').value || 'f'+Date.now();
-            const fData = { 
-                id, title: document.getElementById('f-title').value, val: document.getElementById('f-val').value, 
-                owner: document.getElementById('f-owner').value, date: document.getElementById('f-date').value,
-                imgBase64: document.getElementById('f-img-b64').value, link: document.getElementById('f-link').value, stage: document.getElementById('f-stage').value 
-            };
-            const idx = freelas.findIndex(i=>i.id===id);
-            if(idx>-1) freelas[idx]=fData; else { freelas.push(fData); showToast(`⚡ Novo Freela: ${fData.title}`); }
-            closeModal('freelaModal'); saveData();
-        }
-        function deleteFreela(id) { if(confirm("Excluir Freela?")){ freelas = freelas.filter(f=>f.id!==id); saveData(); } }
-
-        /* --- MODAL REUNIÕES --- */
-        function openMeetingModal(id=null) {
-            document.getElementById('meetingModal').style.display='flex';
-            document.getElementById('meeting-form').reset();
-            
-            const sel = document.getElementById('m-client');
-            sel.innerHTML = '<option value="">Nenhum / Reunião Interna</option>';
-            clients.forEach(c => sel.innerHTML += `<option value="${c.id}">${c.name}</option>`);
-
-            if(id) {
-                const m = meetings.find(i=>i.id===id);
-                document.getElementById('m-id').value = m.id; document.getElementById('m-title').value = m.title;
-                document.getElementById('m-date').value = m.date; document.getElementById('m-time').value = m.time;
-                document.getElementById('m-client').value = m.client || ''; document.getElementById('m-link').value = m.link || '';
-            } else { document.getElementById('m-id').value = ''; }
-        }
-        function saveMeeting(e) {
-            e.preventDefault();
-            const id = document.getElementById('m-id').value || 'm'+Date.now();
-            const mData = { id, title: document.getElementById('m-title').value, date: document.getElementById('m-date').value, time: document.getElementById('m-time').value, client: document.getElementById('m-client').value, link: document.getElementById('m-link').value };
-            const idx = meetings.findIndex(i=>i.id===id);
-            if(idx>-1) meetings[idx]=mData; else { meetings.push(mData); showToast(`📅 Reunião Marcada: ${mData.title}`); }
-            closeModal('meetingModal'); saveData();
-        }
-        function deleteMeeting(id) { if(confirm("Excluir Reunião?")){ meetings = meetings.filter(m=>m.id!==id); saveData(); } }
+        function deleteMeeting(id) { if(confirm(\"Excluir Reunião?\")){ meetings = meetings.filter(m=>m.id!==id); saveData(); } }
 
         function closeModal(id) { document.getElementById(id).style.display='none'; }
 
-        /* --- AGÊNCIA (FUNÇÕES ADICIONADAS) --- */
+        /* --- AGÊNCIA (CORRIGIDO PARA EVITAR CONFLITO DE NOME) --- */
         function openAgencyModal() {
             document.getElementById('agencyModal').style.display='flex';
-            document.getElementById('ag-name').value = agency.name || '';
+            
+            let nomeAgencia = 'Saturno Studio';
+            let logoAgencia = '';
+            if (window.agency && typeof window.agency === 'object' && !window.agency.nodeType) {
+                nomeAgencia = window.agency.name || 'Saturno Studio';
+                logoAgencia = window.agency.logo || '';
+            }
+
+            document.getElementById('ag-name').value = nomeAgencia;
             const p = document.getElementById('ag-preview');
-            if (agency.logo) {
-                document.getElementById('ag-logo-b64').value = agency.logo;
-                p.src = agency.logo;
+            if (logoAgencia) {
+                document.getElementById('ag-logo-b64').value = logoAgencia;
+                p.src = logoAgencia;
                 p.style.display = 'block';
             } else {
                 document.getElementById('ag-logo-b64').value = '';
@@ -1404,52 +657,66 @@
 
         function saveAgency(e) {
             e.preventDefault();
-            agency.name = document.getElementById('ag-name').value || 'Saturno Studio';
-            agency.logo = document.getElementById('ag-logo-b64').value || '';
+            
+            // Força a inicialização como objeto limpo antes de receber os valores
+            if (!window.agency || window.agency.nodeType) {
+                window.agency = { name: '', logo: '' };
+            }
+            
+            window.agency.name = document.getElementById('ag-name').value || 'Saturno Studio';
+            window.agency.logo = document.getElementById('ag-logo-b64').value || '';
+            
             closeModal('agencyModal');
             saveData();
             showToast('Perfil da Agência atualizado!');
+            
+            // Atualiza os elementos visuais da agência na barra lateral se existirem
+            renderSidebar();
         }
 
-        /* --- INICIALIZAÇÃO FINAL (ESCUTANDO O BANCO EM TEMPO REAL) --- */
-        function initApp() {
-            db.collection("saturno_dados").doc("hub_operacional").onSnapshot((doc) => {
+        // --- SISTEMA DE ESCUTA EM TEMPO REAL (REALTIME ATIVADO) ---
+        window.onload = function() {
+            // Escuta qualquer mudança no Firestore em tempo real
+            db.collection("saturno_dados").doc("hub_operacional")
+            .onSnapshot((doc) => {
                 if (doc.exists) {
                     const data = doc.data();
+                    
+                    // Substitui os dados locais pelos dados em tempo real da nuvem
                     clients = data.clients || [];
                     tasks = data.tasks || [];
                     freelas = data.freelas || [];
                     meetings = data.meetings || [];
                     team = data.team || [];
                     subs = data.subs || [];
-                    agency = data.agency || { name: 'Saturno Studio', logo: '' };
-                    
-                    // Salva no LocalStorage como backup caso a internet caia
+                    window.agency = data.agency || { name: 'Saturno Studio', logo: '' };
+
+                    // Atualiza o backup local para segurança
                     localStorage.setItem('sat_final_cli', JSON.stringify(clients));
                     localStorage.setItem('sat_final_tsk', JSON.stringify(tasks));
                     localStorage.setItem('sat_final_freelas', JSON.stringify(freelas));
                     localStorage.setItem('sat_final_meetings', JSON.stringify(meetings));
                     localStorage.setItem('sat_final_team', JSON.stringify(team));
                     localStorage.setItem('sat_final_subs', JSON.stringify(subs));
-                    localStorage.setItem('sat_final_agency', JSON.stringify(agency));
+                    localStorage.setItem('sat_final_agency', JSON.stringify(window.agency));
+
+                    console.log("🔄 Dados atualizados em tempo real via Firebase!");
+                } else {
+                    console.log("Banco de dados vazio na nuvem. Mantendo dados locais.");
                 }
                 
-                // Atualiza a tela de todo mundo que estiver com o sistema aberto
-                populateTeamSelects();
+                // Renderiza as telas com as informações mais recentes
                 updateBadges();
                 renderSidebar();
                 routeView();
+                
             }, (error) => {
-                console.error("Erro ao conectar com Firebase. Carregando modo Offline.", error);
-                populateTeamSelects();
+                console.error("Erro na escuta em tempo real do Firebase. Usando LocalStorage.", error);
                 updateBadges();
                 renderSidebar();
                 routeView();
             });
-        }
-        
-        // Dá o pontapé inicial no sistema
-        initApp();
+        };
     </script>
 </body>
 </html>
