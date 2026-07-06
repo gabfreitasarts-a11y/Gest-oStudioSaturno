@@ -199,9 +199,9 @@
         .btn-icon:hover { color: var(--accent); }
         .btn-icon.danger:hover { color: var(--danger); }
 
-        /* MODAIS OTIMIZADOS */
-        .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0, 0, 0, 0.8); backdrop-filter: blur(5px); display: none; align-items: center; justify-content: center; z-index: 1000; padding: 20px; overflow-y: auto; }
-        .modal { background-color: var(--bg-card); border: 1px solid var(--border); border-radius: 16px; width: 100%; max-width: 600px; padding: 32px; box-shadow: 0 10px 40px rgba(0,0,0,0.5); margin: auto; }
+        /* MODAIS OTIMIZADOS - AQUI FOI CORRIGIDO O ALINHAMENTO */
+        .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0, 0, 0, 0.8); backdrop-filter: blur(5px); display: none; align-items: flex-start; justify-content: center; z-index: 1000; padding: 40px 20px; overflow-y: auto; }
+        .modal { background-color: var(--bg-card); border: 1px solid var(--border); border-radius: 16px; width: 100%; max-width: 600px; padding: 32px; box-shadow: 0 10px 40px rgba(0,0,0,0.5); margin: 0 auto; }
         .modal h2 { font-size: 1.3rem; margin-bottom: 24px; border-bottom: 1px solid var(--border); padding-bottom: 12px; display:flex; justify-content:space-between; align-items:center; color: var(--text-main);}
         .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
         .form-group { margin-bottom: 16px; }
@@ -222,6 +222,7 @@
         @media (max-width: 768px) {
             .form-grid { grid-template-columns: 1fr; }
             .modal { padding: 20px; }
+            .modal-overlay { padding: 20px 10px; }
         }
     </style>
 </head>
@@ -345,7 +346,7 @@
     <!-- MODAL CLIENTE -->
     <div class="modal-overlay" id="clientModal">
         <div class="modal">
-            <h2>Novo Cliente</h2>
+            <h2 id="client-modal-title">Novo Cliente</h2>
             <form id="client-form" onsubmit="saveClient(event)" class="form-grid">
                 <input type="hidden" id="client-id">
                 <div class="form-group full"><label>Nome da Empresa / Cliente *</label><input type="text" id="c-name" required></div>
@@ -508,6 +509,23 @@
         </div>
     </div>
 
+    <!-- MODAL DE SENHA CUSTOMIZADO -->
+    <div class="modal-overlay" id="passwordModal" style="z-index: 10000;">
+        <div class="modal" style="max-width: 400px; margin-top: 10vh;">
+            <h2>Autenticação Necessária</h2>
+            <div class="form-grid">
+                <div class="form-group full">
+                    <label>Digite a senha administrativa:</label>
+                    <input type="password" id="admin-pass-input-modal" placeholder="Senha" onkeypress="if(event.key==='Enter') confirmPassword()">
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn-cancel" onclick="closeModal('passwordModal')">Cancelar</button>
+                    <button type="button" class="btn-primary" onclick="confirmPassword()">Confirmar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script>
         /* --- DADOS LOCAIS --- */
         let clients = JSON.parse(localStorage.getItem('sat_final_cli')) || [];
@@ -524,6 +542,25 @@
         let activeClient = null;
         let chartInstance = null; 
         let financeUnlocked = false;
+
+        // SISTEMA DE SENHA VIA MODAL
+        let pendingPasswordCallback = null;
+        function requestPassword(callback) {
+            pendingPasswordCallback = callback;
+            document.getElementById('admin-pass-input-modal').value = '';
+            document.getElementById('passwordModal').style.display = 'flex';
+            setTimeout(() => document.getElementById('admin-pass-input-modal').focus(), 100);
+        }
+
+        function confirmPassword() {
+            const pass = document.getElementById('admin-pass-input-modal').value;
+            if (pass === ADMIN_PASS) {
+                closeModal('passwordModal');
+                if (pendingPasswordCallback) pendingPasswordCallback();
+            } else {
+                showToast('❌ Senha incorreta.');
+            }
+        }
 
         // TEMA
         document.body.setAttribute('data-theme', currentTheme);
@@ -816,15 +853,11 @@
             `;
         }
 
+        // Alterado para usar o modal customizado de senha
         function promptAgencyPassword() {
-            const pass = prompt("Digite a senha administrativa para editar a agência:");
-            if (pass !== null) { // Só checa a senha se não clicar em Cancelar
-                if(pass === ADMIN_PASS) {
-                    openAgencyModal();
-                } else {
-                    alert('Senha incorreta.');
-                }
-            }
+            requestPassword(() => {
+                openAgencyModal();
+            });
         }
 
         function unlockFinance() {
@@ -833,7 +866,7 @@
                 financeUnlocked = true;
                 renderFinance(document.getElementById('workspace-area'));
                 showToast('Acesso Permitido');
-            } else { alert('Senha incorreta.'); }
+            } else { showToast('❌ Senha incorreta.'); }
         }
         function lockFinance() { financeUnlocked = false; routeView(); }
         function addSub() {
@@ -909,18 +942,16 @@
             `;
         }
 
-        // Funções com Senha para Equipe
+        // Alterado para usar o modal customizado de senha
         function openTeamModalPassword(id) {
-            const pass = prompt("Digite a senha administrativa para editar o colaborador:");
-            if (pass !== null) {
-                if(pass === ADMIN_PASS) { openTeamModal(id); } else { alert('Senha incorreta.'); }
-            }
+            requestPassword(() => {
+                openTeamModal(id);
+            });
         }
         function deleteTeamPassword(id) {
-            const pass = prompt("Digite a senha administrativa para excluir o colaborador:");
-            if (pass !== null) {
-                if(pass === ADMIN_PASS) { deleteTeam(id); } else { alert('Senha incorreta.'); }
-            }
+            requestPassword(() => {
+                deleteTeam(id);
+            });
         }
 
         function openTeamModal(id=null) {
@@ -947,6 +978,21 @@
             closeModal('teamModal'); populateTeamSelects(); saveData(); showToast('Colaborador Salvo!');
         }
         function deleteTeam(id) { if(confirm("Remover colaborador? O histórico financeiro dele será perdido.")){ team = team.filter(t=>t.id!==id); populateTeamSelects(); saveData(); } }
+
+        function openAgencyModal() {
+            document.getElementById('agencyModal').style.display = 'flex';
+            document.getElementById('ag-name').value = agency.name;
+            const p = document.getElementById('ag-preview');
+            if(agency.logo) { document.getElementById('ag-logo-b64').value = agency.logo; p.src = agency.logo; p.style.display = 'block'; }
+            else { p.style.display = 'none'; p.src = ''; document.getElementById('ag-logo-b64').value = ''; }
+        }
+
+        function saveAgency(e) {
+            e.preventDefault();
+            agency.name = document.getElementById('ag-name').value;
+            agency.logo = document.getElementById('ag-logo-b64').value;
+            closeModal('agencyModal'); saveData(); showToast('Agência Atualizada!');
+        }
 
         /* --- FREELAS / AVULSOS --- */
         function renderFreelas(container) {
