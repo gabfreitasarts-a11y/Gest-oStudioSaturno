@@ -8,6 +8,10 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+
     <style>
         /* TEMAS E VARIÁVEIS */
         :root {
@@ -271,40 +275,132 @@
                 </div>
                 <span class="nav-badge" id="badge-meetings">0</span>
             </div>
+            <div class="nav-item" id="nav-nf" onclick="switchMainView('nf')">
+                <div style="display:flex; align-items:center; gap:12px;">
+                    <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg> Notas Fiscais
+                </div>
+            </div>
         </div>
 
-        <div class="sidebar-title">Parceiros Clientes</div>
+        <div class="sidebar-title">PORTFÓLIO DE CLIENTES</div>
         <div class="client-list-container" id="sidebar-client-list"></div>
     </aside>
 
-    <main class="main-workspace" id="main-container"></main>
+    <main class="main-workspace" id="workspace-area"></main>
+
+    <div class="modal-overlay" id="teamModal">
+        <div class="modal">
+            <h2>Cadastrar Colaborador</h2>
+            <form id="team-form" onsubmit="saveTeam(event)" class="form-grid">
+                <input type="hidden" id="tm-id">
+                <div class="form-group full"><label>Nome do Colaborador *</label><input type="text" id="tm-name" required></div>
+                
+                <div class="form-group full">
+                    <label>Foto de Perfil (Upload)</label>
+                    <div class="file-upload-wrapper">
+                        <img id="tm-preview" src="">
+                        <input type="file" accept="image/*" onchange="encodeImageFileAsURL(this, 'tm-preview', 'tm-img-b64')">
+                        <input type="hidden" id="tm-img-b64">
+                    </div>
+                </div>
+
+                <div class="form-group"><label>Função / Cargo</label><input type="text" id="tm-role" placeholder="Ex: Designer, Social Media"></div>
+                <div class="form-group"><label>Cor de Identificação</label><input type="color" id="tm-color" value="#8a2be2"></div>
+                <div class="form-group"><label>Modelo de Remuneração</label>
+                    <select id="tm-type">
+                        <option value="Fixo">Salário Fixo</option>
+                        <option value="Comissão">Por Comissão / Freela</option>
+                    </select>
+                </div>
+                <div class="form-group"><label>Valor Base (R$) - Oculto na tela principal</label><input type="number" step="0.01" id="tm-val" placeholder="0.00" required></div>
+
+                <div class="modal-actions">
+                    <button type="button" class="btn-cancel" onclick="closeModal('teamModal')">Cancelar</button>
+                    <button type="submit" class="btn-primary">Salvar Colaborador</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="agencyModal">
+        <div class="modal">
+            <h2>Configurar Agência</h2>
+            <form id="agency-form" onsubmit="saveAgency(event)" class="form-grid">
+                <div class="form-group full"><label>Nome da Agência</label><input type="text" id="ag-name" required></div>
+                <div class="form-group full">
+                    <label>Upload da Logo (Imagem do Computador)</label>
+                    <div class="file-upload-wrapper">
+                        <img id="ag-preview" src="">
+                        <input type="file" accept="image/*" onchange="encodeImageFileAsURL(this, 'ag-preview', 'ag-logo-b64')">
+                        <input type="hidden" id="ag-logo-b64">
+                    </div>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn-cancel" onclick="closeModal('agencyModal')">Cancelar</button>
+                    <button type="submit" class="btn-primary">Salvar Agência</button>
+                </div>
+            </form>
+        </div>
+    </div>
 
     <div class="modal-overlay" id="clientModal">
         <div class="modal">
-            <h2>Cadastrar Novo Cliente <button class="btn-icon" onclick="closeModal('clientModal')">✕</button></h2>
+            <h2 id="client-modal-title">Novo Cliente</h2>
             <form id="client-form" onsubmit="saveClient(event)" class="form-grid">
                 <input type="hidden" id="client-id">
-                
-                <div class="form-group"><label>Nome da Empresa / Cliente *</label><input type="text" id="c-name" required placeholder="Ex: Nike Brasil"></div>
-                <div class="form-group"><label>Valor do Contrato Mensal (R$) *</label><input type="number" step="0.01" id="c-fee" required placeholder="Ex: 2500"></div>
-                
-                <div class="form-group"><label>WhatsApp de Contato (Com DDD) *</label><input type="text" id="c-phone" required placeholder="Ex: 11999999999"></div>
-                <div class="form-group"><label>Data de Vencimento do Boleto (Dia) *</label><input type="number" min="1" max="31" id="c-payday" required placeholder="Ex: 10"></div>
-                
-                <div class="form-group"><label>Link do Drive (Material / Arquivos)</label><input type="url" id="c-drive" placeholder="https://drive.google.com/..."></div>
-                <div class="form-group"><label>Link do Trello / Notion (Opcional)</label><input type="url" id="c-trello" placeholder="https://..."></div>
-                
-                <div class="form-group"><label>Designer Responsável</label><select id="c-designer"><option value="">Selecionar...</option></select></div>
-                <div class="form-group"><label>Social Media Responsável</label><select id="c-sm"><option value="">Selecionar...</option></select></div>
+                <div class="form-group full"><label>Nome da Empresa / Cliente *</label><input type="text" id="c-name" required></div>
                 
                 <div class="form-group full">
-                    <label>Logo da Empresa (Upload Local)</label>
+                    <label>Upload da Foto/Logo do Cliente</label>
                     <div class="file-upload-wrapper">
                         <img id="c-preview" src="">
                         <input type="file" accept="image/*" onchange="encodeImageFileAsURL(this, 'c-preview', 'c-img-b64')">
                         <input type="hidden" id="c-img-b64">
                     </div>
                 </div>
+
+                <div class="form-group"><label>Instagram</label><input type="text" id="c-profile" placeholder="@"></div>
+                <div class="form-group"><label>Senha/Login</label><input type="text" id="c-login" placeholder="Acesso do insta"></div>
+                
+                <div class="form-group"><label>Contrato (Posts/Sem) *</label><input type="number" id="c-freq" value="3" required></div>
+                <div class="form-group"><label>Quem Posta?</label>
+                    <select id="c-poster">
+                        <option value="Agência Saturno">A Agência</option>
+                        <option value="O Próprio Cliente">O Cliente</option>
+                    </select>
+                </div>
+                
+                <div class="form-group full">
+                    <label>Colaborador Responsável</label>
+                    <select id="c-team-owner"><option value="">Nenhum / Toda a Equipe</option></select>
+                </div>
+
+                <div class="form-group full">
+                    <label>Briefing / Informações Importantes</label>
+                    <textarea id="c-notes" rows="2" placeholder="Bio estrita de 150 caracteres..."></textarea>
+                </div>
+
+                <div class="form-group full" style="border-top: 1px solid var(--border); padding-top:16px; margin-top:8px;">
+                    <h3 style="font-size:1rem; margin-bottom:12px; color:var(--text-main);">Gestão Financeira & NF</h3>
+                </div>
+                <div class="form-group full"><label>Descrição do Plano</label><input type="text" id="c-fin-desc" placeholder="Ex: Gestão de Insta + Tráfego"></div>
+                <div class="form-group"><label>Valor Mensal (R$)</label><input type="number" step="0.01" id="c-fin-value" required></div>
+                <div class="form-group"><label>Dia do Vencimento</label><input type="number" id="c-fin-day" placeholder="Ex: 10" min="1" max="31"></div>
+                <div class="form-group"><label>Telefone / Whats (DDD)</label><input type="text" id="c-fin-phone" placeholder="11999999999"></div>
+                <div class="form-group"><label>Status do Pagamento</label>
+                    <select id="c-fin-status">
+                        <option value="Em Dia">Em Dia</option>
+                        <option value="Atrasado">Atrasado</option>
+                    </select>
+                </div>
+
+                <div class="form-group"><label>Exige Nota Fiscal?</label>
+                    <select id="c-needs-nf">
+                        <option value="Nao">Não</option>
+                        <option value="Sim">Sim</option>
+                    </select>
+                </div>
+                <div class="form-group full"><label>CNPJ para Nota Fiscal</label><input type="text" id="c-cnpj" placeholder="00.000.000/0001-00"></div>
 
                 <div class="modal-actions">
                     <button type="button" class="btn-cancel" onclick="closeModal('clientModal')">Cancelar</button>
@@ -316,36 +412,34 @@
 
     <div class="modal-overlay" id="taskModal">
         <div class="modal">
-            <h2>Adicionar Post ao Cronograma</h2>
+            <h2>Novo Conteúdo (Esteira)</h2>
             <form id="task-form" onsubmit="saveTask(event)" class="form-grid">
                 <input type="hidden" id="t-id">
+                <div class="form-group full"><label>Título / Descrição *</label><input type="text" id="t-title" required></div>
+                <div class="form-group"><label>Delegar para (Resp.)</label><select id="t-owner"><option value="">Equipe Geral</option></select></div>
+                <div class="form-group"><label>Prioridade</label><select id="t-priority"><option value="media">Média</option><option value="alta">Alta</option><option value="baixa">Baixa</option></select></div>
                 
-                <div class="form-group full"><label>Título do Post / Tema da Peça *</label><input type="text" id="t-title" required placeholder="Ex: Carrossel de Dicas de Marketing"></div>
-                <div class="form-group"><label>Data Ideal de Publicação *</label><input type="date" id="t-date" required></div>
-                <div class="form-group"><label>Nível de Prioridade</label><select id="t-priority"><option value="baixa">Baixa</option><option value="media" selected>Média</option><option value="alta">Alta</option></select></div>
-                
+                <div class="form-group full"><label>Prazo de Entrega (Gera Alerta Visual)</label><input type="date" id="t-date" required></div>
+
                 <div class="form-group full">
-                    <label>Referência Visual (Upload Local)</label>
+                    <label>Imagem de Referência (Upload Local)</label>
                     <div class="file-upload-wrapper">
                         <img id="t-preview" src="">
                         <input type="file" accept="image/*" onchange="encodeImageFileAsURL(this, 't-preview', 't-img-b64')">
                         <input type="hidden" id="t-img-b64">
                     </div>
                 </div>
-                <div class="form-group full"><label>Ou Link de Referência Externo</label><input type="text" id="t-link" placeholder="https://pinterest.com/..."></div>
-                
-                <div class="form-group full"><label>Direcionamento / Briefing / Legenda Provisória</label><textarea id="t-desc" rows="3" placeholder="Insira os detalhes fundamentais para a criação da peça..."></textarea></div>
+                <div class="form-group full"><label>Ou Link de Referência Externa</label><input type="text" id="t-link" placeholder="https://figma.com/..."></div>
                 
                 <div class="form-group full">
-                    <label>Status Inicial no Fluxo</label>
+                    <label>Etapa Atual</label>
                     <select id="t-stage">
-                        <option value="copy" selected>1. Roteiro / Copy</option>
+                        <option value="copy">1. Roteiro / Copy</option>
                         <option value="design">2. Arte & Edição</option>
                         <option value="review">3. Envio / Aprovação</option>
                         <option value="sched">4. Programado</option>
                     </select>
                 </div>
-
                 <div class="modal-actions">
                     <button type="button" class="btn-cancel" onclick="closeModal('taskModal')">Cancelar</button>
                     <button type="submit" class="btn-primary">Salvar Post</button>
@@ -362,6 +456,7 @@
                 <div class="form-group full"><label>Nome do Projeto / Demanda *</label><input type="text" id="f-title" required placeholder="Ex: Criação de Logo Barbearia"></div>
                 <div class="form-group"><label>Valor Cobrado (R$) *</label><input type="number" step="0.01" id="f-val" required></div>
                 <div class="form-group"><label>Responsável</label><select id="f-owner"><option value="">Equipe Geral</option></select></div>
+                
                 <div class="form-group full"><label>Prazo de Entrega</label><input type="date" id="f-date" required></div>
                 
                 <div class="form-group full">
@@ -378,11 +473,10 @@
                     <label>Status / Etapa</label>
                     <select id="f-stage">
                         <option value="todo">A Produzir</option>
-                        <option value="doing">Em Criação</option>
-                        <option value="done">Entregue & Concluído</option>
+                        <option value="doing">Produzindo</option>
+                        <option value="done">Entregue / Aprovado</option>
                     </select>
                 </div>
-
                 <div class="modal-actions">
                     <button type="button" class="btn-cancel" onclick="closeModal('freelaModal')">Cancelar</button>
                     <button type="submit" class="btn-primary">Salvar Freela</button>
@@ -391,411 +485,341 @@
         </div>
     </div>
 
-    <div class="modal-overlay" id="teamModal">
-        <div class="modal">
-            <h2>Cadastrar Integrante do Time</h2>
-            <form id="team-form" onsubmit="saveTeam(event)" class="form-grid">
-                <input type="hidden" id="tm-id">
-                <div class="form-group"><label>Nome Completo *</label><input type="text" id="tm-name" required placeholder="Ex: Bruno Designer"></div>
-                <div class="form-group"><label>Cargo / Função Principal *</label><input type="text" id="tm-role" required placeholder="Ex: Motion Designer"></div>
-                <div class="form-group full">
-                    <label>Cor de Identificação no Sistema</label>
-                    <input type="color" id="tm-color" value="#8a2be2">
-                </div>
-                <div class="form-group full">
-                    <label>Foto de Perfil (Upload Local)</label>
-                    <div class="file-upload-wrapper">
-                        <img id="tm-preview" src="">
-                        <input type="file" accept="image/*" onchange="encodeImageFileAsURL(this, 'tm-preview', 'tm-img-b64')">
-                        <input type="hidden" id="tm-img-b64">
-                    </div>
-                </div>
-
-                <div class="modal-actions">
-                    <button type="button" class="btn-cancel" onclick="closeModal('teamModal')">Cancelar</button>
-                    <button type="submit" class="btn-primary">Salvar Integrante</button>
-                </div>
-            </form>
-        </div>
-    </div>
-
     <div class="modal-overlay" id="meetingModal">
         <div class="modal">
-            <h2>Agendar Nova Reunião</h2>
+            <h2>Agendar Reunião</h2>
             <form id="meeting-form" onsubmit="saveMeeting(event)" class="form-grid">
-                <div class="form-group full"><label>Título / Objetivo da Pauta *</label><input type="text" id="m-title" required placeholder="Ex: Alinhamento Estratégico Mensal"></div>
-                <div class="form-group"><label>Data da Reunião *</label><input type="date" id="m-date" required></div>
-                <div class="form-group"><label>Horário Marcado *</label><input type="time" id="m-time" required></div>
-                <div class="form-group full"><label>Link da Sala (Google Meet / Zoom)</label><input type="url" id="m-link" placeholder="https://meet.google.com/..."></div>
-
+                <input type="hidden" id="m-id">
+                <div class="form-group full"><label>Pauta / Título *</label><input type="text" id="m-title" required placeholder="Ex: Call de Fechamento"></div>
+                <div class="form-group"><label>Data *</label><input type="date" id="m-date" required></div>
+                <div class="form-group"><label>Horário *</label><input type="time" id="m-time" required></div>
+                <div class="form-group full"><label>Cliente Relacionado (Opcional)</label>
+                    <select id="m-client"><option value="">Nenhum / Reunião Interna</option></select>
+                </div>
+                <div class="form-group full"><label>Link do Meet / Zoom</label><input type="text" id="m-link" placeholder="https://meet.google.com/..."></div>
                 <div class="modal-actions">
                     <button type="button" class="btn-cancel" onclick="closeModal('meetingModal')">Cancelar</button>
-                    <button type="submit" class="btn-primary">Agendar</button>
+                    <button type="submit" class="btn-primary">Salvar Reunião</button>
                 </div>
             </form>
         </div>
     </div>
 
-    <div class="modal-overlay" id="subModal">
-        <div class="modal">
-            <h2>Cadastrar Custos Operacionais / Assinaturas</h2>
-            <form id="sub-form" onsubmit="saveSub(event)" class="form-grid">
-                <div class="form-group full"><label>Nome da Ferramenta / Serviço *</label><input type="text" id="s-title" required placeholder="Ex: Adobe Creative Cloud"></div>
-                <div class="form-group"><label>Custo Fixo Mensal (R$) *</label><input type="number" step="0.01" id="s-val" required></div>
-                <div class="form-group"><label>Dia de Renovação / Cobrança *</label><input type="number" min="1" max="31" id="s-day" required></div>
-
-                <div class="modal-actions">
-                    <button type="button" class="btn-cancel" onclick="closeModal('subModal')">Cancelar</button>
-                    <button type="submit" class="btn-primary">Adicionar Custo</button>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    <div class="modal-overlay" id="agencyModal">
-        <div class="modal">
-            <h2>Configurações do Perfil da Agência</h2>
-            <form id="agency-form" onsubmit="saveAgency(event)" class="form-grid">
-                <div class="form-group full"><label>Nome Fantasia da Agência</label><input type="text" id="ag-name" placeholder="Ex: Saturno Studio"></div>
-                <div class="form-group full">
-                    <label>Logotipo Personalizado (Upload Local)</label>
-                    <div class="file-upload-wrapper">
-                        <img id="ag-preview" src="">
-                        <input type="file" accept="image/*" onchange="encodeImageFileAsURL(this, 'ag-preview', 'ag-logo-b64')">
-                        <input type="hidden" id="ag-logo-b64">
-                    </div>
-                </div>
-                <div class="modal-actions">
-                    <button type="button" class="btn-cancel" onclick="closeModal('agencyModal')">Cancelar</button>
-                    <button type="submit" class="btn-primary">Salvar Alterações</button>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
     <script>
+        /* --- INTEGRAÇÃO FIREBASE (Tempo Real) --- */
         const firebaseConfig = {
-            apiKey: "AIzaSyAs7O17v7H7Y8wD2f8_u8v8w8x8y8z8",
-            authDomain: "saturnostudio-hub.firebaseapp.com",
-            projectId: "saturnostudio-hub",
-            storageBucket: "saturnostudio-hub.appspot.com",
-            messagingSenderId: "1234567890",
-            appId: "1:1234567890:web:abcdef123456"
+            apiKey: "AIzaSyAmHlkIH8QsaLgUGhPBwiBasjxAft9EDcw",
+            authDomain: "saturno-hub.firebaseapp.com",
+            databaseURL: "https://saturno-hub-default-rtdb.firebaseio.com",
+            projectId: "saturno-hub",
+            storageBucket: "saturno-hub.firebasestorage.app",
+            messagingSenderId: "959036369949",
+            appId: "1:959036369949:web:3893580fec77063bef6af4",
+            measurementId: "G-J8V8FSWKTW"
         };
-        firebase.initializeApp(firebaseConfig);
+
+        if (!firebase.apps.length) {
+            firebase.initializeApp(firebaseConfig);
+        }
         const db = firebase.firestore();
-    </script>
 
-    <script>
-        // ESTADOS DA APLICAÇÃO GLOBAIS
-        let clients = [];
-        let tasks = [];
-        let freelas = [];
-        let meetings = [];
-        let team = [];
-        let subs = [];
+        /* --- DADOS LOCAIS --- */
+        let clients = JSON.parse(localStorage.getItem('sat_final_cli')) || [];
+        let tasks = JSON.parse(localStorage.getItem('sat_final_tsk')) || [];
+        let freelas = JSON.parse(localStorage.getItem('sat_final_freelas')) || [];
+        let meetings = JSON.parse(localStorage.getItem('sat_final_meetings')) || [];
+        let team = JSON.parse(localStorage.getItem('sat_final_team')) || [];
+        let subs = JSON.parse(localStorage.getItem('sat_final_subs')) || []; 
+        let agency = JSON.parse(localStorage.getItem('sat_final_agency')) || { name: 'Saturno Studio', logo: '' };
+        let currentTheme = localStorage.getItem('sat_theme') || 'dark';
+        
+        const ADMIN_PASS = '400289'; // Senha Mestra Definitiva
+        let mainView = 'dashboard';
+        let activeClient = null;
+        let chartInstance = null; 
+        let financeUnlocked = false;
 
-        // Variáveis seguras para evitar colisão de nomes com elementos HTML do navegador
-        window.agencyNameText = "Saturno Studio";
-        window.agencyLogoText = "";
-
-        let currentView = 'dashboard'; 
-        let selectedClientId = null; 
-        let isFinanceUnlocked = false; 
-
-        // ROTEAMENTO E REFRESH VISUAL
-        function switchMainView(view, clientId = null) {
-            currentView = view;
-            selectedClientId = clientId;
-            
-            document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
-            document.querySelectorAll('.client-item').forEach(c => c.classList.remove('active'));
-            
-            if(view === 'dashboard') document.getElementById('nav-dash').classList.add('active');
-            if(view === 'finance') document.getElementById('nav-finance').classList.add('active');
-            if(view === 'freelas') document.getElementById('nav-freela').classList.add('active');
-            if(view === 'team') document.getElementById('nav-team').classList.add('active');
-            if(view === 'meetings') document.getElementById('nav-meetings').classList.add('active');
-            
-            if(clientId) {
-                const el = document.getElementById(`cli-${clientId}`);
-                if(el) el.classList.add('active');
+        // TEMA
+        document.body.setAttribute('data-theme', currentTheme);
+        function toggleTheme() {
+            currentTheme = currentTheme === 'dark' ? 'light' : 'dark';
+            document.body.setAttribute('data-theme', currentTheme);
+            localStorage.setItem('sat_theme', currentTheme);
+            if(chartInstance && mainView === 'dashboard') {
+                const color = currentTheme === 'dark' ? '#8b929e' : '#64748b';
+                chartInstance.options.plugins.legend.labels.color = color;
+                chartInstance.update();
             }
+        }
+
+        // UTILIDADES
+        const formatBRL = (val) => Number(val).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+        const getInitials = (n) => n ? n.split(' ').map(x=>x[0]).join('').substring(0,2).toUpperCase() : 'U';
+
+        function showToast(msg) {
+            const container = document.getElementById('toast-container');
+            const t = document.createElement('div');
+            t.className = 'toast'; t.innerText = msg;
+            container.appendChild(t);
+            setTimeout(() => t.remove(), 3500);
+        }
+
+        function isDueSoon(dateStr) {
+            if(!dateStr) return false;
+            const dueDate = new Date(dateStr);
+            const now = new Date();
+            const diffTime = (dueDate - now);
+            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); 
+            return diffDays <= 2 && diffDays >= -1;
+        }
+
+        function encodeImageFileAsURL(element, previewId, hiddenInputId) {
+            const file = element.files[0];
+            if(!file) return;
+            const reader = new FileReader();
+            reader.onloadend = function() {
+                document.getElementById(hiddenInputId).value = reader.result;
+                const preview = document.getElementById(previewId);
+                preview.src = reader.result;
+                preview.style.display = 'block';
+            }
+            function saveData() {
+            // Backup Local Imediato
+            localStorage.setItem('sat_final_cli', JSON.stringify(clients));
+            localStorage.setItem('sat_final_tsk', JSON.stringify(tasks));
+            localStorage.setItem('sat_final_freelas', JSON.stringify(freelas));
+            localStorage.setItem('sat_final_meetings', JSON.stringify(meetings));
+            localStorage.setItem('sat_final_team', JSON.stringify(team));
+            localStorage.setItem('sat_final_subs', JSON.stringify(subs));
             
+            // CORREÇÃO: Garante que a agência seja um objeto limpo e puro antes de salvar
+            const dadosAgenciaLimpos = {
+                name: agency.name || 'Saturno Studio',
+                logo: agency.logo || ''
+            };
+            
+            localStorage.setItem('sat_final_agency', JSON.stringify(dadosAgenciaLimpos));
+            
+            // Sincroniza com a nuvem Firebase usando o objeto limpo
+            db.collection("saturno_dados").doc("hub_operacional").set({
+                clients, 
+                tasks, 
+                freelas, 
+                meetings, 
+                team, 
+                subs, 
+                agency: dadosAgenciaLimpos
+            }).then(() => {
+                console.log("Dados sincronizados com o Firebase com sucesso!");
+            }).catch(err => {
+                console.error("Erro ao salvar no Firebase: ", err);
+            });
+        }
+
+            updateBadges();
+            renderSidebar();
             routeView();
         }
 
-        function routeView() {
-            const container = document.getElementById('main-container');
-            if(!container) return;
-            
-            if(currentView === 'dashboard') renderDashboard(container);
-            else if(currentView === 'finance') renderFinanceView(container);
-            else if(currentView === 'freelas') renderFreelaView(container);
-            else if(currentView === 'team') renderTeamView(container);
-            else if(currentView === 'meetings') renderMeetingsView(container);
-            else if(currentView === 'client' && selectedClientId) renderClientWorkspace(container, selectedClientId);
-        }
-
-        // ELEMENTOS VISUAIS DA SIDEBAR
-        function renderSidebar() {
-            // Atualiza os cabeçalhos textuais da Agência na barra lateral
-            document.getElementById('agency-name-display').innerText = window.agencyNameText || 'Saturno Studio';
-            const logBox = document.getElementById('agency-logo-display');
-            if(window.agencyLogoText) {
-                logBox.innerHTML = `<img src="${window.agencyLogoText}">`;
-            } else {
-                logBox.innerHTML = getInitials(window.agencyNameText || 'Saturno Studio');
-            }
-
-            const container = document.getElementById('sidebar-client-list');
-            if(!container) return;
-            
-            if(clients.length === 0) {
-                container.innerHTML = `<div style="color:var(--text-muted); font-size:0.75rem; padding:16px; text-align:center;">Nenhum parceiro cadastrado.</div>`;
-                return;
-            }
-            
-            container.innerHTML = clients.map(c => {
-                const isActive = (currentView === 'client' && selectedClientId === c.id) ? 'active' : '';
-                const avatarContent = c.img ? `<img src="${c.img}">` : getInitials(c.name);
-                return `
-                    <div class="client-item ${isActive} fade-in" id="cli-${c.id}" onclick="switchMainView('client', '${c.id}')">
-                        <div class="avatar">${avatarContent}</div>
-                        <div class="client-name-wrapper">
-                            <h4>${c.name}</h4>
-                        </div>
-                    </div>
-                `;
-            }).join('');
-        }
-
         function updateBadges() {
-            const fBadge = document.getElementById('badge-freela');
-            const mBadge = document.getElementById('badge-meetings');
+            const pendingFreelas = freelas.filter(f => f.stage === 'todo' || f.stage === 'doing').length;
+            const bF = document.getElementById('badge-freela');
+            if(bF) { bF.innerText = pendingFreelas; bF.style.display = pendingFreelas > 0 ? 'flex' : 'none'; }
             
-            const activeFreelas = freelas.filter(f => f.stage !== 'done').length;
-            if(fBadge) { fBadge.innerText = activeFreelas; fBadge.style.display = activeFreelas > 0 ? 'block' : 'none'; }
-            
-            const activeMeetings = meetings.length;
-            if(mBadge) { mBadge.innerText = activeMeetings; mBadge.style.display = activeMeetings > 0 ? 'block' : 'none'; }
+            const today = new Date().toISOString().split('T')[0];
+            const upMeetings = meetings.filter(m => m.date >= today).length;
+            const bM = document.getElementById('badge-meetings');
+            if(bM) { bM.innerText = upMeetings; bM.style.display = upMeetings > 0 ? 'flex' : 'none'; }
         }
 
-        // SEGURANÇA E ACESSO À AGÊNCIA
-        function promptAgencyPassword() {
-            const pass = prompt("Digite a senha master para gerenciar o Perfil da Agência:");
-            if (pass === "saturno2024") {
-                openAgencyModal();
-            } else if (pass !== null) {
-                alert("Senha incorreta!");
-            }
+        function populateTeamSelects() {
+            let opts = '<option value="">Equipe Geral</option>';
+            team.forEach(t => opts += `<option value="${t.id}">${t.name} (${t.role})</option>`);
+            ['c-team-owner', 't-owner', 'f-owner'].forEach(id => {
+                const el = document.getElementById(id);
+                if(el) { const val = el.value; el.innerHTML = opts; el.value = val; }
+            });
         }
 
-        // 1. CONSTRUÇÃO DO WORKSPACE DO CLIENTE FIXO
-        function renderClientWorkspace(container, id) {
-            const c = clients.find(i => i.id === id);
-            if(!c) return switchMainView('dashboard');
-            
-            const clientTasks = tasks.filter(t => t.clientId === id);
-            
-            // Medidor de Demanda / Buffer Semanal (Exemplo de regra: Máximo 4 peças pendentes ideais)
-            const pendentesCount = clientTasks.filter(t => t.stage !== 'sched').length;
-            const percent = Math.min((pendentesCount / 5) * 100, 100);
-            
-            container.innerHTML = `
-                <div class="workspace-header">
-                    <div class="client-meta">
-                        <h2>${c.name}</h2>
-                        <div class="client-info-badges">
-                            <div class="info-badge">💰 Faturamento: <strong>${formatBRL(c.fee)}/mês</strong></div>
-                            <div class="info-badge">📅 Vencimento: <strong>Dia ${c.payday}</strong></div>
-                            ${c.drive ? `<a href="${c.drive}" target="_blank" class="info-badge" style="color:var(--accent)">📂 Google Drive</a>` : ''}
-                            ${c.trello ? `<a href="${c.trello}" target="_blank" class="info-badge" style="color:var(--color-design)">📋 Trello / Notion</a>` : ''}
-                        </div>
-                    </div>
-                    
-                    <div style="display:flex; align-items:center; gap:16px;">
-                        <div class="buffer-meter-box">
-                            <div class="meter-label"><span>Fila de Produção Atual</span><span>${pendentesCount} Peças</span></div>
-                            <div class="meter-bg"><div class="meter-bar" style="width: ${percent}%"></div></div>
-                        </div>
-                        <div class="dropdown">
-                            <button class="btn-outline">⚙️ Ações do Hub</button>
-                            <div class="dropdown-content">
-                                <button onclick="openClientModal('${c.id}')">✏️ Editar Cliente</button>
-                                <button class="danger-btn" onclick="deleteClient('${c.id}')">❌ Remover Cliente</button>
-                            </div>
-                        </div>
-                        <button class="theme-toggle" onclick="toggleTheme()" title="Alterar Tema">🌓</button>
-                    </div>
-                </div>
-
-                <div class="workspace-body">
-                    <div class="panel-left">
-                        <div class="box">
-                            <div class="box-header"><h3>Branding & Identidade</h3></div>
-                            <div style="text-align:center; padding:10px 0;">
-                                <div class="avatar" style="width:90px; height:90px; margin:0 auto 12px auto; font-size:2rem; border-radius:16px;">
-                                    ${c.img ? `<img src="${c.img}">` : getInitials(c.name)}
-                                </div>
-                                <h4 style="font-size:0.95rem; font-weight:700;">${c.name}</h4>
-                            </div>
-                        </div>
-
-                        <div class="box">
-                            <div class="box-header"><h3>Checklist Financeiro</h3></div>
-                            <div class="fin-detail"><span>Status de Pagamento</span> <span class="status-badge ${c.paid ? 'status-ok' : 'status-late'}">${c.paid ? 'Adimplente ✓' : 'Pendente ⏳'}</span></div>
-                            <div class="fin-detail"><span>Vencimento Próximo</span> <span>Dia ${c.payday}</span></div>
-                            <button class="btn-whatsapp" style="margin-top:14px;" onclick="toggleClientPayment('${c.id}')">
-                                ${c.paid ? 'Marcar como Inadimplente' : 'Confirmar Recebimento ✓'}
-                            </button>
-                            ${!c.paid ? `<a class="btn-whatsapp" style="margin-top:8px; background-color:transparent; border:1px solid var(--whatsapp); color:var(--whatsapp);" href="https://wa.me/${c.phone}?text=Olá!%20Passando%20para%20lembrar%20do%20vencimento%20do%20seu%20hub%20de%20marketing." target="_blank">💬 Cobrar no WhatsApp</a>` : ''}
-                        </div>
-                    </div>
-
-                    <div class="panel-right">
-                        <div class="kanban-header-actions">
-                            <h3 style="font-size:0.9rem; text-transform:uppercase; color:var(--text-muted);">Cronograma de Postagens</h3>
-                            <button class="btn-primary" onclick="openTaskModal()"><svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg> Inserir Post</button>
-                        </div>
-                        <div class="production-grid">
-                            ${renderKanbanColumn('copy', '1. Roteiro / Copy', clientTasks)}
-                            ${renderKanbanColumn('design', '2. Arte & Edição', clientTasks)}
-                            ${renderKanbanColumn('review', '3. Aprovação', clientTasks)}
-                            ${renderKanbanColumn('sched', '4. Programado ✓', clientTasks)}
-                        </div>
-                    </div>
-                </div>
-            `;
+        /* --- NAVEGAÇÃO --- */
+        function switchMainView(view) {
+            mainView = view;
+            if(view !== 'client') activeClient = null;
+            document.querySelectorAll('.nav-item').forEach(e => e.classList.remove('active'));
+            if(document.getElementById(`nav-${view}`)) document.getElementById(`nav-${view}`).classList.add('active');
+            renderSidebar(); routeView();
         }
 
-        function renderKanbanColumn(stage, title, clientTasks) {
-            const filtered = clientTasks.filter(t => t.stage === stage);
-            let cards = '';
+        function routeView() {
+            const area = document.getElementById('workspace-area');
+            area.innerHTML = '';
+            area.className = 'main-workspace fade-in';
+            setTimeout(()=>area.classList.remove('fade-in'), 400);
+
+            if(mainView === 'dashboard') renderDashboard(area);
+            else if(mainView === 'finance') renderFinance(area); 
+            else if(mainView === 'freelas') renderFreelas(area);
+            else if(mainView === 'team') renderTeam(area);
+            else if(mainView === 'meetings') renderMeetings(area);
+            else if(mainView === 'nf') renderNotasFiscais(area);
+            else if(mainView === 'client') renderClientWorkspace(area);
+        }
+
+        /* --- SIDEBAR --- */
+        function renderSidebar() {
+            document.getElementById('agency-name-display').innerText = agency.name;
+            if(agency.logo) { document.getElementById('agency-logo-display').innerHTML = `<img src="${agency.logo}" alt="Logo">`; } 
+            else { document.getElementById('agency-logo-display').innerHTML = getInitials(agency.name); }
+
+            const list = document.getElementById('sidebar-client-list');
+            list.innerHTML = '';
             
-            filtered.forEach(t => {
-                const cardClass = isDueSoon(t.date) && t.stage !== 'sched' ? 'due-alert' : '';
-                const dateBadge = t.date ? `<div class="post-date"><svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg> Publicação: ${t.date.split('-').reverse().join('/')}</div>` : '';
-                const refHTML = t.img ? `<img src="${t.img}" class="post-preview-img">` : (t.link ? `<a href="${t.link}" target="_blank" class="post-attachment">🔗 Ver Referência Externa</a>` : '');
+            clients.forEach(c => {
+                const target = (c.freq || 0) * 2;
+                const sched = tasks.filter(t => t.clientId === c.id && t.stage === 'sched').length;
+                const pct = target > 0 ? Math.min(Math.round((sched / target)*100), 100) : 0;
                 
-                const opts = ['copy','design','review','sched'].map(s => {
-                    const sName = s==='copy'?'Roteiro':s==='design'?'Arte/Edição':s==='review'?'Aprovação':'Programado';
-                    return `<option value="${s}" ${t.stage===s?'selected':''}>${sName}</option>`;
-                }).join('');
+                let colorClass = 'var(--danger)'; let stTxt = 'Atrasado';
+                if(pct >= 100) { colorClass = 'var(--color-sched)'; stTxt = 'No Alvo'; }
+                else if(pct >= 50) { colorClass = 'var(--color-review)'; stTxt = 'Rodando'; }
 
-                cards += `
-                    <div class="post-card ${cardClass} slide-up">
+                let ownerBadge = '';
+                if (c.teamOwner) {
+                    const tm = team.find(t => t.id === c.teamOwner);
+                    if (tm) {
+                        const pendingTasks = tasks.filter(t => t.clientId === c.id && t.owner === tm.id && t.stage !== 'sched').length;
+                        const notifDot = pendingTasks > 0 ? `<div style="position:absolute; top:-2px; right:-2px; width:8px; height:8px; background:var(--danger); border-radius:50%; border:1px solid var(--bg-card);"></div>` : '';
+                        ownerBadge = `
+                            <div style="position:relative; display:inline-flex;" title="Resp: ${tm.name}">
+                                <div style="width:20px; height:20px; border-radius:50%; background:${tm.color || 'var(--accent)'}; color:#fff; display:flex; align-items:center; justify-content:center; font-size:0.55rem; font-weight:bold; border:2px solid var(--bg-card); overflow:hidden;">
+                                    ${tm.img ? `<img src="${tm.img}" style="width:100%;height:100%;object-fit:cover;">` : getInitials(tm.name)}
+                                </div>
+                                ${notifDot}
+                            </div>
+                        `;
+                    }
+                }
+
+                const avatarHTML = c.img ? `<img src="${c.img}">` : getInitials(c.name);
+
+                const item = document.createElement('div');
+                item.className = `client-item ${activeClient === c.id ? 'active' : ''}`;
+                item.onclick = () => {
+                    document.querySelectorAll('.nav-item').forEach(e => e.classList.remove('active'));
+                    mainView = 'client'; activeClient = c.id; 
+                    renderSidebar(); routeView();
+                };
+                
+                item.innerHTML = `
+                    <div class="avatar">${avatarHTML}</div>
+                    <div class="client-name-wrapper">
                         <div style="display:flex; justify-content:space-between; align-items:center;">
-                            <span class="priority-tag p-${t.priority}">${t.priority}</span>
-                            <button onclick="deleteTask('${t.id}')" style="background:none; border:none; color:var(--text-muted); cursor:pointer; font-size:0.75rem;">✕</button>
+                            <div style="display:flex; align-items:center; gap:6px;">
+                                <h4>${c.name}</h4>
+                                ${ownerBadge}
+                            </div>
+                            <span style="background:rgba(138,43,226,0.1); padding:2px 4px; border-radius:4px; font-weight:700; color:${colorClass}; font-size:0.65rem;">${pct}%</span>
                         </div>
-                        <h5 onclick="openTaskModal('${t.id}')">${t.title}</h5>
-                        ${dateBadge}
-                        ${refHTML}
-                        ${t.desc ? `<p style="font-size:0.7rem; color:var(--text-muted); margin-bottom:10px; line-height:1.3; background:var(--bg-card); padding:6px; border-radius:4px; max-height:50px; overflow:hidden; text-overflow:ellipsis;">${t.desc}</p>` : ''}
-                        <div class="post-footer">
-                            <span style="font-size:0.65rem; color:var(--text-muted);">Mudar Fluxo:</span>
-                            <select class="stage-select" onchange="moveTask('${t.id}', this.value, '${t.title}')">${opts}</select>
+                        <div style="display:flex; justify-content:space-between; font-size:0.65rem; color:var(--text-muted); margin-top:2px;">
+                            <span>${c.finDesc || 'S/Plano'}</span>
+                            <span style="color:${colorClass}">${stTxt}</span>
+                        </div>
+                        <div style="width:100%; height:3px; background:var(--bg-input); border-radius:2px; margin-top:4px;">
+                            <div style="width:${pct}%; height:100%; background:${colorClass}; border-radius:2px;"></div>
                         </div>
                     </div>
                 `;
+                list.appendChild(item);
+            });
+        }
+
+        /* --- DASHBOARD GERAL --- */
+        function renderDashboard(container) {
+            let globalTarget = 0, globalSched = 0;
+            let countCopy = 0, countDesign = 0, countReview = 0;
+            
+            clients.forEach(c => {
+                globalTarget += (c.freq || 0) * 2;
+                const cTasks = tasks.filter(t => t.clientId === c.id);
+                globalSched += cTasks.filter(t => t.stage === 'sched').length;
+                countCopy += cTasks.filter(t => t.stage === 'copy').length;
+                countDesign += cTasks.filter(t => t.stage === 'design').length;
+                countReview += cTasks.filter(t => t.stage === 'review').length;
             });
 
-            return `
-                <div class="prod-column">
-                    <div class="prod-column-header"><span>${title}</span> <span style="background:var(--bg-card); padding:2px 6px; border-radius:8px; font-size:0.7rem;">${filtered.length}</span></div>
-                    <div class="col-content">${cards}</div>
-                </div>
-            `;
-        }
-
-        // 2. DASHBOARD GERAL
-        function renderDashboard(container) {
-            const mrr = clients.reduce((acc, c) => acc + Number(c.fee), 0);
-            const pendentes = tasks.filter(t => t.stage !== 'sched').length;
-            const concluídos = tasks.filter(t => t.stage === 'sched').length;
-            const freelaFaturamento = freelas.filter(f => f.stage === 'done').reduce((acc, f) => acc + Number(f.val), 0);
+            const globalHealth = globalTarget > 0 ? Math.round((globalSched / globalTarget) * 100) : 0;
+            const healthColor = globalHealth >= 100 ? 'var(--color-sched)' : (globalHealth > 50 ? 'var(--color-review)' : 'var(--danger)');
 
             container.innerHTML = `
                 <div class="workspace-header">
-                    <div class="client-meta"><h2>🪐 Central Operational Dashboard</h2><span style="color:var(--text-muted); font-size:0.9rem;">Visão unificada das demandas, contratos e prazos.</span></div>
+                    <div class="client-meta"><h2>📊 Dashboard Operacional</h2><span style="color:var(--text-muted); font-size:0.9rem;">Visão global de produção da equipe.</span></div>
                     <button class="theme-toggle" onclick="toggleTheme()" title="Alterar Tema">🌓</button>
                 </div>
-                <div class="dash-container slide-up">
-                    <div class="dash-metrics">
-                        <div class="metric-card" style="border-bottom: 4px solid var(--accent);"><span>Contratos Ativos (MRR)</span><h3>${formatBRL(mrr)}</h3></div>
-                        <div class="metric-card" style="border-bottom: 4px solid var(--color-review);"><span>Peças Pendentes</span><h3>${pendentes}</h3></div>
-                        <div class="metric-card" style="border-bottom: 4px solid var(--color-sched);"><span>Peças Entregues</span><h3>${concluídos}</h3></div>
-                        <div class="metric-card gold"><span>Faturamento Avulso</span><h3>${formatBRL(freelaFaturamento)}</h3></div>
+                <div class="dash-container">
+                    <div class="dash-metrics slide-up">
+                        <div class="metric-card"><span>Posts em Produção</span><h3>${countCopy+countDesign+countReview} <span style="font-size:1rem; color:var(--text-muted); font-weight:400;">peças</span></h3></div>
+                        <div class="metric-card"><span>Posts Finalizados / Meta</span><h3>${globalSched} <span style="font-size:1rem; color:var(--text-muted); font-weight:400;">/ ${globalTarget}</span></h3></div>
+                        <div class="metric-card" style="border-bottom: 4px solid ${healthColor}">
+                            <span>Saúde Geral das Esteiras</span>
+                            <h3 style="color:${healthColor}">${globalHealth}%</h3>
+                        </div>
                     </div>
 
-                    <div class="dash-tables-grid">
-                        <div class="dash-panel">
-                            <h3>Distribuição de Demandas por Estágio</h3>
-                            <div class="chart-container"><canvas id="chart-stages"></canvas></div>
-                        </div>
-                        <div class="dash-panel">
-                            <h3>Próximas Reuniões Marcadas</h3>
-                            <div class="fin-table-wrapper">
-                                <table class="fin-table">
-                                    <thead><tr><th>Pauta/Assunto</th><th>Data</th><th>Hora</th><th>Sala</th></tr></thead>
-                                    <tbody>
-                                        ${meetings.length === 0 ? '<tr><td colspan="4" style="text-align:center; color:var(--text-muted);">Nenhuma reunião agendada.</td></tr>' : meetings.map(m => `
-                                            <tr><td><strong>${m.title}</strong></td><td>${m.date.split('-').reverse().join('/')}</td><td>${m.time}</td><td>${m.link ? `<a href="${m.link}" target="_blank" style="color:var(--accent); text-decoration:none;">Entrar 🎥</a>` : 'Presencial'}</td></tr>
-                                        `).join('')}
-                                    </tbody>
-                                </table>
-                            </div>
+                    <div class="dash-tables-grid slide-up" style="animation-delay: 0.1s;">
+                        <div class="dash-panel" style="grid-column: 1 / -1;">
+                            <h3>Distribuição de Etapas (Agência)</h3>
+                            <div class="chart-container"><canvas id="prodChart"></canvas></div>
                         </div>
                     </div>
                 </div>
             `;
 
-            // Renderiza Gráfico ChartJS
-            const ctx = document.getElementById('chart-stages');
-            if(ctx) {
-                const copy = tasks.filter(t => t.stage === 'copy').length;
-                const design = tasks.filter(t => t.stage === 'design').length;
-                const review = tasks.filter(t => t.stage === 'review').length;
-                const sched = tasks.filter(t => t.stage === 'sched').length;
-
-                new Chart(ctx, {
+            setTimeout(() => {
+                const ctx = document.getElementById('prodChart').getContext('2d');
+                if(chartInstance) chartInstance.destroy();
+                const legendColor = currentTheme === 'dark' ? '#8b929e' : '#64748b';
+                chartInstance = new Chart(ctx, {
                     type: 'doughnut',
-                    data: {
-                        labels: ['Roteiro', 'Design', 'Aprovação', 'Programado'],
-                        datasets: [{
-                            data: [copy, design, review, sched],
-                            backgroundColor: ['#ec4899', '#3b82f6', '#f59e0b', '#10b981'],
-                            borderWidth: 0
-                        }]
-                    },
-                    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { color: document.body.getAttribute('data-theme')==='light'?'#0f172a':'#fff' } } } }
+                    data: { labels: ['Roteiro/Copy', 'Arte/Edição', 'Em Aprovação', 'Prontos'], datasets: [{ data: [countCopy, countDesign, countReview, globalSched], backgroundColor: ['#ec4899', '#3b82f6', '#f59e0b', '#10b981'], borderWidth: 0, hoverOffset: 4 }] },
+                    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { color: legendColor, padding: 20, font: { family: "'Plus Jakarta Sans', sans-serif" } } } }, cutout: '70%' }
                 });
-            }
+            }, 100);
         }
 
-        // 3. VISÃO FINANCEIRA RESTRITA
-        function renderFinanceView(container) {
-            if (!isFinanceUnlocked) {
+        /* --- FINANCEIRO RESTRITO --- */
+        function renderFinance(container) {
+            if(!financeUnlocked) {
                 container.innerHTML = `
                     <div class="workspace-header">
-                        <div class="client-meta"><h2>🔒 Balanço Financeiro Restrito</h2></div>
-                        <button class="theme-toggle" onclick="toggleTheme()">🌓</button>
+                        <div class="client-meta"><h2>💳 Balanço Restrito</h2></div>
+                        <button class="theme-toggle" onclick="toggleTheme()" title="Alterar Tema">🌓</button>
                     </div>
-                    <div style="display:flex; flex-direction:column; align-items:center; justify-content:center; flex:1; gap:16px;" class="fade-in">
-                        <div style="font-size:3rem;">🔒</div>
-                        <h3 style="color:var(--text-muted)">Esta área contém informações altamente confidenciais.</h3>
-                        <button class="btn-primary" onclick="unlockFinance()">Inserir Senha Master</button>
+                    <div style="flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:16px;">
+                        <svg width="48" height="48" fill="none" stroke="var(--text-muted)" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z"></path></svg>
+                        <h3 style="color:var(--text-main);">Acesso de Administrador</h3>
+                        <input type="password" id="fin-pass-input" placeholder="Digite a Senha" style="background:var(--bg-input); border:1px solid var(--border); padding:12px; border-radius:8px; color:var(--text-main); text-align:center; width:250px; letter-spacing:4px;" onkeypress="if(event.key==='Enter') unlockFinance()">
+                        <button class="btn-primary" style="width:250px;" onclick="unlockFinance()">Desbloquear</button>
                     </div>
                 `;
                 return;
             }
 
-            const receita = clients.reduce((acc, c) => acc + Number(c.fee), 0) + freelas.filter(f => f.stage === 'done').reduce((acc, f) => acc + Number(f.val), 0);
-            const custos = subs.reduce((acc, s) => acc + Number(s.val), 0);
-            const lucro = receita - custos;
+            let mrr = clients.reduce((acc, c) => acc + (parseFloat(c.finValue) || 0), 0);
+            let ext = freelas.filter(f => f.stage === 'done').reduce((acc, f) => acc + (parseFloat(f.val) || 0), 0);
+            let receita = mrr + ext;
+            let despesaEquipe = team.reduce((acc, t) => acc + (parseFloat(t.val) || 0), 0);
+            let despesaFerramentas = subs.reduce((acc, s) => acc + (parseFloat(s.val) || 0), 0);
+            let lucro = receita - despesaEquipe - despesaFerramentas;
+
+            let subsHTML = subs.map(s => `
+                <div style="display:flex; justify-content:space-between; align-items:center; padding:12px; background:var(--bg-input); border:1px solid var(--border); border-radius:8px; margin-bottom:8px;">
+                    <div><strong>${s.name}</strong><br><span style="font-size:0.7rem; color:var(--text-muted)">Assinatura/Custo Fixo</span></div>
+                    <div style="display:flex; align-items:center; gap:16px;">
+                        <span style="color:var(--danger); font-weight:600;">- ${formatBRL(s.val)}</span>
+                        <button onclick="deleteSub('${s.id}')" style="background:none; border:none; color:var(--text-muted); cursor:pointer;">✕</button>
+                    </div>
+                </div>
+            `).join('');
 
             container.innerHTML = `
                 <div class="workspace-header">
@@ -808,421 +832,559 @@
                 <div class="dash-container slide-up">
                     <div class="dash-metrics">
                         <div class="metric-card" style="border-bottom: 4px solid var(--color-sched);"><span>Receita Total (MRR + Freelas)</span><h3 style="color:var(--color-sched)">${formatBRL(receita)}</h3></div>
-                        <div class="metric-card" style="border-bottom: 4px solid var(--danger);"><span>Despesas Fixas</span><h3 style="color:var(--danger)">${formatBRL(custos)}</h3></div>
-                        <div class="metric-card" style="border-bottom: 4px solid var(--accent);"><span>Lucro Líquido Real</span><h3 style="color:var(--accent)">${formatBRL(lucro)}</h3></div>
+                        <div class="metric-card" style="border-bottom: 4px solid var(--danger);"><span>Despesas de Equipe</span><h3 style="color:var(--danger)">- ${formatBRL(despesaEquipe)}</h3></div>
+                        <div class="metric-card" style="border-bottom: 4px solid var(--color-review);"><span>Assinaturas & Ferramentas</span><h3 style="color:var(--color-review)">- ${formatBRL(despesaFerramentas)}</h3></div>
+                        <div class="metric-card" style="border-bottom: 4px solid var(--accent); background:var(--bg-sidebar);"><span>Lucro Líquido Previsto</span><h3 style="color:var(--accent)">${formatBRL(lucro)}</h3></div>
                     </div>
 
                     <div class="dash-tables-grid">
                         <div class="dash-panel">
-                            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
-                                <h3>Mensalidades dos Contratos</h3>
+                            <h3>Gestão de Assinaturas & Plataformas</h3>
+                            <div style="display:flex; gap:8px; margin-bottom:16px;">
+                                <input type="text" id="sub-name" placeholder="Ex: ChatGPT, Drive, Canva" style="flex:1; padding:10px; background:var(--bg-input); border:1px solid var(--border); border-radius:8px; color:var(--text-main);">
+                                <input type="number" id="sub-val" placeholder="Valor R$" style="width:100px; padding:10px; background:var(--bg-input); border:1px solid var(--border); border-radius:8px; color:var(--text-main);">
+                                <button class="btn-primary" onclick="addSub()">Adicionar</button>
                             </div>
-                            <div class="fin-table-wrapper">
-                                <table class="fin-table">
-                                    <thead><tr><th>Parceiro</th><th>Dia Venc.</th><th>Status</th><th>Valor</th></tr></thead>
-                                    <tbody>
-                                        ${clients.map(c => `
-                                            <tr><td><strong>${c.name}</strong></td><td>Dia ${c.payday}</td><td><span class="status-badge ${c.paid?'status-ok':'status-late'}">${c.paid?'Pago ✓':'Pendente'}</span></td><td>${formatBRL(c.fee)}</td></tr>
-                                        `).join('')}
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-
-                        <div class="dash-panel">
-                            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
-                                <h3>Custos Fixos / Ferramentas</h3>
-                                <button class="btn-primary" style="padding:6px 12px; font-size:0.75rem;" onclick="openModal('subModal')">+ Inserir Gasto</button>
-                            </div>
-                            <div class="fin-table-wrapper">
-                                <table class="fin-table">
-                                    <thead><tr><th>Ferramenta/Serviço</th><th>Dia Ren.</th><th>Ações</th><th>Valor</th></tr></thead>
-                                    <tbody>
-                                        ${subs.length === 0 ? '<tr><td colspan="4" style="text-align:center; color:var(--text-muted)">Nenhuma ferramenta fixada.</td></tr>' : subs.map(s => `
-                                            <tr><td><strong>${s.title}</strong></td><td>Dia ${s.day}</td><td><button onclick="deleteSub('${s.id}')" style="background:none; border:none; color:var(--danger); cursor:pointer;">Remover</button></td><td style="color:var(--danger); font-weight:600;">- ${formatBRL(s.val)}</td></tr>
-                                        `).join('')}
-                                    </tbody>
-                                </table>
-                            </div>
+                            <div class="fin-table-wrapper">${subsHTML || '<p style="color:var(--text-muted); font-size:0.85rem;">Nenhuma assinatura cadastrada.</p>'}</div>
                         </div>
                     </div>
                 </div>
             `;
+        }
+
+        function promptAgencyPassword() {
+            const pass = prompt("Digite a senha administrativa para editar a agência:");
+            if (pass !== null) { 
+                if(pass === ADMIN_PASS) {
+                    openAgencyModal();
+                } else {
+                    alert('Senha incorreta.');
+                }
+            }
         }
 
         function unlockFinance() {
-            const pass = prompt("Digite a senha financeira restrita:");
-            if(pass === "saturno2024") { isFinanceUnlocked = true; switchMainView('finance'); }
-            else if(pass !== null) alert("Acesso Negado!");
+            const input = document.getElementById('fin-pass-input').value;
+            if(input === ADMIN_PASS) {
+                financeUnlocked = true;
+                renderFinance(document.getElementById('workspace-area'));
+                showToast('Acesso Permitido');
+            } else { alert('Senha incorreta.'); }
         }
-        function lockFinance() { isFinanceUnlocked = false; switchMainView('dashboard'); }
+        function lockFinance() { financeUnlocked = false; routeView(); }
+        function addSub() {
+            const name = document.getElementById('sub-name').value;
+            const val = document.getElementById('sub-val').value;
+            if(!name || !val) return;
+            subs.push({ id: 's'+Date.now(), name, val: parseFloat(val) });
+            saveData();
+        }
+        function deleteSub(id) { subs = subs.filter(s=>s.id!==id); saveData(); }
 
-        // 4. KANBAN DE FREELAS / AVULSOS
-        function renderFreelaView(container) {
+        /* --- NOTAS FISCAIS --- */
+        function renderNotasFiscais(container) {
+            let nfHTML = clients.filter(c => c.needsNf === 'Sim').map(c => `
+                <tr class="slide-up">
+                    <td>
+                        <div style="display:flex; align-items:center; gap:8px;">
+                            <div class="avatar" style="width:24px;height:24px;font-size:0.6rem;">${c.img ? `<img src="${c.img}">` : getInitials(c.name)}</div>
+                            <strong>${c.name}</strong>
+                        </div>
+                    </td>
+                    <td>${c.cnpj || '<span style="color:var(--danger)">S/ CNPJ</span>'}</td>
+                    <td>${formatBRL(c.finValue || 0)}</td>
+                    <td>Dia ${c.finDay || '-'}</td>
+                    <td><button class="btn-outline" style="padding: 6px 12px; font-size:0.75rem; border-color: ${c.nfStatus === 'Emitida' ? 'var(--color-sched)' : 'var(--border)'}; color: ${c.nfStatus === 'Emitida' ? 'var(--color-sched)' : 'var(--text-main)'}; background: ${c.nfStatus === 'Emitida' ? 'rgba(16,185,129,0.1)' : 'transparent'};" onclick="toggleNfStatus('${c.id}')">${c.nfStatus === 'Emitida' ? '✓ Emitida' : 'Marcar Emitida'}</button></td>
+                </tr>
+            `).join('');
+
             container.innerHTML = `
                 <div class="workspace-header">
-                    <div class="client-meta"><h2>🚀 Demandas Avulsas / Freelas Extra</h2><span style="color:var(--text-muted); font-size:0.9rem;">Projetos de identidade visual, sites e jobs que não entram no MRR fixo.</span></div>
-                    <div style="display:flex; gap:12px;">
-                        <button class="btn-primary" onclick="openFreelaModal()"><svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg> Cadastrar Job</button>
-                        <button class="theme-toggle" onclick="toggleTheme()">🌓</button>
-                    </div>
-                </div>
-                <div class="workspace-body slide-up">
-                    <div class="panel-right" style="background:transparent; border:none; box-shadow:none;">
-                        <div class="production-grid" style="padding:0;">
-                            ${renderFreelaColumn('todo', 'A Produzir')}
-                            ${renderFreelaColumn('doing', 'Em Desenvolvimento')}
-                            ${renderFreelaColumn('done', 'Concluído & Faturado ✓')}
-                        </div>
-                    </div>
-                </div>
-            `;
-        }
-
-        function renderFreelaColumn(stage, title) {
-            const filtered = freelas.filter(f => f.stage === stage);
-            let cards = '';
-            
-            filtered.forEach(f => {
-                const cardClass = stage === 'todo' ? 'freela-todo' : stage === 'doing' ? 'freela-doing' : '';
-                const dateBadge = f.date ? `<div class="post-date">📅 Prazo: ${f.date.split('-').reverse().join('/')}</div>` : '';
-                const refHTML = f.img ? `<img src="${f.img}" class="post-preview-img">` : (f.link ? `<a href="${f.link}" target="_blank" class="post-attachment">🔗 Link do Job</a>` : '');
-                
-                const ownerObj = team.find(t => t.id === f.ownerId);
-                const ownerName = ownerObj ? ownerObj.name : 'Equipe Geral';
-                const ownerColor = ownerObj ? ownerObj.color : 'var(--border)';
-                const ownerAvatar = ownerObj && ownerObj.img ? `<img src="${ownerObj.img}">` : getInitials(ownerName);
-
-                const opts = ['todo','doing','done'].map(s => {
-                    const sName = s==='todo'?'A Produzir':s==='doing'?'Em Criação':'Concluído';
-                    return `<option value="${s}" ${f.stage===s?'selected':''}>${sName}</option>`;
-                }).join('');
-
-                cards += `
-                    <div class="post-card ${cardClass}">
-                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
-                            <span class="post-val">${formatBRL(f.val || 0)}</span>
-                            <button onclick="deleteFreela('${f.id}')" style="background:none; border:none; color:var(--text-muted); cursor:pointer;">✕</button>
-                        </div>
-                        <h5 onclick="openFreelaModal('${f.id}')">${f.title}</h5>
-                        ${dateBadge}
-                        ${refHTML}
-                        <div class="post-footer">
-                            <div class="assignee"><div class="avatar" style="background:${ownerColor}; width:22px; height:22px; font-size:0.6rem;">${ownerAvatar}</div> ${ownerName}</div>
-                            <select class="stage-select" onchange="moveFreela('${f.id}', this.value, '${f.title}')">${opts}</select>
-                        </div>
-                    </div>
-                `;
-            });
-
-            return `
-                <div class="prod-column">
-                    <div class="prod-column-header"><span>${title}</span> <span style="background:var(--bg-card); padding:2px 6px; border-radius:8px; font-size:0.7rem;">${filtered.length}</span></div>
-                    <div class="col-content">${cards}</div>
-                </div>
-            `;
-        }
-
-        // 5. VISÃO DA EQUIPE
-        function renderTeamView(container) {
-            container.innerHTML = `
-                <div class="workspace-header">
-                    <div class="client-meta"><h2>👥 Integrantes do Time & Squad</h2><span style="color:var(--text-muted); font-size:0.9rem;">Profissionais e colaboradores vinculados ao ecossistema da agência.</span></div>
-                    <div style="display:flex; gap:12px;">
-                        <button class="btn-primary" onclick="openModal('teamModal')"><svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg> Cadastrar Integrante</button>
-                        <button class="theme-toggle" onclick="toggleTheme()">🌓</button>
-                    </div>
+                    <div class="client-meta"><h2>🧾 Gestão de Notas Fiscais</h2><span style="color:var(--text-muted); font-size:0.9rem;">Emissão e acompanhamento de NF mensal.</span></div>
+                    <button class="theme-toggle" onclick="toggleTheme()" title="Alterar Tema">🌓</button>
                 </div>
                 <div class="dash-container slide-up">
-                    <div class="team-grid">
-                        ${team.length === 0 ? '<div style="color:var(--text-muted); font-size:0.85rem;">Nenhum profissional cadastrado no time.</div>' : team.map(t => `
-                            <div class="team-card fade-in">
-                                <div class="team-card-actions">
-                                    <button class="btn-icon danger" onclick="deleteTeam('${t.id}')">✕</button>
-                                </div>
-                                <div class="avatar" style="background:${t.color || 'var(--accent)'}">${t.img ? `<img src="${t.img}">` : getInitials(t.name)}</div>
-                                <h4>${t.name}</h4>
-                                <span class="role">${t.role}</span>
-                            </div>
-                        `).join('')}
+                    <div class="dash-panel" style="grid-column: 1 / -1;">
+                        <table class="fin-table">
+                            <thead><tr><th>Cliente</th><th>CNPJ</th><th>Valor Faturado</th><th>Vencimento</th><th>Ação / Status</th></tr></thead>
+                            <tbody>${nfHTML || '<tr><td colspan="5">Nenhum cliente configurado para emitir NF. Altere as configurações financeiras do cliente.</td></tr>'}</tbody>
+                        </table>
                     </div>
                 </div>
             `;
         }
+        function toggleNfStatus(id) { const c = clients.find(i => i.id === id); c.nfStatus = c.nfStatus === 'Emitida' ? 'Pendente' : 'Emitida'; if(c.nfStatus === 'Emitida') showToast(`✅ Nota fiscal marcada como emitida para ${c.name}`); saveData(); }
 
-        // 6. AGENDA DE REUNIÕES
-        function renderMeetingsView(container) {
+        /* --- EQUIPE / COLABORADORES --- */
+        function renderTeam(container) {
+            let teamHTML = team.map(t => `
+                <div class="team-card slide-up">
+                    <div class="team-card-actions">
+                        <button class="btn-icon" onclick="openTeamModalPassword('${t.id}')">
+                            <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
+                        </button>
+                        <button class="btn-icon danger" onclick="deleteTeamPassword('${t.id}')">
+                            <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                        </button>
+                    </div>
+                    <div class="avatar" style="width:80px; height:80px; margin:0 auto 16px auto; font-size:1.8rem; border: 3px solid ${t.color || 'transparent'};">${t.img ? `<img src="${t.img}">` : getInitials(t.name)}</div>
+                    <h4>${t.name}</h4>
+                    <span class="role" style="color: ${t.color || 'var(--accent)'}; border-color: ${t.color || 'var(--accent)'};">${t.role || 'Geral'}</span>
+                </div>
+            `).join('');
+
             container.innerHTML = `
                 <div class="workspace-header">
-                    <div class="client-meta"><h2>📅 Agenda e Alinhamentos</h2><span style="color:var(--text-muted); font-size:0.9rem;">Próximas reuniões estratégicas marcadas.</span></div>
+                    <div class="client-meta"><h2>👥 Equipe e Colaboradores</h2><span style="color:var(--text-muted); font-size:0.9rem;">Gestão do seu time interno de produção.</span></div>
                     <div style="display:flex; gap:12px;">
-                        <button class="btn-primary" onclick="openModal('meetingModal')"><svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg> Marcar Reunião</button>
-                        <button class="theme-toggle" onclick="toggleTheme()">🌓</button>
+                        <button class="btn-primary" onclick="openTeamModal()">+ Novo Colaborador</button>
+                        <button class="theme-toggle" onclick="toggleTheme()" title="Alterar Tema">🌓</button>
                     </div>
                 </div>
-                <div class="dash-container slide-up">
-                    <div class="dash-panel">
-                        <div class="fin-table-wrapper">
-                            <table class="fin-table">
-                                <thead><tr><th>Compromisso / Assunto</th><th>Data Marcada</th><th>Horário</th><th>Sala Virtual</th><th>Ações</th></tr></thead>
-                                <tbody>
-                                    ${meetings.length === 0 ? '<tr><td colspan="5" style="text-align:center; color:var(--text-muted);">Nenhuma reunião agendada no cronograma.</td></tr>' : meetings.map(m => `
-                                        <tr>
-                                            <td><strong>${m.title}</strong></td>
-                                            <td>${m.date.split('-').reverse().join('/')}</td>
-                                            <td>${m.time} h</td>
-                                            <td>${m.link ? `<a href="${m.link}" target="_blank" style="color:var(--accent); text-decoration:none; font-weight:600;">Entrar na Chamada Video 🎥</a>` : '<span style="color:var(--text-muted)">Presencial / Sem Link</span>'}</td>
-                                            <td><button onclick="deleteMeeting('${m.id}')" style="background:none; border:none; color:var(--danger); cursor:pointer; font-weight:600;">Excluir</button></td>
-                                        </tr>
-                                    `).join('')}
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
+                <div class="dash-container"><div class="team-grid">${teamHTML || '<p style="color:var(--text-muted);">Nenhum colaborador cadastrado. Adicione sua equipe!</p>'}</div></div>
             `;
         }
 
-
-        // ================= FUNÇÕES DE PERSISTÊNCIA E CRUD =================
-
-        function saveData() {
-            // Backup imediato e preventivo em formato local
-            localStorage.setItem('sat_final_cli', JSON.stringify(clients || []));
-            localStorage.setItem('sat_final_tsk', JSON.stringify(tasks || []));
-            localStorage.setItem('sat_final_freelas', JSON.stringify(freelas || []));
-            localStorage.setItem('sat_final_meetings', JSON.stringify(meetings || []));
-            localStorage.setItem('sat_final_team', JSON.stringify(team || []));
-            localStorage.setItem('sat_final_subs', JSON.stringify(subs || []));
-            localStorage.setItem('sat_final_agency', JSON.stringify({name: window.agencyNameText, logo: window.agencyLogoText}));
-
-            // Envia o payload total limpo para a coleção do Firebase
-            db.collection("saturno_dados").doc("hub_operacional").set({
-                clients, 
-                tasks, 
-                freelas, 
-                meetings, 
-                team, 
-                subs,
-                agency: {
-                    name: window.agencyNameText || "Saturno Studio",
-                    logo: window.agencyLogoText || ""
-                }
-            })
-            .then(() => {
-                console.log("✅ Banco de dados nuvem atualizado com sucesso!");
-            })
-            .catch(err => {
-                console.error("❌ Erro ao enviar dados ao Firebase: ", err);
-            });
+        // Funções com Senha para Equipe
+        function openTeamModalPassword(id) {
+            const pass = prompt("Digite a senha administrativa para editar o colaborador:");
+            if (pass !== null) {
+                if(pass === ADMIN_PASS) { openTeamModal(id); } else { alert('Senha incorreta.'); }
+            }
+        }
+        function deleteTeamPassword(id) {
+            const pass = prompt("Digite a senha administrativa para excluir o colaborador:");
+            if (pass !== null) {
+                if(pass === ADMIN_PASS) { deleteTeam(id); } else { alert('Senha incorreta.'); }
+            }
         }
 
-        // CONTROLADORES DE SUBMISSÃO DE FORMULÁRIO (CRUD)
-        function saveClient(e) {
-            e.preventDefault();
-            const id = document.getElementById('client-id').value;
-            
-            const cData = {
-                id: id || 'c_' + Date.now(),
-                name: document.getElementById('c-name').value,
-                fee: document.getElementById('c-fee').value,
-                phone: document.getElementById('c-phone').value,
-                payday: document.getElementById('c-payday').value,
-                drive: document.getElementById('c-drive').value,
-                trello: document.getElementById('c-trello').value,
-                designerId: document.getElementById('c-designer').value,
-                smId: document.getElementById('c-sm').value,
-                img: document.getElementById('c-img-b64').value,
-                paid: id ? (clients.find(i=>i.id===id)?.paid || false) : true
-            };
+        function openTeamModal(id=null) {
+            document.getElementById('teamModal').style.display='flex';
+            document.getElementById('team-form').reset();
+            const p = document.getElementById('tm-preview'); p.style.display = 'none'; p.src = ''; document.getElementById('tm-img-b64').value = '';
 
             if(id) {
-                const idx = clients.findIndex(i => i.id === id);
-                clients[idx] = cData;
-                showToast("Cliente atualizado!");
-            } else {
-                clients.push(cData);
-                showToast("Novo cliente cadastrado com sucesso!");
-            }
-
-            closeModal('clientModal');
-            saveData();
+                const t = team.find(i=>i.id===id);
+                document.getElementById('tm-id').value = t.id; document.getElementById('tm-name').value = t.name;
+                document.getElementById('tm-role').value = t.role || ''; document.getElementById('tm-type').value = t.type || 'Fixo';
+                document.getElementById('tm-color').value = t.color || '#8a2be2';
+                document.getElementById('tm-val').value = t.val || '';
+                if(t.img) { document.getElementById('tm-img-b64').value = t.img; p.src = t.img; p.style.display = 'block'; }
+            } else { document.getElementById('tm-id').value = ''; document.getElementById('tm-color').value = '#8a2be2'; }
         }
-
-        function deleteClient(id) {
-            if(confirm("Tem certeza que deseja remover este cliente? Todos os posts serão limpos.")) {
-                clients = clients.filter(c => c.id !== id);
-                tasks = tasks.filter(t => t.clientId !== id);
-                saveData();
-                switchMainView('dashboard');
-            }
-        }
-
-        function toggleClientPayment(id) {
-            const c = clients.find(i => i.id === id);
-            c.paid = !c.paid;
-            showToast(`Status alterado!`);
-            saveData();
-            routeView();
-        }
-
-        function saveTask(e) {
-            e.preventDefault();
-            const id = document.getElementById('t-id').value;
-            
-            const tData = {
-                id: id || 't_' + Date.now(),
-                clientId: selectedClientId,
-                title: document.getElementById('t-title').value,
-                date: document.getElementById('t-date').value,
-                priority: document.getElementById('t-priority').value,
-                desc: document.getElementById('t-desc').value,
-                img: document.getElementById('t-img-b64').value,
-                link: document.getElementById('t-link').value,
-                stage: document.getElementById('t-stage').value
-            };
-
-            if(id) {
-                const idx = tasks.findIndex(i => i.id === id);
-                tasks[idx] = tData;
-                showToast("Postagem atualizada!");
-            } else {
-                tasks.push(tData);
-                showToast("Peça inserida no cronograma!");
-            }
-
-            closeModal('taskModal');
-            saveData();
-            routeView();
-        }
-
-        function openTaskModal(id=null) {
-            document.getElementById('taskModal').style.display='flex';
-            document.getElementById('task-form').reset();
-            document.getElementById('t-id').value = '';
-            const p = document.getElementById('t-preview');
-            p.style.display = 'none'; p.src = '';
-            document.getElementById('t-img-b64').value = '';
-            
-            if(id) {
-                const t = tasks.find(i => i.id === id);
-                document.getElementById('t-id').value = t.id;
-                document.getElementById('t-title').value = t.title;
-                document.getElementById('t-date').value = t.date;
-                document.getElementById('t-priority').value = t.priority;
-                document.getElementById('t-desc').value = t.desc;
-                document.getElementById('t-link').value = t.link;
-                document.getElementById('t-stage').value = t.stage;
-                if(t.img) { p.src = t.img; p.style.display = 'block'; document.getElementById('t-img-b64').value = t.img; }
-            }
-        }
-
-        function deleteTask(id) {
-            if(confirm("Deseja apagar esta postagem da grade?")) {
-                tasks = tasks.filter(t => t.id !== id);
-                saveData();
-                routeView();
-            }
-        }
-
-        function saveFreela(e) {
-            e.preventDefault();
-            const id = document.getElementById('f-id').value;
-            const fData = {
-                id: id || 'f_' + Date.now(),
-                title: document.getElementById('f-title').value,
-                val: document.getElementById('f-val').value,
-                ownerId: document.getElementById('f-owner').value,
-                date: document.getElementById('f-date').value,
-                img: document.getElementById('f-img-b64').value,
-                link: document.getElementById('f-link').value,
-                stage: document.getElementById('f-stage').value
-            };
-
-            if(id) {
-                const idx = freelas.findIndex(i=>i.id===id);
-                freelas[idx] = fData;
-            } else {
-                freelas.push(fData);
-            }
-            closeModal('freelaModal'); saveData(); routeView(); showToast('Freela Registrado!');
-        }
-
-        function openFreelaModal(id=null) {
-            populateTeamSelects();
-            document.getElementById('freelaModal').style.display='flex';
-            document.getElementById('freela-form').reset();
-            document.getElementById('f-id').value = '';
-            const p = document.getElementById('f-preview');
-            p.style.display = 'none'; p.src = '';
-            document.getElementById('f-img-b64').value = '';
-
-            if(id) {
-                const f = freelas.find(i=>i.id===id);
-                document.getElementById('f-id').value = f.id;
-                document.getElementById('f-title').value = f.title;
-                document.getElementById('f-val').value = f.val;
-                document.getElementById('f-owner').value = f.ownerId || '';
-                document.getElementById('f-date').value = f.date;
-                document.getElementById('f-link').value = f.link;
-                document.getElementById('f-stage').value = f.stage;
-                if(f.img) { p.src = f.img; p.style.display = 'block'; document.getElementById('f-img-b64').value = f.img; }
-            }
-        }
-
-        function deleteFreela(id) { if(confirm("Remover este Freela?")){ freelas = freelas.filter(f=>f.id!==id); saveData(); routeView(); } }
 
         function saveTeam(e) {
             e.preventDefault();
-            const tData = {
-                id: 'tm_' + Date.now(),
-                name: document.getElementById('tm-name').value,
-                role: document.getElementById('tm-role').value,
-                color: document.getElementById('tm-color').value,
-                img: document.getElementById('tm-img-b64').value
-            };
-            team.push(tData); closeModal('teamModal'); saveData(); routeView(); showToast('Membro Integrado!');
+            const id = document.getElementById('tm-id').value || 'tm'+Date.now();
+            const tData = { id, name: document.getElementById('tm-name').value, img: document.getElementById('tm-img-b64').value, color: document.getElementById('tm-color').value, role: document.getElementById('tm-role').value, type: document.getElementById('tm-type').value, val: document.getElementById('tm-val').value };
+            const idx = team.findIndex(i=>i.id===id);
+            if(idx > -1) team[idx] = tData; else team.push(tData);
+            closeModal('teamModal'); populateTeamSelects(); saveData(); showToast('Colaborador Salvo!');
         }
-        function deleteTeam(id) { if(confirm("Excluir este integrante do squad?")){ team = team.filter(t=>t.id!==id); saveData(); routeView(); } }
+        function deleteTeam(id) { if(confirm("Remover colaborador? O histórico financeiro dele será perdido.")){ team = team.filter(t=>t.id!==id); populateTeamSelects(); saveData(); } }
 
-        function saveSub(e) {
+        /* --- FREELAS / AVULSOS --- */
+        function renderFreelas(container) {
+            const total = freelas.length;
+            const done = freelas.filter(f => f.stage === 'done').length;
+            const pct = total > 0 ? Math.round((done / total) * 100) : 0;
+
+            container.innerHTML = `
+                <div class="workspace-header">
+                    <div class="client-meta"><h2>⚡ Fábrica de Freelas</h2><span style="color:var(--text-muted); font-size:0.9rem;">Demandas avulsas. Progresso Global: <strong style="color:var(--text-main);">${done}/${total} concluídos</strong></span></div>
+                    <div style="display:flex; align-items:center; gap:16px;">
+                        <div style="width: 150px;">
+                            <div style="display:flex; justify-content:space-between; font-size:0.75rem; font-weight:600; margin-bottom:4px; color:var(--text-muted);"><span>Avanço</span> <span style="color:var(--color-sched);">${pct}%</span></div>
+                            <div class="meter-bg"><div class="meter-bar" style="width:${pct}%; background:var(--color-sched);"></div></div>
+                        </div>
+                        <button class="btn-primary" onclick="openFreelaModal()">+ Novo Freela</button>
+                        <button class="theme-toggle" onclick="toggleTheme()" title="Alterar Tema">🌓</button>
+                    </div>
+                </div>
+                <div class="workspace-body slide-up"><div class="panel-right" style="border:none; background:transparent; box-shadow:none;"><div class="production-grid" id="freela-kanban"></div></div></div>
+            `;
+
+            const kArea = document.getElementById('freela-kanban');
+            const cols = [{ id: 'todo', title: 'A Produzir', color: '#ef4444' }, { id: 'doing', title: 'Produzindo', color: '#facc15' }, { id: 'done', title: 'Entregue / Aprovado', color: '#10b981' }];
+
+            cols.forEach(col => {
+                const colF = freelas.filter(f => f.stage === col.id);
+                let cards = '';
+                colF.forEach(f => {
+                    let opts = cols.map(c => `<option value="${c.id}" ${f.stage === c.id ? 'selected':''}>${c.title}</option>`).join('');
+                    
+                    let refHTML = '';
+                    if(f.imgBase64) {
+                        refHTML = `<div class="post-preview-img"><img src="${f.imgBase64}" style="width:100%;height:100%;object-fit:cover;border-radius:6px;"></div>`;
+                    } else if (f.link) {
+                        refHTML = `<a href="${f.link.includes('http') ? f.link : 'https://'+f.link}" class="post-attachment" target="_blank"><svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg> Link Útil</a>`;
+                    }
+
+                    let cardClass = f.stage === 'todo' ? 'freela-todo' : (f.stage === 'doing' ? 'freela-doing' : '');
+                    let dateBadge = f.date ? `<div class="post-date" style="color: ${isDueSoon(f.date) && f.stage !== 'done' ? 'var(--danger)' : ''}">📅 Entrega: ${f.date.split('-').reverse().join('/')}</div>` : '';
+                    let ownerObj = team.find(tm=>tm.id===f.owner);
+                    let ownerName = ownerObj ? ownerObj.name : 'Equipe';
+                    let ownerColor = ownerObj ? ownerObj.color : 'var(--accent)';
+                    let ownerAvatar = ownerObj && ownerObj.img ? `<img src="${ownerObj.img}">` : getInitials(ownerName);
+
+                    cards += `
+                        <div class="post-card ${cardClass}">
+                            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+                                <span class="post-val">${formatBRL(f.val || 0)}</span>
+                                ${isDueSoon(f.date) && f.stage !== 'done' ? '<span style="font-size:0.6rem; color:var(--danger); font-weight:bold; background:rgba(239,68,68,0.1); padding:2px 6px; border-radius:4px;">⚠️ PRAZO CURTO</span>' : ''}
+                            </div>
+                            <h5 onclick="openFreelaModal('${f.id}')">${f.title}</h5>
+                            ${dateBadge} ${refHTML}
+                            <div class="post-footer">
+                                <div class="assignee"><div class="avatar" style="background:${ownerColor}">${ownerAvatar}</div> ${ownerName}</div>
+                                <select class="stage-select" onchange="moveFreela('${f.id}', this.value, '${f.title}')">${opts}</select>
+                            </div>
+                            <div style="text-align:right; margin-top:8px;"><button onclick="deleteFreela('${f.id}')" style="background:none; border:none; color:var(--danger); cursor:pointer; font-size:0.75rem;">Excluir</button></div>
+                        </div>
+                    `;
+                });
+                kArea.innerHTML += `<div class="prod-column"><div class="prod-column-header" style="color:${col.color}"><div style="display:flex; align-items:center; gap:8px;"><div class="dot" style="background:${col.color}"></div> ${col.title}</div><span style="background:var(--bg-card); padding:2px 8px; border-radius:10px; font-size:0.7rem; color:var(--text-main);">${colF.length}</span></div><div class="col-content">${cards}</div></div>`;
+            });
+        }
+
+        /* --- REUNIÕES --- */
+        function renderMeetings(container) {
+            const todayStr = new Date().toISOString().split('T')[0];
+            const up = meetings.filter(m => m.date >= todayStr).sort((a,b) => new Date(a.date) - new Date(b.date));
+            
+            let upHTML = up.map(m => {
+                let cName = m.client ? (clients.find(c=>c.id===m.client)?.name || 'Interna') : 'Interna';
+                return `
+                <div class="post-card slide-up" style="display:flex; justify-content:space-between; align-items:center;">
+                    <div>
+                        <div style="color:var(--accent); font-size:0.75rem; font-weight:700; margin-bottom:4px;">${cName}</div>
+                        <h4 style="color:var(--text-main); margin-bottom:4px;">${m.title}</h4>
+                        <div style="font-size:0.8rem; color:var(--text-muted);">📅 ${m.date.split('-').reverse().join('/')} às ⏰ ${m.time}</div>
+                    </div>
+                    <div style="display:flex; gap:10px; align-items:center;">
+                        ${m.link ? `<a href="${m.link}" target="_blank" class="btn-outline" style="padding:6px 12px; font-size:0.8rem; color:var(--color-design); border-color:var(--color-design);">Entrar na Call</a>` : ''}
+                        <button class="btn-cancel" onclick="deleteMeeting('${m.id}')" style="padding:6px 12px; font-size:0.8rem; border-color:var(--danger); color:var(--danger);">✕</button>
+                    </div>
+                </div>`;
+            }).join('');
+
+            container.innerHTML = `
+                <div class="workspace-header">
+                    <div class="client-meta"><h2>📅 Reuniões & Calls</h2><span style="color:var(--text-muted); font-size:0.9rem;">Agenda da Agência.</span></div>
+                    <div style="display:flex; gap:12px;"><button class="btn-primary" onclick="openMeetingModal()">+ Agendar Reunião</button><button class="theme-toggle" onclick="toggleTheme()" title="Tema">🌓</button></div>
+                </div>
+                <div class="workspace-body" style="flex-direction:column; overflow-y:auto;">
+                    <div style="max-width: 800px; width: 100%;">
+                        <h3 style="color:var(--text-main); margin-bottom:16px;">Próximas Reuniões</h3>
+                        ${upHTML || '<p style="color:var(--text-muted); font-size:0.9rem;">Nenhuma reunião futura agendada.</p>'}
+                    </div>
+                </div>
+            `;
+        }
+
+        /* --- CLIENT WORKSPACE --- */
+        function renderClientWorkspace(container) {
+            const c = clients.find(i => i.id === activeClient);
+            const target = (c.freq || 0) * 2;
+            const schedPosts = tasks.filter(t => t.clientId === c.id && t.stage === 'sched').length;
+            const pct = target > 0 ? Math.min(Math.round((schedPosts / target)*100), 100) : 0;
+            const colorBar = pct >= 100 ? 'var(--color-sched)' : (pct >= 50 ? 'var(--color-review)' : 'var(--danger)');
+            const avatarHTML = c.img ? `<img src="${c.img}">` : getInitials(c.name);
+            const whatsLink = c.finPhone ? `https://wa.me/55${c.finPhone.replace(/\D/g,'')}?text=Ol%C3%A1!%20Passando%20para%20lembrar%20da%20mensalidade%20da%20ag%C3%AAncia.` : '#';
+            const resp = team.find(t=>t.id===c.teamOwner);
+            const respHTML = resp ? `<div class="assignee"><div class="avatar" style="background:${resp.color || 'var(--accent)'}">${resp.img ? `<img src="${resp.img}">`: getInitials(resp.name)}</div> ${resp.name}</div>` : 'Equipe Geral';
+
+            container.innerHTML = `
+                <div class="workspace-header">
+                    <div class="client-meta">
+                        <h2><div class="avatar" style="width:48px;height:48px;font-size:1.3rem;">${avatarHTML}</div> ${c.name}</h2>
+                        <div class="client-info-badges">
+                            <div class="info-badge">Resp: <strong>${respHTML}</strong></div>
+                            <div class="info-badge">Instagram: <strong>${c.profile || '-'}</strong></div>
+                            <div class="info-badge">Postagem: <strong>${c.poster || 'Agência'}</strong></div>
+                        </div>
+                    </div>
+                    <div style="display:flex; align-items:center; gap:16px;">
+                        <div class="dropdown">
+                            <button class="btn-outline">
+                                <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg> 
+                                Opções ▼
+                            </button>
+                            <div class="dropdown-content">
+                                <button onclick="openClientModal('${c.id}')"><svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg> Editar Perfil</button>
+                                <button onclick="deleteClient('${c.id}')" class="danger-btn" style="color:var(--danger);"><svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg> Excluir Cliente</button>
+                            </div>
+                        </div>
+                        <div class="buffer-meter-box">
+                            <div class="meter-label"><span>Meta de Frente (2 Sem.)</span><span style="color:${colorBar}">${pct}%</span></div>
+                            <div class="meter-bg"><div class="meter-bar" style="width:${pct}%; background:${colorBar}"></div></div>
+                        </div>
+                        <button class="theme-toggle" onclick="toggleTheme()" title="Alterar Tema">🌓</button>
+                    </div>
+                </div>
+
+                <div class="workspace-body slide-up">
+                    <div class="panel-left">
+                        <div class="box">
+                            <div class="box-header"><h3>🚀 Checklist Inicial</h3></div>
+                            <div class="checklist-group">
+                                <div class="chk-item ${c.chk?.group ? 'done':''}" onclick="toggleChk('group')"><div class="chk-circle"></div> 1. Grupo do WhatsApp</div>
+                                <div class="chk-item ${c.chk?.briefing ? 'done':''}" onclick="toggleChk('briefing')"><div class="chk-circle"></div> 2. Enviar Briefing</div>
+                                <div class="chk-item ${c.chk?.strategy ? 'done':''}" onclick="toggleChk('strategy')"><div class="chk-circle"></div> 3. Enviar Estratégia</div>
+                                <div class="chk-item ${c.chk?.pic ? 'done':''}" onclick="toggleChk('pic')"><div class="chk-circle"></div> 4. Foto de Perfil</div>
+                                <div class="chk-item ${c.chk?.bio ? 'done':''}" onclick="toggleChk('bio')"><div class="chk-circle"></div> 5. Criar Bio</div>
+                                <div class="chk-item ${c.chk?.highlights ? 'done':''}" onclick="toggleChk('highlights')"><div class="chk-circle"></div> 6. Capas Destaque</div>
+                            </div>
+                        </div>
+                        <div class="box">
+                            <div class="box-header"><h3>📝 Briefing / Diretrizes</h3></div>
+                            <div style="font-size:0.8rem; color:var(--text-main); line-height:1.5;">${c.notes || 'Sem anotações.'}</div>
+                        </div>
+                        <div class="box">
+                            <div class="box-header"><h3>💸 Financeiro Mensal</h3></div>
+                            <div class="fin-detail"><span>Plano</span> <strong>${c.finDesc || '-'}</strong></div>
+                            <div class="fin-detail"><span>Valor</span> <strong>${formatBRL(c.finValue || 0)}</strong></div>
+                            <div class="fin-detail"><span>Venc.</span> <strong>Dia ${c.finDay || '-'}</strong></div>
+                            <div class="fin-detail" style="border:none;"><span>Status</span> <span class="status-badge ${c.finStatus === 'Em Dia' ? 'status-ok' : 'status-late'}">${c.finStatus || '-'}</span></div>
+                            <a href="${whatsLink}" target="_blank" class="btn-whatsapp">
+                                <svg width="18" height="18" fill="currentColor" viewBox="0 0 24 24"><path d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.582 2.128 2.182-.573c.978.58 1.911.928 3.145.929 3.178 0 5.767-2.587 5.768-5.766.001-3.187-2.575-5.77-5.764-5.771zm3.392 8.244c-.144.405-.837.774-1.17.824-.299.045-.677.063-1.092-.069-.252-.08-.575-.187-.988-.365-1.739-.751-2.874-2.502-2.961-2.617-.087-.116-.708-.94-.708-1.793s.448-1.273.607-1.446c.159-.173.346-.217.462-.217l.332.006c.106.005.249-.04.39.298.144.347.491 1.2.534 1.287.043.087.072.188.014.304-.058.116-.087.188-.173.289l-.26.304c-.087.086-.177.18-.076.322.101.144.453.712 1.033 1.234.75.674 1.349.882 1.493.968.144.087.231.072.318-.029l.364-.428c.116-.144.231-.116.362-.072.13.044.837.398.981.47.144.072.241.109.276.166.035.058.035.341-.109.746z"/></svg>
+                                Cobrar Cliente
+                            </a>
+                        </div>
+                    </div>
+
+                    <div class="panel-right">
+                        <div class="kanban-header-actions">
+                            <span style="font-size:0.9rem; color:var(--text-muted); font-weight:600;">🔥 Esteira de Produção</span>
+                            <button class="btn-primary" onclick="openTaskModal()">+ Novo Post</button>
+                        </div>
+                        <div class="production-grid" id="kanban-area"></div>
+                    </div>
+                </div>
+            `;
+            renderClientKanban();
+        }
+
+        function renderClientKanban() {
+            const kArea = document.getElementById('kanban-area');
+            const clientTasks = tasks.filter(t => t.clientId === activeClient);
+            kArea.innerHTML = '';
+            const cols = [{ id: 'copy', title: '1. Roteiro/Copy', color: 'var(--color-copy)' }, { id: 'design', title: '2. Arte/Edição', color: 'var(--color-design)' }, { id: 'review', title: '3. Aprovação', color: 'var(--color-review)' }, { id: 'sched', title: '4. Programado', color: 'var(--color-sched)' }];
+
+            cols.forEach(col => {
+                const colTasks = clientTasks.filter(t => t.stage === col.id);
+                let cards = '';
+                
+                colTasks.forEach(t => {
+                    let pClass = t.priority === 'alta' ? 'p-alta' : t.priority === 'media' ? 'p-media' : 'p-baixa';
+                    let opts = cols.map(c => `<option value="${c.id}" ${t.stage === c.id ? 'selected':''}>${c.title}</option>`).join('');
+                    
+                    let refHTML = '';
+                    if(t.imgBase64) {
+                        refHTML = `<div class="post-preview-img"><img src="${t.imgBase64}" style="width:100%;height:100%;object-fit:cover;border-radius:6px;"></div>`;
+                    } else if (t.link) {
+                        refHTML = `<a href="${t.link.includes('http') ? t.link : 'https://'+t.link}" class="post-attachment" target="_blank"><svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg> Link de Referência</a>`;
+                    }
+
+                    const dueClass = isDueSoon(t.date) && t.stage !== 'sched' ? 'due-alert' : '';
+                    let dateBadge = t.date ? `<div class="post-date" style="color: ${isDueSoon(t.date) && t.stage !== 'sched' ? 'var(--danger)' : ''}">📅 Entrega: ${t.date.split('-').reverse().join('/')}</div>` : '';
+                    let ownerObj = team.find(tm=>tm.id===t.owner);
+                    let ownerName = ownerObj ? ownerObj.name : 'Equipe';
+                    let ownerColor = ownerObj ? ownerObj.color : 'var(--border)';
+                    let ownerAvatar = ownerObj && ownerObj.img ? `<img src="${ownerObj.img}">` : getInitials(ownerName);
+
+                    cards += `
+                        <div class="post-card ${dueClass}">
+                            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+                                <span class="priority-tag ${pClass}">${t.priority}</span>
+                                ${isDueSoon(t.date) && t.stage !== 'sched' ? '<span style="font-size:0.6rem; color:var(--danger); font-weight:bold; background:rgba(239,68,68,0.1); padding:2px 6px; border-radius:4px;">⚠️ PRAZO CURTO</span>' : ''}
+                            </div>
+                            <h5 onclick="openTaskModal('${t.id}')">${t.title}</h5>
+                            ${dateBadge}
+                            ${refHTML}
+                            <div class="post-footer">
+                                <div class="assignee"><div class="avatar" style="background:${ownerColor}">${ownerAvatar}</div> <span style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:80px;">${ownerName}</span></div>
+                                <select class="stage-select" onchange="moveTask('${t.id}', this.value, '${t.title}')">${opts}</select>
+                            </div>
+                            <div style="text-align:right; margin-top:8px;">
+                                <button onclick="deleteTask('${t.id}')" style="background:none; border:none; color:var(--danger); cursor:pointer; font-size:0.75rem;">Excluir Post</button>
+                            </div>
+                        </div>
+                    `;
+                });
+                kArea.innerHTML += `<div class="prod-column"><div class="prod-column-header" style="color:${col.color}"><div style="display:flex; align-items:center; gap:8px;"><div class="dot" style="background:${col.color}"></div> ${col.title}</div><span style="background:var(--bg-card); padding:2px 8px; border-radius:10px; font-size:0.7rem; color:var(--text-main);">${colTasks.length}</span></div><div class="col-content">${cards}</div></div>`;
+            });
+        }
+
+        /* --- AÇÕES DE DADOS COM NOTIFICAÇÃO --- */
+        function toggleChk(field) { const c = clients.find(i => i.id === activeClient); if(!c.chk) c.chk = {}; c.chk[field] = !c.chk[field]; saveData(); }
+        
+        function moveTask(id, stage, title) { 
+            const t = tasks.find(i => i.id === id); 
+            t.stage = stage; 
+            if(stage === 'design' || stage === 'copy') showToast(`🚀 Produção iniciada: ${title}`);
+            if(stage === 'sched') showToast(`✅ Peça Programada: ${title}`);
+            saveData(); 
+        }
+
+        function moveFreela(id, stage, title) { 
+            const f = freelas.find(i => i.id === id); 
+            f.stage = stage; 
+            if(stage === 'doing') showToast(`⚡ Freela em andamento: ${title}`);
+            if(stage === 'done') showToast(`💸 Freela Entregue: ${title}`);
+            saveData(); 
+        }
+
+        /* --- MODAL CLIENTE --- */
+        function openClientModal(id=null) {
+            populateTeamSelects();
+            document.getElementById('clientModal').style.display='flex';
+            document.getElementById('client-form').reset();
+            const p = document.getElementById('c-preview'); p.style.display = 'none'; p.src = ''; document.getElementById('c-img-b64').value = '';
+
+            if(id) {
+                const c = clients.find(i=>i.id===id);
+                document.getElementById('client-id').value = c.id;
+                document.getElementById('c-name').value = c.name;
+                document.getElementById('c-profile').value = c.profile || '';
+                document.getElementById('c-login').value = c.login || '';
+                document.getElementById('c-freq').value = c.freq || 3;
+                document.getElementById('c-poster').value = c.poster || 'Agência Saturno';
+                document.getElementById('c-team-owner').value = c.teamOwner || ''; 
+                document.getElementById('c-notes').value = c.notes || '';
+                document.getElementById('c-fin-desc').value = c.finDesc || '';
+                document.getElementById('c-fin-value').value = c.finValue || '';
+                document.getElementById('c-fin-day').value = c.finDay || '';
+                document.getElementById('c-fin-phone').value = c.finPhone || '';
+                document.getElementById('c-fin-status').value = c.finStatus || 'Em Dia';
+                document.getElementById('c-needs-nf').value = c.needsNf || 'Nao';
+                document.getElementById('c-cnpj').value = c.cnpj || '';
+                
+                if(c.img) { document.getElementById('c-img-b64').value = c.img; p.src = c.img; p.style.display = 'block'; }
+                document.getElementById('client-modal-title').innerText = 'Editar Cliente';
+            } else {
+                document.getElementById('client-id').value = '';
+                document.getElementById('client-modal-title').innerText = 'Novo Cliente';
+            }
+        }
+
+        function saveClient(e) {
             e.preventDefault();
-            const sData = {
-                id: 's_' + Date.now(),
-                title: document.getElementById('s-title').value,
-                val: document.getElementById('s-val').value,
-                day: document.getElementById('s-day').value
+            const id = document.getElementById('client-id').value || 'c'+Date.now();
+            const cData = {
+                id, name: document.getElementById('c-name').value, img: document.getElementById('c-img-b64').value,
+                profile: document.getElementById('c-profile').value, login: document.getElementById('c-login').value, freq: parseInt(document.getElementById('c-freq').value),
+                poster: document.getElementById('c-poster').value, teamOwner: document.getElementById('c-team-owner').value, notes: document.getElementById('c-notes').value,
+                finDesc: document.getElementById('c-fin-desc').value, finValue: document.getElementById('c-fin-value').value, finDay: document.getElementById('c-fin-day').value, 
+                finPhone: document.getElementById('c-fin-phone').value, finStatus: document.getElementById('c-fin-status').value, needsNf: document.getElementById('c-needs-nf').value, cnpj: document.getElementById('c-cnpj').value,
+                nfStatus: clients.find(i=>i.id===id)?.nfStatus || 'Pendente', chk: clients.find(i=>i.id===id)?.chk || { group:false, briefing:false, strategy:false, pic:false, bio:false, highlights:false }
             };
-            subs.push(sData); closeModal('subModal'); saveData(); routeView(); showToast('Custo Adicionado!');
+            const idx = clients.findIndex(i=>i.id===id);
+            if(idx > -1) clients[idx] = cData; else { clients.push(cData); activeClient = id; mainView = 'client'; }
+            closeModal('clientModal'); saveData(); showToast(`Cliente ${cData.name} salvo!`);
         }
-        function deleteSub(id) { if(confirm("Excluir custo?")){ subs = subs.filter(s=>s.id!==id); saveData(); routeView(); } }
+        function deleteClient(id) { if(confirm("Apagar cliente e todas as suas peças?")) { clients = clients.filter(c=>c.id!==id); tasks = tasks.filter(t=>t.clientId!==id); activeClient = null; mainView = 'dashboard'; saveData(); } }
 
+        /* --- MODAL TAREFA (ESTEIRA) --- */
+        function openTaskModal(id=null) {
+            document.getElementById('taskModal').style.display='flex';
+            document.getElementById('task-form').reset();
+            const p = document.getElementById('t-preview'); p.style.display = 'none'; p.src = ''; document.getElementById('t-img-b64').value = '';
+
+            if(id) {
+                const t = tasks.find(i=>i.id===id);
+                document.getElementById('t-id').value = t.id; document.getElementById('t-title').value = t.title;
+                document.getElementById('t-owner').value = t.owner; document.getElementById('t-priority').value = t.priority;
+                document.getElementById('t-date').value = t.date || '';
+                document.getElementById('t-link').value = t.link || ''; document.getElementById('t-stage').value = t.stage;
+                if(t.imgBase64) { document.getElementById('t-img-b64').value = t.imgBase64; p.src = t.imgBase64; p.style.display = 'block'; }
+            } else {
+                document.getElementById('t-id').value = '';
+            }
+        }
+        function saveTask(e) {
+            e.preventDefault();
+            const id = document.getElementById('t-id').value || 't'+Date.now();
+            const tData = { 
+                id, clientId: activeClient, title: document.getElementById('t-title').value, 
+                owner: document.getElementById('t-owner').value, priority: document.getElementById('t-priority').value, 
+                date: document.getElementById('t-date').value, imgBase64: document.getElementById('t-img-b64').value,
+                link: document.getElementById('t-link').value, stage: document.getElementById('t-stage').value 
+            };
+            const idx = tasks.findIndex(i=>i.id===id);
+            if(idx>-1) tasks[idx]=tData; else { tasks.push(tData); showToast(`📌 Tarefa Adicionada: ${tData.title}`); }
+            closeModal('taskModal'); saveData();
+        }
+        function deleteTask(id) { if(confirm("Excluir peça de conteúdo?")){ tasks = tasks.filter(t=>t.id!==id); saveData(); } }
+
+        /* --- MODAL FREELA --- */
+        function openFreelaModal(id=null) {
+            document.getElementById('freelaModal').style.display='flex';
+            document.getElementById('freela-form').reset();
+            const p = document.getElementById('f-preview'); p.style.display = 'none'; p.src = ''; document.getElementById('f-img-b64').value = '';
+
+            if(id) {
+                const f = freelas.find(i=>i.id===id);
+                document.getElementById('f-id').value = f.id; document.getElementById('f-title').value = f.title;
+                document.getElementById('f-val').value = f.val; document.getElementById('f-owner').value = f.owner;
+                document.getElementById('f-date').value = f.date || '';
+                document.getElementById('f-link').value = f.link || ''; document.getElementById('f-stage').value = f.stage;
+                if(f.imgBase64) { document.getElementById('f-img-b64').value = f.imgBase64; p.src = f.imgBase64; p.style.display = 'block'; }
+            } else {
+                document.getElementById('f-id').value = '';
+            }
+        }
+        function saveFreela(e) {
+            e.preventDefault();
+            const id = document.getElementById('f-id').value || 'f'+Date.now();
+            const fData = { 
+                id, title: document.getElementById('f-title').value, val: document.getElementById('f-val').value, 
+                owner: document.getElementById('f-owner').value, date: document.getElementById('f-date').value,
+                imgBase64: document.getElementById('f-img-b64').value, link: document.getElementById('f-link').value, stage: document.getElementById('f-stage').value 
+            };
+            const idx = freelas.findIndex(i=>i.id===id);
+            if(idx>-1) freelas[idx]=fData; else { freelas.push(fData); showToast(`⚡ Novo Freela: ${fData.title}`); }
+            closeModal('freelaModal'); saveData();
+        }
+        function deleteFreela(id) { if(confirm("Excluir Freela?")){ freelas = freelas.filter(f=>f.id!==id); saveData(); } }
+
+        /* --- MODAL REUNIÕES --- */
+        function openMeetingModal(id=null) {
+            document.getElementById('meetingModal').style.display='flex';
+            document.getElementById('meeting-form').reset();
+            
+            const sel = document.getElementById('m-client');
+            sel.innerHTML = '<option value="">Nenhum / Reunião Interna</option>';
+            clients.forEach(c => sel.innerHTML += `<option value="${c.id}">${c.name}</option>`);
+
+            if(id) {
+                const m = meetings.find(i=>i.id===id);
+                document.getElementById('m-id').value = m.id; document.getElementById('m-title').value = m.title;
+                document.getElementById('m-date').value = m.date; document.getElementById('m-time').value = m.time;
+                document.getElementById('m-client').value = m.client || ''; document.getElementById('m-link').value = m.link || '';
+            } else { document.getElementById('m-id').value = ''; }
+        }
         function saveMeeting(e) {
             e.preventDefault();
-            const mData = {
-                id: 'm_' + Date.now(),
-                title: document.getElementById('m-title').value,
-                date: document.getElementById('m-date').value,
-                time: document.getElementById('m-time').value,
-                link: document.getElementById('m-link').value
-            };
-            meetings.push(mData); 
-            if(mData.link) { showToast(`📅 Reunião Marcada: ${mData.title}`); }
-            closeModal('meetingModal'); saveData(); routeView();
+            const id = document.getElementById('m-id').value || 'm'+Date.now();
+            const mData = { id, title: document.getElementById('m-title').value, date: document.getElementById('m-date').value, time: document.getElementById('m-time').value, client: document.getElementById('m-client').value, link: document.getElementById('m-link').value };
+            const idx = meetings.findIndex(i=>i.id===id);
+            if(idx>-1) meetings[idx]=mData; else { meetings.push(mData); showToast(`📅 Reunião Marcada: ${mData.title}`); }
+            closeModal('meetingModal'); saveData();
         }
-        function deleteMeeting(id) { if(confirm("Excluir Reunião?")){ meetings = meetings.filter(m=>m.id!==id); saveData(); routeView(); } }
+        function deleteMeeting(id) { if(confirm("Excluir Reunião?")){ meetings = meetings.filter(m=>m.id!==id); saveData(); } }
 
         function closeModal(id) { document.getElementById(id).style.display='none'; }
-        function openModal(id) { document.getElementById(id).style.display='flex'; }
 
-        /* --- AGÊNCIA --- */
+        /* --- AGÊNCIA (FUNÇÕES ADICIONADAS) --- */
         function openAgencyModal() {
             document.getElementById('agencyModal').style.display='flex';
-            document.getElementById('ag-name').value = window.agencyNameText || '';
+            document.getElementById('ag-name').value = agency.name || '';
             const p = document.getElementById('ag-preview');
-            if (window.agencyLogoText) {
-                document.getElementById('ag-logo-b64').value = window.agencyLogoText;
-                p.src = window.agencyLogoText;
+            if (agency.logo) {
+                document.getElementById('ag-logo-b64').value = agency.logo;
+                p.src = agency.logo;
                 p.style.display = 'block';
             } else {
                 document.getElementById('ag-logo-b64').value = '';
@@ -1233,88 +1395,16 @@
 
         function saveAgency(e) {
             e.preventDefault();
-            window.agencyNameText = document.getElementById('ag-name').value || 'Saturno Studio';
-            window.agencyLogoText = document.getElementById('ag-logo-b64').value || '';
+            agency.name = document.getElementById('ag-name').value || 'Saturno Studio';
+            agency.logo = document.getElementById('ag-logo-b64').value || '';
             closeModal('agencyModal');
             saveData();
-            renderSidebar();
             showToast('Perfil da Agência atualizado!');
         }
 
-        // INICIALIZAÇÃO FINAL E UTILS
-        function populateTeamSelects() {
-            const des = document.getElementById('c-designer');
-            const sm = document.getElementById('c-sm');
-            const fOwn = document.getElementById('f-owner');
-            
-            if(des) des.innerHTML = '<option value="">Selecionar...</option>' + team.map(t => `<option value="${t.id}">${t.name}</option>`).join('');
-            if(sm) sm.innerHTML = '<option value="">Selecionar...</option>' + team.map(t => `<option value="${t.id}">${t.name}</option>`).join('');
-            if(fOwn) fOwn.innerHTML = '<option value="">Equipe Geral</option>' + team.map(t => `<option value="${t.id}">${t.name}</option>`).join('');
-        }
-
-        const formatBRL = (val) => Number(val).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-        const getInitials = (n) => n ? n.split(' ').map(x=>x[0]).join('').substring(0,2).toUpperCase() : 'U';
-        
-        function showToast(msg) {
-            const container = document.getElementById('toast-container');
-            const t = document.createElement('div');
-            t.className = 'toast';
-            t.innerText = msg;
-            container.appendChild(t);
-            setTimeout(() => t.remove(), 3500);
-        }
-
-        function isDueSoon(dateStr) {
-            if(!dateStr) return false;
-            const dueDate = new Date(dateStr);
-            const now = new Date();
-            const diffTime = (dueDate - now);
-            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-            return diffDays <= 2 && diffDays >= -1;
-        }
-
-        function encodeImageFileAsURL(element, previewId, hiddenInputId) {
-            const file = element.files[0];
-            if(!file) return;
-            const reader = new FileReader();
-            reader.onloadend = function() {
-                document.getElementById(hiddenInputId).value = reader.result;
-                const p = document.getElementById(previewId);
-                p.src = reader.result;
-                p.style.display = 'block';
-            }
-            reader.readAsDataURL(file);
-        }
-
-        function toggleTheme() {
-            const current = document.body.getAttribute('data-theme');
-            const target = current === 'light' ? 'dark' : 'light';
-            document.body.setAttribute('data-theme', target);
-            routeView();
-        }
-
-        function moveTask(id, stage, title) {
-            const t = tasks.find(i => i.id === id);
-            t.stage = stage;
-            if(stage === 'design' || stage === 'copy') showToast(`🚀 Produção iniciada: ${title}`);
-            if(stage === 'sched') showToast(`✅ Peça Programada: ${title}`);
-            saveData();
-            routeView();
-        }
-
-        function moveFreela(id, stage, title) {
-            const f = freelas.find(i => i.id === id);
-            f.stage = stage;
-            if(stage === 'doing') showToast(`⚡ Freela em andamento: ${title}`);
-            if(stage === 'done') showToast(`💸 Freela Entregue: ${title}`);
-            saveData();
-            routeView();
-        }
-
-        // --- SISTEMA DE ESCUTA EM TEMPO REAL ---
-        window.onload = function() {
-            db.collection("saturno_dados").doc("hub_operacional")
-            .onSnapshot((doc) => {
+        /* --- INICIALIZAÇÃO FINAL (ESCUTANDO O BANCO EM TEMPO REAL) --- */
+        function initApp() {
+            db.collection("saturno_dados").doc("hub_operacional").onSnapshot((doc) => {
                 if (doc.exists) {
                     const data = doc.data();
                     clients = data.clients || [];
@@ -1323,44 +1413,34 @@
                     meetings = data.meetings || [];
                     team = data.team || [];
                     subs = data.subs || [];
+                    agency = data.agency || { name: 'Saturno Studio', logo: '' };
                     
-                    const agData = data.agency || {};
-                    window.agencyNameText = agData.name || "Saturno Studio";
-                    window.agencyLogoText = agData.logo || "";
-
-                    // Sincroniza LocalStorage para redundância local rápida
+                    // Salva no LocalStorage como backup caso a internet caia
                     localStorage.setItem('sat_final_cli', JSON.stringify(clients));
                     localStorage.setItem('sat_final_tsk', JSON.stringify(tasks));
                     localStorage.setItem('sat_final_freelas', JSON.stringify(freelas));
                     localStorage.setItem('sat_final_meetings', JSON.stringify(meetings));
                     localStorage.setItem('sat_final_team', JSON.stringify(team));
                     localStorage.setItem('sat_final_subs', JSON.stringify(subs));
-                    localStorage.setItem('sat_final_agency', JSON.stringify({name: window.agencyNameText, logo: window.agencyLogoText}));
-
-                    console.log("🔄 Dados atualizados em tempo real via Firebase Firestore!");
+                    localStorage.setItem('sat_final_agency', JSON.stringify(agency));
                 }
                 
+                // Atualiza a tela de todo mundo que estiver com o sistema aberto
+                populateTeamSelects();
                 updateBadges();
                 renderSidebar();
                 routeView();
             }, (error) => {
-                console.error("Erro na escuta Firestore. Carregando redundância offline.", error);
-                // Caso ocorra falha de rede/permissão, recupera os dados salvos localmente
-                clients = JSON.parse(localStorage.getItem('sat_final_cli')) || [];
-                tasks = JSON.parse(localStorage.getItem('sat_final_tsk')) || [];
-                freelas = JSON.parse(localStorage.getItem('sat_final_freelas')) || [];
-                meetings = JSON.parse(localStorage.getItem('sat_final_meetings')) || [];
-                team = JSON.parse(localStorage.getItem('sat_final_team')) || [];
-                subs = JSON.parse(localStorage.getItem('sat_final_subs')) || [];
-                const localAg = JSON.parse(localStorage.getItem('sat_final_agency')) || {};
-                window.agencyNameText = localAg.name || "Saturno Studio";
-                window.agencyLogoText = localAg.logo || "";
-
+                console.error("Erro ao conectar com Firebase. Carregando modo Offline.", error);
+                populateTeamSelects();
                 updateBadges();
                 renderSidebar();
                 routeView();
             });
-        };
+        }
+        
+        // Dá o pontapé inicial no sistema
+        initApp();
     </script>
 </body>
 </html>
