@@ -58,7 +58,7 @@
         .btn-whatsapp:hover { opacity: 0.9; transform: translateY(-1px); box-shadow: 0 4px 12px rgba(37, 211, 102, 0.3); }
 
         /* SIDEBAR */
-        .sidebar { width: 320px; background-color: var(--bg-sidebar); border-right: 1px solid var(--border); display: flex; flex-direction: column; flex-shrink: 0; z-index: 10; }
+        .sidebar { width: 320px; background-color: var(--bg-sidebar); border-right: 1px solid var(--border); display: flex; flex-direction: column; flex-shrink: 0; z-index: 10; overflow-y: auto; }
         .sidebar-header { padding: 24px; border-bottom: 1px solid var(--border); }
         .agency-profile { display: flex; align-items: center; gap: 12px; margin-bottom: 20px; padding: 10px; border-radius: 12px; cursor: pointer; transition: 0.2s; border: 1px solid transparent; }
         .agency-profile:hover { background: var(--bg-card); border-color: var(--border); }
@@ -68,14 +68,14 @@
         .agency-info span { font-size: 0.7rem; color: var(--text-muted); display: block; }
         
         /* ICONS E MENU GLOBAL */
-        .global-nav { padding: 16px 12px; border-bottom: 1px solid var(--border); display: flex; flex-direction: column; gap: 4px; }
+        .global-nav { padding: 16px 12px; border-bottom: 1px solid var(--border); display: flex; flex-direction: column; gap: 4px; flex-shrink: 0; }
         .nav-item { display: flex; align-items: center; justify-content: space-between; padding: 10px 14px; border-radius: 10px; cursor: pointer; color: var(--text-muted); font-weight: 600; font-size: 0.85rem; transition: 0.2s; border: 1px solid transparent;}
         .nav-item:hover { color: var(--text-main); background: var(--bg-card); }
         .nav-item.active { background: var(--bg-card); color: var(--accent); border-color: var(--border); }
         .nav-item.active svg { color: var(--accent); }
         .nav-badge { background: var(--danger); color: #fff; font-size: 0.7rem; padding: 2px 6px; border-radius: 10px; display: none; }
 
-        .sidebar-title { font-size: 0.7rem; font-weight: 700; color: var(--text-muted); padding: 16px 16px 8px 16px; letter-spacing: 0.5px; text-transform: uppercase; }
+        .sidebar-title { font-size: 0.7rem; font-weight: 700; color: var(--text-muted); padding: 16px 16px 8px 16px; letter-spacing: 0.5px; text-transform: uppercase; flex-shrink: 0; }
         .client-list-container { flex: 1; overflow-y: auto; padding: 0 12px 12px 12px; }
         .client-item { display: flex; align-items: center; gap: 12px; padding: 10px 12px; border-radius: 10px; cursor: pointer; margin-bottom: 6px; transition: 0.2s; border: 1px solid transparent; }
         .client-item:hover { background-color: var(--bg-card); }
@@ -170,7 +170,7 @@
         .stage-select:hover { color: var(--text-main); border-color: var(--text-muted); }
 
         /* DASHBOARD GRIDS */
-        .dash-container { padding: 32px; display: flex; flex-direction: column; gap: 24px; }
+        .dash-container { padding: 32px; display: flex; flex-direction: column; gap: 24px; overflow-y: auto; }
         .dash-metrics { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 20px; }
         .metric-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 16px; padding: 24px; position: relative; overflow: hidden; box-shadow: 0 2px 10px var(--shadow-sm); }
         .metric-card span { font-size: 0.75rem; font-weight: 700; text-transform: uppercase; color: var(--text-muted); letter-spacing: 0.5px; display: block; margin-bottom: 8px;}
@@ -182,6 +182,7 @@
         .dash-panel h3 { font-size: 1.1rem; margin-bottom: 16px; color: var(--text-main); }
         .chart-container { width: 100%; height: 260px; position: relative; display: flex; justify-content: center;}
         
+        /* TABLES */
         .fin-table-wrapper { flex: 1; overflow-y: auto; max-height: 300px;}
         .fin-table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
         .fin-table th { text-align: left; padding: 12px 8px; color: var(--text-muted); border-bottom: 1px solid var(--border); font-weight: 600; position: sticky; top: 0; background: var(--bg-card);}
@@ -198,9 +199,9 @@
         .btn-icon:hover { color: var(--accent); }
         .btn-icon.danger:hover { color: var(--danger); }
 
-        /* MODAIS */
-        .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0, 0, 0, 0.8); backdrop-filter: blur(5px); display: none; align-items: center; justify-content: center; z-index: 1000; }
-        .modal { background-color: var(--bg-card); border: 1px solid var(--border); border-radius: 16px; width: 100%; max-width: 600px; max-height: 90vh; overflow-y: auto; padding: 32px; box-shadow: 0 10px 40px rgba(0,0,0,0.5); }
+        /* MODAIS OTIMIZADOS */
+        .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0, 0, 0, 0.8); backdrop-filter: blur(5px); display: none; align-items: center; justify-content: center; z-index: 1000; padding: 20px; overflow-y: auto; }
+        .modal { background-color: var(--bg-card); border: 1px solid var(--border); border-radius: 16px; width: 100%; max-width: 600px; padding: 32px; box-shadow: 0 10px 40px rgba(0,0,0,0.5); margin: auto; }
         .modal h2 { font-size: 1.3rem; margin-bottom: 24px; border-bottom: 1px solid var(--border); padding-bottom: 12px; display:flex; justify-content:space-between; align-items:center; color: var(--text-main);}
         .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
         .form-group { margin-bottom: 16px; }
@@ -216,13 +217,19 @@
         
         .file-upload-wrapper { display: flex; align-items: center; gap: 12px; background: var(--bg-input); border: 1px dashed var(--border); padding: 12px; border-radius: 8px; }
         .file-upload-wrapper img { width: 40px; height: 40px; border-radius: 6px; object-fit: cover; display: none; }
+
+        /* Ajustes para Telas Menores */
+        @media (max-width: 768px) {
+            .form-grid { grid-template-columns: 1fr; }
+            .modal { padding: 20px; }
+        }
     </style>
 </head>
 <body data-theme="dark">
 
     <div id="toast-container"></div>
 
-    <!-- SIDEBAR COM ÍCONES PROFISSIONAIS -->
+    <!-- SIDEBAR -->
     <aside class="sidebar">
         <div class="sidebar-header">
             <div class="agency-profile" onclick="promptAgencyPassword()" title="Editar Perfil da Agência">
@@ -303,7 +310,7 @@
                         <option value="Comissão">Por Comissão / Freela</option>
                     </select>
                 </div>
-                <div class="form-group full"><label>Valor Base (R$) - Visível apenas no Financeiro Restrito</label><input type="number" step="0.01" id="tm-val" placeholder="0.00" required></div>
+                <div class="form-group"><label>Valor Base (R$) - Oculto na tela principal</label><input type="number" step="0.01" id="tm-val" placeholder="0.00" required></div>
 
                 <div class="modal-actions">
                     <button type="button" class="btn-cancel" onclick="closeModal('teamModal')">Cancelar</button>
@@ -327,7 +334,6 @@
                         <input type="hidden" id="ag-logo-b64">
                     </div>
                 </div>
-                <div class="form-group full"><label>Senha do Financeiro Restrito (Padrão: 400289)</label><input type="text" id="ag-pass" required></div>
                 <div class="modal-actions">
                     <button type="button" class="btn-cancel" onclick="closeModal('agencyModal')">Cancelar</button>
                     <button type="submit" class="btn-primary">Salvar Agência</button>
@@ -371,7 +377,7 @@
 
                 <div class="form-group full">
                     <label>Briefing / Informações Importantes</label>
-                    <textarea id="c-notes" rows="2" placeholder="Bio estrita de 150 caracteres, usar preto metálico..."></textarea>
+                    <textarea id="c-notes" rows="2" placeholder="Bio estrita de 150 caracteres..."></textarea>
                 </div>
 
                 <div class="form-group full" style="border-top: 1px solid var(--border); padding-top:16px; margin-top:8px;">
@@ -504,13 +510,13 @@
 
     <script>
         /* --- DADOS LOCAIS --- */
-        let clients = JSON.parse(localStorage.getItem('sat_v12_cli')) || [];
-        let tasks = JSON.parse(localStorage.getItem('sat_v12_tsk')) || [];
-        let freelas = JSON.parse(localStorage.getItem('sat_v12_freelas')) || [];
-        let meetings = JSON.parse(localStorage.getItem('sat_v12_meetings')) || [];
-        let team = JSON.parse(localStorage.getItem('sat_v12_team')) || [];
-        let subs = JSON.parse(localStorage.getItem('sat_v12_subs')) || []; 
-        let agency = JSON.parse(localStorage.getItem('sat_v12_agency')) || { name: 'Saturno Studio', logo: '', adminPass: '400289' };
+        let clients = JSON.parse(localStorage.getItem('sat_final_cli')) || [];
+        let tasks = JSON.parse(localStorage.getItem('sat_final_tsk')) || [];
+        let freelas = JSON.parse(localStorage.getItem('sat_final_freelas')) || [];
+        let meetings = JSON.parse(localStorage.getItem('sat_final_meetings')) || [];
+        let team = JSON.parse(localStorage.getItem('sat_final_team')) || [];
+        let subs = JSON.parse(localStorage.getItem('sat_final_subs')) || []; 
+        let agency = JSON.parse(localStorage.getItem('sat_final_agency')) || { name: 'Saturno Studio', logo: '' };
         let currentTheme = localStorage.getItem('sat_theme') || 'dark';
         
         const ADMIN_PASS = '400289'; // Senha Mestra Definitiva
@@ -567,13 +573,13 @@
         }
 
         function saveData() {
-            localStorage.setItem('sat_v12_cli', JSON.stringify(clients));
-            localStorage.setItem('sat_v12_tsk', JSON.stringify(tasks));
-            localStorage.setItem('sat_v12_freelas', JSON.stringify(freelas));
-            localStorage.setItem('sat_v12_meetings', JSON.stringify(meetings));
-            localStorage.setItem('sat_v12_team', JSON.stringify(team));
-            localStorage.setItem('sat_v12_subs', JSON.stringify(subs));
-            localStorage.setItem('sat_v12_agency', JSON.stringify(agency));
+            localStorage.setItem('sat_final_cli', JSON.stringify(clients));
+            localStorage.setItem('sat_final_tsk', JSON.stringify(tasks));
+            localStorage.setItem('sat_final_freelas', JSON.stringify(freelas));
+            localStorage.setItem('sat_final_meetings', JSON.stringify(meetings));
+            localStorage.setItem('sat_final_team', JSON.stringify(team));
+            localStorage.setItem('sat_final_subs', JSON.stringify(subs));
+            localStorage.setItem('sat_final_agency', JSON.stringify(agency));
             updateBadges();
             renderSidebar();
             routeView();
@@ -812,10 +818,12 @@
 
         function promptAgencyPassword() {
             const pass = prompt("Digite a senha administrativa para editar a agência:");
-            if(pass === ADMIN_PASS) {
-                openAgencyModal();
-            } else if(pass !== null) {
-                alert('Senha incorreta.');
+            if (pass !== null) { // Só checa a senha se não clicar em Cancelar
+                if(pass === ADMIN_PASS) {
+                    openAgencyModal();
+                } else {
+                    alert('Senha incorreta.');
+                }
             }
         }
 
@@ -904,11 +912,15 @@
         // Funções com Senha para Equipe
         function openTeamModalPassword(id) {
             const pass = prompt("Digite a senha administrativa para editar o colaborador:");
-            if(pass === ADMIN_PASS) { openTeamModal(id); } else if(pass !== null) { alert('Senha incorreta.'); }
+            if (pass !== null) {
+                if(pass === ADMIN_PASS) { openTeamModal(id); } else { alert('Senha incorreta.'); }
+            }
         }
         function deleteTeamPassword(id) {
             const pass = prompt("Digite a senha administrativa para excluir o colaborador:");
-            if(pass === ADMIN_PASS) { deleteTeam(id); } else if(pass !== null) { alert('Senha incorreta.'); }
+            if (pass !== null) {
+                if(pass === ADMIN_PASS) { deleteTeam(id); } else { alert('Senha incorreta.'); }
+            }
         }
 
         function openTeamModal(id=null) {
