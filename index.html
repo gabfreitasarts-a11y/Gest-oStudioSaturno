@@ -584,35 +584,44 @@
                 preview.style.display = 'block';
             }
             function saveData() {
-            // Backup Local Imediato
-            localStorage.setItem('sat_final_cli', JSON.stringify(clients));
-            localStorage.setItem('sat_final_tsk', JSON.stringify(tasks));
-            localStorage.setItem('sat_final_freelas', JSON.stringify(freelas));
-            localStorage.setItem('sat_final_meetings', JSON.stringify(meetings));
-            localStorage.setItem('sat_final_team', JSON.stringify(team));
-            localStorage.setItem('sat_final_subs', JSON.stringify(subs));
-            
-            // CORREÇÃO: Garante que a agência seja um objeto limpo e puro antes de salvar
-            const dadosAgenciaLimpos = {
-                name: agency.name || 'Saturno Studio',
-                logo: agency.logo || ''
-            };
-            
+            // 1. Backup Local Imediato (Garante que nada se perca no seu navegador)
+            localStorage.setItem('sat_final_cli', JSON.stringify(clients || []));
+            localStorage.setItem('sat_final_tsk', JSON.stringify(tasks || []));
+            localStorage.setItem('sat_final_freelas', JSON.stringify(freelas || []));
+            localStorage.setItem('sat_final_meetings', JSON.stringify(meetings || []));
+            localStorage.setItem('sat_final_team', JSON.stringify(team || []));
+            localStorage.setItem('sat_final_subs', JSON.stringify(subs || []));
+
+            // 2. CORREÇÃO CRÍTICA: Isola e limpa os dados da agência para não enviar lixo HTML
+            let dadosAgenciaLimpos = { name: 'Saturno Studio', logo: '' };
+            if (typeof agency === 'object' && agency !== null && !agency.nodeType) {
+                dadosAgenciaLimpos.name = agency.name || 'Saturno Studio';
+                dadosAgenciaLimpos.logo = agency.logo || '';
+            } else if (document.getElementById('ag-name')) {
+                // Se 'agency' virou um elemento HTML por erro do navegador, pegamos direto dos inputs
+                dadosAgenciaLimpos.name = document.getElementById('ag-name').value || 'Saturno Studio';
+                dadosAgenciaLimpos.logo = document.getElementById('ag-logo-b64')?.value || '';
+            }
             localStorage.setItem('sat_final_agency', JSON.stringify(dadosAgenciaLimpos));
-            
-            // Sincroniza com a nuvem Firebase usando o objeto limpo
-            db.collection("saturno_dados").doc("hub_operacional").set({
-                clients, 
-                tasks, 
-                freelas, 
-                meetings, 
-                team, 
-                subs, 
+
+            // 3. Limpa e mapeia as outras listas para remover qualquer propriedade oculta inválida do JS
+            const dadosParaEnviar = {
+                clients: Array.isArray(clients) ? clients.map(c => ({...c})) : [],
+                tasks: Array.isArray(tasks) ? tasks.map(t => ({...t})) : [],
+                freelas: Array.isArray(freelas) ? freelas.map(f => ({...f})) : [],
+                meetings: Array.isArray(meetings) ? meetings.map(m => ({...m})) : [],
+                team: Array.isArray(team) ? team.map(t => ({...t})) : [],
+                subs: Array.isArray(subs) ? subs.map(s => ({...s})) : [],
                 agency: dadosAgenciaLimpos
-            }).then(() => {
-                console.log("Dados sincronizados com o Firebase com sucesso!");
-            }).catch(err => {
-                console.error("Erro ao salvar no Firebase: ", err);
+            };
+
+            // 4. Envia para a Nuvem de forma limpa e segura
+            db.collection("saturno_dados").doc("hub_operacional").set(dadosParaEnviar)
+            .then(() => {
+                console.log("✅ Sincronizado com o Firebase com sucesso!");
+            })
+            .catch(err => {
+                console.error("❌ Erro fatal ao salvar no Firebase: ", err);
             });
         }
 
