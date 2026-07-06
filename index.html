@@ -511,7 +511,9 @@
         /* --- CONFIGURAÇÃO SUPABASE --- */
         const SUPABASE_URL = 'https://ygomjnnuscczvijcodlc.supabase.co';
         const SUPABASE_KEY = 'sb_publishable_CzFf6Cs0NdILtbgohHFBcg_W7gNDec1';
-        const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        
+        // MUDANÇA IMPORTANTE: O nome da variável agora é 'supabaseClient'
+        const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
         /* --- DADOS LOCAIS --- */
         let clients = JSON.parse(localStorage.getItem('sat_final_cli')) || [];
@@ -563,7 +565,7 @@
             return diffDays <= 2 && diffDays >= -1;
         }
 
-        /* CORREÇÃO DO ERRO DA TELA BRANCA: Função isolada corretamente */
+        /* Função isolada para evitar erros de leitura */
         function encodeImageFileAsURL(element, previewId, hiddenInputId) {
             const file = element.files[0];
             if(!file) return;
@@ -598,7 +600,7 @@
                 clients, tasks, freelas, meetings, team, subs, agency: dadosAgenciaLimpos
             };
 
-            const { error } = await supabase
+            const { error } = await supabaseClient
                 .from('app_data')
                 .upsert({ id: 'hub_operacional', payload: payloadData });
 
@@ -1398,7 +1400,7 @@
         async function initApp() {
             try {
                 // 1. Busca os dados iniciais salvos no banco
-                const { data, error } = await supabase
+                const { data, error } = await supabaseClient
                     .from('app_data')
                     .select('payload')
                     .eq('id', 'hub_operacional')
@@ -1429,7 +1431,7 @@
             }
 
             // 2. Fica "escutando" mudanças em tempo real (Realtime Sync)
-            supabase.channel('custom-all-channel')
+            supabaseClient.channel('custom-all-channel')
                 .on('postgres_changes', { event: '*', schema: 'public', table: 'app_data' }, (payloadDB) => {
                     if (payloadDB.new && payloadDB.new.id === 'hub_operacional') {
                         const d = payloadDB.new.payload;
