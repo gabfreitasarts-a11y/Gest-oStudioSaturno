@@ -8,10 +8,6 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
-
     <style>
         /* TEMAS E VARIÁVEIS */
         :root {
@@ -275,132 +271,40 @@
                 </div>
                 <span class="nav-badge" id="badge-meetings">0</span>
             </div>
-            <div class="nav-item" id="nav-nf" onclick="switchMainView('nf')">
-                <div style="display:flex; align-items:center; gap:12px;">
-                    <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg> Notas Fiscais
-                </div>
-            </div>
         </div>
 
-        <div class="sidebar-title">PORTFÓLIO DE CLIENTES</div>
+        <div class="sidebar-title">Parceiros Clientes</div>
         <div class="client-list-container" id="sidebar-client-list"></div>
     </aside>
 
-    <main class="main-workspace" id="workspace-area"></main>
-
-    <div class="modal-overlay" id="teamModal">
-        <div class="modal">
-            <h2>Cadastrar Colaborador</h2>
-            <form id="team-form" onsubmit="saveTeam(event)" class="form-grid">
-                <input type="hidden" id="tm-id">
-                <div class="form-group full"><label>Nome do Colaborador *</label><input type="text" id="tm-name" required></div>
-                
-                <div class="form-group full">
-                    <label>Foto de Perfil (Upload)</label>
-                    <div class="file-upload-wrapper">
-                        <img id="tm-preview" src="">
-                        <input type="file" accept="image/*" onchange="encodeImageFileAsURL(this, 'tm-preview', 'tm-img-b64')">
-                        <input type="hidden" id="tm-img-b64">
-                    </div>
-                </div>
-
-                <div class="form-group"><label>Função / Cargo</label><input type="text" id="tm-role" placeholder="Ex: Designer, Social Media"></div>
-                <div class="form-group"><label>Cor de Identificação</label><input type="color" id="tm-color" value="#8a2be2"></div>
-                <div class="form-group"><label>Modelo de Remuneração</label>
-                    <select id="tm-type">
-                        <option value="Fixo">Salário Fixo</option>
-                        <option value="Comissão">Por Comissão / Freela</option>
-                    </select>
-                </div>
-                <div class="form-group"><label>Valor Base (R$) - Oculto na tela principal</label><input type="number" step="0.01" id="tm-val" placeholder="0.00" required></div>
-
-                <div class="modal-actions">
-                    <button type="button" class="btn-cancel" onclick="closeModal('teamModal')">Cancelar</button>
-                    <button type="submit" class="btn-primary">Salvar Colaborador</button>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    <div class="modal-overlay" id="agencyModal">
-        <div class="modal">
-            <h2>Configurar Agência</h2>
-            <form id="agency-form" onsubmit="saveAgency(event)" class="form-grid">
-                <div class="form-group full"><label>Nome da Agência</label><input type="text" id="ag-name" required></div>
-                <div class="form-group full">
-                    <label>Upload da Logo (Imagem do Computador)</label>
-                    <div class="file-upload-wrapper">
-                        <img id="ag-preview" src="">
-                        <input type="file" accept="image/*" onchange="encodeImageFileAsURL(this, 'ag-preview', 'ag-logo-b64')">
-                        <input type="hidden" id="ag-logo-b64">
-                    </div>
-                </div>
-                <div class="modal-actions">
-                    <button type="button" class="btn-cancel" onclick="closeModal('agencyModal')">Cancelar</button>
-                    <button type="submit" class="btn-primary">Salvar Agência</button>
-                </div>
-            </form>
-        </div>
-    </div>
+    <main class="main-workspace" id="main-container"></main>
 
     <div class="modal-overlay" id="clientModal">
         <div class="modal">
-            <h2 id="client-modal-title">Novo Cliente</h2>
+            <h2>Cadastrar Novo Cliente <button class="btn-icon" onclick="closeModal('clientModal')">✕</button></h2>
             <form id="client-form" onsubmit="saveClient(event)" class="form-grid">
                 <input type="hidden" id="client-id">
-                <div class="form-group full"><label>Nome da Empresa / Cliente *</label><input type="text" id="c-name" required></div>
+                
+                <div class="form-group"><label>Nome da Empresa / Cliente *</label><input type="text" id="c-name" required placeholder="Ex: Nike Brasil"></div>
+                <div class="form-group"><label>Valor do Contrato Mensal (R$) *</label><input type="number" step="0.01" id="c-fee" required placeholder="Ex: 2500"></div>
+                
+                <div class="form-group"><label>WhatsApp de Contato (Com DDD) *</label><input type="text" id="c-phone" required placeholder="Ex: 11999999999"></div>
+                <div class="form-group"><label>Data de Vencimento do Boleto (Dia) *</label><input type="number" min="1" max="31" id="c-payday" required placeholder="Ex: 10"></div>
+                
+                <div class="form-group"><label>Link do Drive (Material / Arquivos)</label><input type="url" id="c-drive" placeholder="https://drive.google.com/..."></div>
+                <div class="form-group"><label>Link do Trello / Notion (Opcional)</label><input type="url" id="c-trello" placeholder="https://..."></div>
+                
+                <div class="form-group"><label>Designer Responsável</label><select id="c-designer"><option value="">Selecionar...</option></select></div>
+                <div class="form-group"><label>Social Media Responsável</label><select id="c-sm"><option value="">Selecionar...</option></select></div>
                 
                 <div class="form-group full">
-                    <label>Upload da Foto/Logo do Cliente</label>
+                    <label>Logo da Empresa (Upload Local)</label>
                     <div class="file-upload-wrapper">
                         <img id="c-preview" src="">
                         <input type="file" accept="image/*" onchange="encodeImageFileAsURL(this, 'c-preview', 'c-img-b64')">
                         <input type="hidden" id="c-img-b64">
                     </div>
                 </div>
-
-                <div class="form-group"><label>Instagram</label><input type="text" id="c-profile" placeholder="@"></div>
-                <div class="form-group"><label>Senha/Login</label><input type="text" id="c-login" placeholder="Acesso do insta"></div>
-                
-                <div class="form-group"><label>Contrato (Posts/Sem) *</label><input type="number" id="c-freq" value="3" required></div>
-                <div class="form-group"><label>Quem Posta?</label>
-                    <select id="c-poster">
-                        <option value="Agência Saturno">A Agência</option>
-                        <option value="O Próprio Cliente">O Cliente</option>
-                    </select>
-                </div>
-                
-                <div class="form-group full">
-                    <label>Colaborador Responsável</label>
-                    <select id="c-team-owner"><option value="">Nenhum / Toda a Equipe</option></select>
-                </div>
-
-                <div class="form-group full">
-                    <label>Briefing / Informações Importantes</label>
-                    <textarea id="c-notes" rows="2" placeholder="Bio estrita de 150 caracteres..."></textarea>
-                </div>
-
-                <div class="form-group full" style="border-top: 1px solid var(--border); padding-top:16px; margin-top:8px;">
-                    <h3 style="font-size:1rem; margin-bottom:12px; color:var(--text-main);">Gestão Financeira & NF</h3>
-                </div>
-                <div class="form-group full"><label>Descrição do Plano</label><input type="text" id="c-fin-desc" placeholder="Ex: Gestão de Insta + Tráfego"></div>
-                <div class="form-group"><label>Valor Mensal (R$)</label><input type="number" step="0.01" id="c-fin-value" required></div>
-                <div class="form-group"><label>Dia do Vencimento</label><input type="number" id="c-fin-day" placeholder="Ex: 10" min="1" max="31"></div>
-                <div class="form-group"><label>Telefone / Whats (DDD)</label><input type="text" id="c-fin-phone" placeholder="11999999999"></div>
-                <div class="form-group"><label>Status do Pagamento</label>
-                    <select id="c-fin-status">
-                        <option value="Em Dia">Em Dia</option>
-                        <option value="Atrasado">Atrasado</option>
-                    </select>
-                </div>
-
-                <div class="form-group"><label>Exige Nota Fiscal?</label>
-                    <select id="c-needs-nf">
-                        <option value="Nao">Não</option>
-                        <option value="Sim">Sim</option>
-                    </select>
-                </div>
-                <div class="form-group full"><label>CNPJ para Nota Fiscal</label><input type="text" id="c-cnpj" placeholder="00.000.000/0001-00"></div>
 
                 <div class="modal-actions">
                     <button type="button" class="btn-cancel" onclick="closeModal('clientModal')">Cancelar</button>
@@ -412,34 +316,36 @@
 
     <div class="modal-overlay" id="taskModal">
         <div class="modal">
-            <h2>Novo Conteúdo (Esteira)</h2>
+            <h2>Adicionar Post ao Cronograma</h2>
             <form id="task-form" onsubmit="saveTask(event)" class="form-grid">
                 <input type="hidden" id="t-id">
-                <div class="form-group full"><label>Título / Descrição *</label><input type="text" id="t-title" required></div>
-                <div class="form-group"><label>Delegar para (Resp.)</label><select id="t-owner"><option value="">Equipe Geral</option></select></div>
-                <div class="form-group"><label>Prioridade</label><select id="t-priority"><option value="media">Média</option><option value="alta">Alta</option><option value="baixa">Baixa</option></select></div>
                 
-                <div class="form-group full"><label>Prazo de Entrega (Gera Alerta Visual)</label><input type="date" id="t-date" required></div>
-
+                <div class="form-group full"><label>Título do Post / Tema da Peça *</label><input type="text" id="t-title" required placeholder="Ex: Carrossel de Dicas de Marketing"></div>
+                <div class="form-group"><label>Data Ideal de Publicação *</label><input type="date" id="t-date" required></div>
+                <div class="form-group"><label>Nível de Prioridade</label><select id="t-priority"><option value="baixa">Baixa</option><option value="media" selected>Média</option><option value="alta">Alta</option></select></div>
+                
                 <div class="form-group full">
-                    <label>Imagem de Referência (Upload Local)</label>
+                    <label>Referência Visual (Upload Local)</label>
                     <div class="file-upload-wrapper">
                         <img id="t-preview" src="">
                         <input type="file" accept="image/*" onchange="encodeImageFileAsURL(this, 't-preview', 't-img-b64')">
                         <input type="hidden" id="t-img-b64">
                     </div>
                 </div>
-                <div class="form-group full"><label>Ou Link de Referência Externa</label><input type="text" id="t-link" placeholder="https://figma.com/..."></div>
+                <div class="form-group full"><label>Ou Link de Referência Externo</label><input type="text" id="t-link" placeholder="https://pinterest.com/..."></div>
+                
+                <div class="form-group full"><label>Direcionamento / Briefing / Legenda Provisória</label><textarea id="t-desc" rows="3" placeholder="Insira os detalhes fundamentais para a criação da peça..."></textarea></div>
                 
                 <div class="form-group full">
-                    <label>Etapa Atual</label>
+                    <label>Status Inicial no Fluxo</label>
                     <select id="t-stage">
-                        <option value="copy">1. Roteiro / Copy</option>
+                        <option value="copy" selected>1. Roteiro / Copy</option>
                         <option value="design">2. Arte & Edição</option>
                         <option value="review">3. Envio / Aprovação</option>
                         <option value="sched">4. Programado</option>
                     </select>
                 </div>
+
                 <div class="modal-actions">
                     <button type="button" class="btn-cancel" onclick="closeModal('taskModal')">Cancelar</button>
                     <button type="submit" class="btn-primary">Salvar Post</button>
@@ -456,7 +362,6 @@
                 <div class="form-group full"><label>Nome do Projeto / Demanda *</label><input type="text" id="f-title" required placeholder="Ex: Criação de Logo Barbearia"></div>
                 <div class="form-group"><label>Valor Cobrado (R$) *</label><input type="number" step="0.01" id="f-val" required></div>
                 <div class="form-group"><label>Responsável</label><select id="f-owner"><option value="">Equipe Geral</option></select></div>
-                
                 <div class="form-group full"><label>Prazo de Entrega</label><input type="date" id="f-date" required></div>
                 
                 <div class="form-group full">
@@ -473,10 +378,11 @@
                     <label>Status / Etapa</label>
                     <select id="f-stage">
                         <option value="todo">A Produzir</option>
-                        <option value="doing">Produzindo</option>
-                        <option value="done">Entregue / Aprovado</option>
+                        <option value="doing">Em Criação</option>
+                        <option value="done">Entregue & Concluído</option>
                     </select>
                 </div>
+
                 <div class="modal-actions">
                     <button type="button" class="btn-cancel" onclick="closeModal('freelaModal')">Cancelar</button>
                     <button type="submit" class="btn-primary">Salvar Freela</button>
@@ -485,168 +391,838 @@
         </div>
     </div>
 
-    <div class="modal-overlay" id="meetingModal">
+    <div class="modal-overlay" id="teamModal">
         <div class="modal">
-            <h2>Agendar Reunião</h2>
-            <form id="meeting-form" onsubmit="saveMeeting(event)" class="form-grid">
-                <input type="hidden" id="m-id">
-                <div class="form-group full"><label>Pauta / Título *</label><input type="text" id="m-title" required placeholder="Ex: Call de Fechamento"></div>
-                <div class="form-group"><label>Data *</label><input type="date" id="m-date" required></div>
-                <div class="form-group"><label>Horário *</label><input type="time" id="m-time" required></div>
-                <div class="form-group full"><label>Cliente Relacionado (Opcional)</label>
-                    <select id="m-client"><option value="">Nenhum / Reunião Interna</option></select>
+            <h2>Cadastrar Integrante do Time</h2>
+            <form id="team-form" onsubmit="saveTeam(event)" class="form-grid">
+                <input type="hidden" id="tm-id">
+                <div class="form-group"><label>Nome Completo *</label><input type="text" id="tm-name" required placeholder="Ex: Bruno Designer"></div>
+                <div class="form-group"><label>Cargo / Função Principal *</label><input type="text" id="tm-role" required placeholder="Ex: Motion Designer"></div>
+                <div class="form-group full">
+                    <label>Cor de Identificação no Sistema</label>
+                    <input type="color" id="tm-color" value="#8a2be2">
                 </div>
-                <div class="form-group full"><label>Link do Meet / Zoom</label><input type="text" id="m-link" placeholder="https://meet.google.com/..."></div>
+                <div class="form-group full">
+                    <label>Foto de Perfil (Upload Local)</label>
+                    <div class="file-upload-wrapper">
+                        <img id="tm-preview" src="">
+                        <input type="file" accept="image/*" onchange="encodeImageFileAsURL(this, 'tm-preview', 'tm-img-b64')">
+                        <input type="hidden" id="tm-img-b64">
+                    </div>
+                </div>
+
                 <div class="modal-actions">
-                    <button type="button" class="btn-cancel" onclick="closeModal('meetingModal')">Cancelar</button>
-                    <button type="submit" class="btn-primary">Salvar Reunião</button>
+                    <button type="button" class="btn-cancel" onclick="closeModal('teamModal')">Cancelar</button>
+                    <button type="submit" class="btn-primary">Salvar Integrante</button>
                 </div>
             </form>
         </div>
     </div>
 
+    <div class="modal-overlay" id="meetingModal">
+        <div class="modal">
+            <h2>Agendar Nova Reunião</h2>
+            <form id="meeting-form" onsubmit="saveMeeting(event)" class="form-grid">
+                <div class="form-group full"><label>Título / Objetivo da Pauta *</label><input type="text" id="m-title" required placeholder="Ex: Alinhamento Estratégico Mensal"></div>
+                <div class="form-group"><label>Data da Reunião *</label><input type="date" id="m-date" required></div>
+                <div class="form-group"><label>Horário Marcado *</label><input type="time" id="m-time" required></div>
+                <div class="form-group full"><label>Link da Sala (Google Meet / Zoom)</label><input type="url" id="m-link" placeholder="https://meet.google.com/..."></div>
+
+                <div class="modal-actions">
+                    <button type="button" class="btn-cancel" onclick="closeModal('meetingModal')">Cancelar</button>
+                    <button type="submit" class="btn-primary">Agendar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="subModal">
+        <div class="modal">
+            <h2>Cadastrar Custos Operacionais / Assinaturas</h2>
+            <form id="sub-form" onsubmit="saveSub(event)" class="form-grid">
+                <div class="form-group full"><label>Nome da Ferramenta / Serviço *</label><input type="text" id="s-title" required placeholder="Ex: Adobe Creative Cloud"></div>
+                <div class="form-group"><label>Custo Fixo Mensal (R$) *</label><input type="number" step="0.01" id="s-val" required></div>
+                <div class="form-group"><label>Dia de Renovação / Cobrança *</label><input type="number" min="1" max="31" id="s-day" required></div>
+
+                <div class="modal-actions">
+                    <button type="button" class="btn-cancel" onclick="closeModal('subModal')">Cancelar</button>
+                    <button type="submit" class="btn-primary">Adicionar Custo</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="agencyModal">
+        <div class="modal">
+            <h2>Configurações do Perfil da Agência</h2>
+            <form id="agency-form" onsubmit="saveAgency(event)" class="form-grid">
+                <div class="form-group full"><label>Nome Fantasia da Agência</label><input type="text" id="ag-name" placeholder="Ex: Saturno Studio"></div>
+                <div class="form-group full">
+                    <label>Logotipo Personalizado (Upload Local)</label>
+                    <div class="file-upload-wrapper">
+                        <img id="ag-preview" src="">
+                        <input type="file" accept="image/*" onchange="encodeImageFileAsURL(this, 'ag-preview', 'ag-logo-b64')">
+                        <input type="hidden" id="ag-logo-b64">
+                    </div>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn-cancel" onclick="closeModal('agencyModal')">Cancelar</button>
+                    <button type="submit" class="btn-primary">Salvar Alterações</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
     <script>
-        /* --- INTEGRAÇÃO FIREBASE (Tempo Real) --- */
         const firebaseConfig = {
-            apiKey: "AIzaSyAmHlkIH8QsaLgUGhPBwiBasjxAft9EDcw",
-            authDomain: "saturno-hub.firebaseapp.com",
-            databaseURL: "https://saturno-hub-default-rtdb.firebaseio.com",
-            projectId: "saturno-hub",
-            storageBucket: "saturno-hub.firebasestorage.app",
-            messagingSenderId: "959036369949",
-            appId: "1:959036369949:web:3893580fec77063bef6af4",
-            measurementId: "G-J8V8FSWKTW"
+            apiKey: "AIzaSyAs7O17v7H7Y8wD2f8_u8v8w8x8y8z8",
+            authDomain: "saturnostudio-hub.firebaseapp.com",
+            projectId: "saturnostudio-hub",
+            storageBucket: "saturnostudio-hub.appspot.com",
+            messagingSenderId: "1234567890",
+            appId: "1:1234567890:web:abcdef123456"
         };
-
-        if (!firebase.apps.length) {
-            firebase.initializeApp(firebaseConfig);
-        }
+        firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
+    </script>
 
-        /* --- DADOS LOCAIS --- */
-        let clients = JSON.parse(localStorage.getItem('sat_final_cli')) || [];
-        let tasks = JSON.parse(localStorage.getItem('sat_final_tsk')) || [];
-        let freelas = JSON.parse(localStorage.getItem('sat_final_freelas')) || [];
-        let meetings = JSON.parse(localStorage.getItem('sat_final_meetings')) || [];
-        let team = JSON.parse(localStorage.getItem('sat_final_team')) || [];
-        let subs = JSON.parse(localStorage.getItem('sat_final_subs')) || []; 
-        let agency = JSON.parse(localStorage.getItem('sat_final_agency')) || { name: 'Saturno Studio', logo: '' };
-        let currentTheme = localStorage.getItem('sat_theme') || 'dark';
-        
-        const ADMIN_PASS = '400289'; // Senha Mestra Definitiva
-        let mainView = 'dashboard';
-        let activeClient = null;
-        let chartInstance = null; 
-        let financeUnlocked = false;
+    <script>
+        // ESTADOS DA APLICAÇÃO GLOBAIS
+        let clients = [];
+        let tasks = [];
+        let freelas = [];
+        let meetings = [];
+        let team = [];
+        let subs = [];
 
-        // TEMA
-        document.body.setAttribute('data-theme', currentTheme);
-        function toggleTheme() {
-            currentTheme = currentTheme === 'dark' ? 'light' : 'dark';
-            document.body.setAttribute('data-theme', currentTheme);
-            localStorage.setItem('sat_theme', currentTheme);
-            if(chartInstance && mainView === 'dashboard') {
-                const color = currentTheme === 'dark' ? '#8b929e' : '#64748b';
-                chartInstance.options.plugins.legend.labels.color = color;
-                chartInstance.update();
+        // Variáveis seguras para evitar colisão de nomes com elementos HTML do navegador
+        window.agencyNameText = "Saturno Studio";
+        window.agencyLogoText = "";
+
+        let currentView = 'dashboard'; 
+        let selectedClientId = null; 
+        let isFinanceUnlocked = false; 
+
+        // ROTEAMENTO E REFRESH VISUAL
+        function switchMainView(view, clientId = null) {
+            currentView = view;
+            selectedClientId = clientId;
+            
+            document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+            document.querySelectorAll('.client-item').forEach(c => c.classList.remove('active'));
+            
+            if(view === 'dashboard') document.getElementById('nav-dash').classList.add('active');
+            if(view === 'finance') document.getElementById('nav-finance').classList.add('active');
+            if(view === 'freelas') document.getElementById('nav-freela').classList.add('active');
+            if(view === 'team') document.getElementById('nav-team').classList.add('active');
+            if(view === 'meetings') document.getElementById('nav-meetings').classList.add('active');
+            
+            if(clientId) {
+                const el = document.getElementById(`cli-${clientId}`);
+                if(el) el.classList.add('active');
+            }
+            
+            routeView();
+        }
+
+        function routeView() {
+            const container = document.getElementById('main-container');
+            if(!container) return;
+            
+            if(currentView === 'dashboard') renderDashboard(container);
+            else if(currentView === 'finance') renderFinanceView(container);
+            else if(currentView === 'freelas') renderFreelaView(container);
+            else if(currentView === 'team') renderTeamView(container);
+            else if(currentView === 'meetings') renderMeetingsView(container);
+            else if(currentView === 'client' && selectedClientId) renderClientWorkspace(container, selectedClientId);
+        }
+
+        // ELEMENTOS VISUAIS DA SIDEBAR
+        function renderSidebar() {
+            // Atualiza os cabeçalhos textuais da Agência na barra lateral
+            document.getElementById('agency-name-display').innerText = window.agencyNameText || 'Saturno Studio';
+            const logBox = document.getElementById('agency-logo-display');
+            if(window.agencyLogoText) {
+                logBox.innerHTML = `<img src="${window.agencyLogoText}">`;
+            } else {
+                logBox.innerHTML = getInitials(window.agencyNameText || 'Saturno Studio');
+            }
+
+            const container = document.getElementById('sidebar-client-list');
+            if(!container) return;
+            
+            if(clients.length === 0) {
+                container.innerHTML = `<div style="color:var(--text-muted); font-size:0.75rem; padding:16px; text-align:center;">Nenhum parceiro cadastrado.</div>`;
+                return;
+            }
+            
+            container.innerHTML = clients.map(c => {
+                const isActive = (currentView === 'client' && selectedClientId === c.id) ? 'active' : '';
+                const avatarContent = c.img ? `<img src="${c.img}">` : getInitials(c.name);
+                return `
+                    <div class="client-item ${isActive} fade-in" id="cli-${c.id}" onclick="switchMainView('client', '${c.id}')">
+                        <div class="avatar">${avatarContent}</div>
+                        <div class="client-name-wrapper">
+                            <h4>${c.name}</h4>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function updateBadges() {
+            const fBadge = document.getElementById('badge-freela');
+            const mBadge = document.getElementById('badge-meetings');
+            
+            const activeFreelas = freelas.filter(f => f.stage !== 'done').length;
+            if(fBadge) { fBadge.innerText = activeFreelas; fBadge.style.display = activeFreelas > 0 ? 'block' : 'none'; }
+            
+            const activeMeetings = meetings.length;
+            if(mBadge) { mBadge.innerText = activeMeetings; mBadge.style.display = activeMeetings > 0 ? 'block' : 'none'; }
+        }
+
+        // SEGURANÇA E ACESSO À AGÊNCIA
+        function promptAgencyPassword() {
+            const pass = prompt("Digite a senha master para gerenciar o Perfil da Agência:");
+            if (pass === "saturno2024") {
+                openAgencyModal();
+            } else if (pass !== null) {
+                alert("Senha incorreta!");
             }
         }
 
-        // UTILIDADES
-        const formatBRL = (val) => Number(val).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-        const getInitials = (n) => n ? n.split(' ').map(x=>x[0]).join('').substring(0,2).toUpperCase() : 'U';
+        // 1. CONSTRUÇÃO DO WORKSPACE DO CLIENTE FIXO
+        function renderClientWorkspace(container, id) {
+            const c = clients.find(i => i.id === id);
+            if(!c) return switchMainView('dashboard');
+            
+            const clientTasks = tasks.filter(t => t.clientId === id);
+            
+            // Medidor de Demanda / Buffer Semanal (Exemplo de regra: Máximo 4 peças pendentes ideais)
+            const pendentesCount = clientTasks.filter(t => t.stage !== 'sched').length;
+            const percent = Math.min((pendentesCount / 5) * 100, 100);
+            
+            container.innerHTML = `
+                <div class="workspace-header">
+                    <div class="client-meta">
+                        <h2>${c.name}</h2>
+                        <div class="client-info-badges">
+                            <div class="info-badge">💰 Faturamento: <strong>${formatBRL(c.fee)}/mês</strong></div>
+                            <div class="info-badge">📅 Vencimento: <strong>Dia ${c.payday}</strong></div>
+                            ${c.drive ? `<a href="${c.drive}" target="_blank" class="info-badge" style="color:var(--accent)">📂 Google Drive</a>` : ''}
+                            ${c.trello ? `<a href="${c.trello}" target="_blank" class="info-badge" style="color:var(--color-design)">📋 Trello / Notion</a>` : ''}
+                        </div>
+                    </div>
+                    
+                    <div style="display:flex; align-items:center; gap:16px;">
+                        <div class="buffer-meter-box">
+                            <div class="meter-label"><span>Fila de Produção Atual</span><span>${pendentesCount} Peças</span></div>
+                            <div class="meter-bg"><div class="meter-bar" style="width: ${percent}%"></div></div>
+                        </div>
+                        <div class="dropdown">
+                            <button class="btn-outline">⚙️ Ações do Hub</button>
+                            <div class="dropdown-content">
+                                <button onclick="openClientModal('${c.id}')">✏️ Editar Cliente</button>
+                                <button class="danger-btn" onclick="deleteClient('${c.id}')">❌ Remover Cliente</button>
+                            </div>
+                        </div>
+                        <button class="theme-toggle" onclick="toggleTheme()" title="Alterar Tema">🌓</button>
+                    </div>
+                </div>
 
-        function showToast(msg) {
-            const container = document.getElementById('toast-container');
-            const t = document.createElement('div');
-            t.className = 'toast'; t.innerText = msg;
-            container.appendChild(t);
-            setTimeout(() => t.remove(), 3500);
+                <div class="workspace-body">
+                    <div class="panel-left">
+                        <div class="box">
+                            <div class="box-header"><h3>Branding & Identidade</h3></div>
+                            <div style="text-align:center; padding:10px 0;">
+                                <div class="avatar" style="width:90px; height:90px; margin:0 auto 12px auto; font-size:2rem; border-radius:16px;">
+                                    ${c.img ? `<img src="${c.img}">` : getInitials(c.name)}
+                                </div>
+                                <h4 style="font-size:0.95rem; font-weight:700;">${c.name}</h4>
+                            </div>
+                        </div>
+
+                        <div class="box">
+                            <div class="box-header"><h3>Checklist Financeiro</h3></div>
+                            <div class="fin-detail"><span>Status de Pagamento</span> <span class="status-badge ${c.paid ? 'status-ok' : 'status-late'}">${c.paid ? 'Adimplente ✓' : 'Pendente ⏳'}</span></div>
+                            <div class="fin-detail"><span>Vencimento Próximo</span> <span>Dia ${c.payday}</span></div>
+                            <button class="btn-whatsapp" style="margin-top:14px;" onclick="toggleClientPayment('${c.id}')">
+                                ${c.paid ? 'Marcar como Inadimplente' : 'Confirmar Recebimento ✓'}
+                            </button>
+                            ${!c.paid ? `<a class="btn-whatsapp" style="margin-top:8px; background-color:transparent; border:1px solid var(--whatsapp); color:var(--whatsapp);" href="https://wa.me/${c.phone}?text=Olá!%20Passando%20para%20lembrar%20do%20vencimento%20do%20seu%20hub%20de%20marketing." target="_blank">💬 Cobrar no WhatsApp</a>` : ''}
+                        </div>
+                    </div>
+
+                    <div class="panel-right">
+                        <div class="kanban-header-actions">
+                            <h3 style="font-size:0.9rem; text-transform:uppercase; color:var(--text-muted);">Cronograma de Postagens</h3>
+                            <button class="btn-primary" onclick="openTaskModal()"><svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg> Inserir Post</button>
+                        </div>
+                        <div class="production-grid">
+                            ${renderKanbanColumn('copy', '1. Roteiro / Copy', clientTasks)}
+                            ${renderKanbanColumn('design', '2. Arte & Edição', clientTasks)}
+                            ${renderKanbanColumn('review', '3. Aprovação', clientTasks)}
+                            ${renderKanbanColumn('sched', '4. Programado ✓', clientTasks)}
+                        </div>
+                    </div>
+                </div>
+            `;
         }
 
-        function isDueSoon(dateStr) {
-            if(!dateStr) return false;
-            const dueDate = new Date(dateStr);
-            const now = new Date();
-            const diffTime = (dueDate - now);
-            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); 
-            return diffDays <= 2 && diffDays >= -1;
+        function renderKanbanColumn(stage, title, clientTasks) {
+            const filtered = clientTasks.filter(t => t.stage === stage);
+            let cards = '';
+            
+            filtered.forEach(t => {
+                const cardClass = isDueSoon(t.date) && t.stage !== 'sched' ? 'due-alert' : '';
+                const dateBadge = t.date ? `<div class="post-date"><svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg> Publicação: ${t.date.split('-').reverse().join('/')}</div>` : '';
+                const refHTML = t.img ? `<img src="${t.img}" class="post-preview-img">` : (t.link ? `<a href="${t.link}" target="_blank" class="post-attachment">🔗 Ver Referência Externa</a>` : '');
+                
+                const opts = ['copy','design','review','sched'].map(s => {
+                    const sName = s==='copy'?'Roteiro':s==='design'?'Arte/Edição':s==='review'?'Aprovação':'Programado';
+                    return `<option value="${s}" ${t.stage===s?'selected':''}>${sName}</option>`;
+                }).join('');
+
+                cards += `
+                    <div class="post-card ${cardClass} slide-up">
+                        <div style="display:flex; justify-content:space-between; align-items:center;">
+                            <span class="priority-tag p-${t.priority}">${t.priority}</span>
+                            <button onclick="deleteTask('${t.id}')" style="background:none; border:none; color:var(--text-muted); cursor:pointer; font-size:0.75rem;">✕</button>
+                        </div>
+                        <h5 onclick="openTaskModal('${t.id}')">${t.title}</h5>
+                        ${dateBadge}
+                        ${refHTML}
+                        ${t.desc ? `<p style="font-size:0.7rem; color:var(--text-muted); margin-bottom:10px; line-height:1.3; background:var(--bg-card); padding:6px; border-radius:4px; max-height:50px; overflow:hidden; text-overflow:ellipsis;">${t.desc}</p>` : ''}
+                        <div class="post-footer">
+                            <span style="font-size:0.65rem; color:var(--text-muted);">Mudar Fluxo:</span>
+                            <select class="stage-select" onchange="moveTask('${t.id}', this.value, '${t.title}')">${opts}</select>
+                        </div>
+                    </div>
+                `;
+            });
+
+            return `
+                <div class="prod-column">
+                    <div class="prod-column-header"><span>${title}</span> <span style="background:var(--bg-card); padding:2px 6px; border-radius:8px; font-size:0.7rem;">${filtered.length}</span></div>
+                    <div class="col-content">${cards}</div>
+                </div>
+            `;
         }
 
-        function encodeImageFileAsURL(element, previewId, hiddenInputId) {
-            const file = element.files[0];
-            if(!file) return;
-            const reader = new FileReader();
-            reader.onloadend = function() {
-                document.getElementById(hiddenInputId).value = reader.result;
-                const preview = document.getElementById(previewId);
-                preview.src = reader.result;
-                preview.style.display = 'block';
+        // 2. DASHBOARD GERAL
+        function renderDashboard(container) {
+            const mrr = clients.reduce((acc, c) => acc + Number(c.fee), 0);
+            const pendentes = tasks.filter(t => t.stage !== 'sched').length;
+            const concluídos = tasks.filter(t => t.stage === 'sched').length;
+            const freelaFaturamento = freelas.filter(f => f.stage === 'done').reduce((acc, f) => acc + Number(f.val), 0);
+
+            container.innerHTML = `
+                <div class="workspace-header">
+                    <div class="client-meta"><h2>🪐 Central Operational Dashboard</h2><span style="color:var(--text-muted); font-size:0.9rem;">Visão unificada das demandas, contratos e prazos.</span></div>
+                    <button class="theme-toggle" onclick="toggleTheme()" title="Alterar Tema">🌓</button>
+                </div>
+                <div class="dash-container slide-up">
+                    <div class="dash-metrics">
+                        <div class="metric-card" style="border-bottom: 4px solid var(--accent);"><span>Contratos Ativos (MRR)</span><h3>${formatBRL(mrr)}</h3></div>
+                        <div class="metric-card" style="border-bottom: 4px solid var(--color-review);"><span>Peças Pendentes</span><h3>${pendentes}</h3></div>
+                        <div class="metric-card" style="border-bottom: 4px solid var(--color-sched);"><span>Peças Entregues</span><h3>${concluídos}</h3></div>
+                        <div class="metric-card gold"><span>Faturamento Avulso</span><h3>${formatBRL(freelaFaturamento)}</h3></div>
+                    </div>
+
+                    <div class="dash-tables-grid">
+                        <div class="dash-panel">
+                            <h3>Distribuição de Demandas por Estágio</h3>
+                            <div class="chart-container"><canvas id="chart-stages"></canvas></div>
+                        </div>
+                        <div class="dash-panel">
+                            <h3>Próximas Reuniões Marcadas</h3>
+                            <div class="fin-table-wrapper">
+                                <table class="fin-table">
+                                    <thead><tr><th>Pauta/Assunto</th><th>Data</th><th>Hora</th><th>Sala</th></tr></thead>
+                                    <tbody>
+                                        ${meetings.length === 0 ? '<tr><td colspan="4" style="text-align:center; color:var(--text-muted);">Nenhuma reunião agendada.</td></tr>' : meetings.map(m => `
+                                            <tr><td><strong>${m.title}</strong></td><td>${m.date.split('-').reverse().join('/')}</td><td>${m.time}</td><td>${m.link ? `<a href="${m.link}" target="_blank" style="color:var(--accent); text-decoration:none;">Entrar 🎥</a>` : 'Presencial'}</td></tr>
+                                        `).join('')}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            // Renderiza Gráfico ChartJS
+            const ctx = document.getElementById('chart-stages');
+            if(ctx) {
+                const copy = tasks.filter(t => t.stage === 'copy').length;
+                const design = tasks.filter(t => t.stage === 'design').length;
+                const review = tasks.filter(t => t.stage === 'review').length;
+                const sched = tasks.filter(t => t.stage === 'sched').length;
+
+                new Chart(ctx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: ['Roteiro', 'Design', 'Aprovação', 'Programado'],
+                        datasets: [{
+                            data: [copy, design, review, sched],
+                            backgroundColor: ['#ec4899', '#3b82f6', '#f59e0b', '#10b981'],
+                            borderWidth: 0
+                        }]
+                    },
+                    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { color: document.body.getAttribute('data-theme')==='light'?'#0f172a':'#fff' } } } }
+                });
             }
-            function saveData() {
-            // 1. Backup Local Imediato (Prevenção de perdas)
+        }
+
+        // 3. VISÃO FINANCEIRA RESTRITA
+        function renderFinanceView(container) {
+            if (!isFinanceUnlocked) {
+                container.innerHTML = `
+                    <div class="workspace-header">
+                        <div class="client-meta"><h2>🔒 Balanço Financeiro Restrito</h2></div>
+                        <button class="theme-toggle" onclick="toggleTheme()">🌓</button>
+                    </div>
+                    <div style="display:flex; flex-direction:column; align-items:center; justify-content:center; flex:1; gap:16px;" class="fade-in">
+                        <div style="font-size:3rem;">🔒</div>
+                        <h3 style="color:var(--text-muted)">Esta área contém informações altamente confidenciais.</h3>
+                        <button class="btn-primary" onclick="unlockFinance()">Inserir Senha Master</button>
+                    </div>
+                `;
+                return;
+            }
+
+            const receita = clients.reduce((acc, c) => acc + Number(c.fee), 0) + freelas.filter(f => f.stage === 'done').reduce((acc, f) => acc + Number(f.val), 0);
+            const custos = subs.reduce((acc, s) => acc + Number(s.val), 0);
+            const lucro = receita - custos;
+
+            container.innerHTML = `
+                <div class="workspace-header">
+                    <div class="client-meta"><h2>💳 Balanço Financeiro Restrito</h2><span style="color:var(--text-muted); font-size:0.9rem;">Visão exclusiva de auditoria, faturamento e lucro líquido.</span></div>
+                    <div style="display:flex; gap:12px;">
+                        <button class="btn-outline" onclick="lockFinance()">🔒 Bloquear</button>
+                        <button class="theme-toggle" onclick="toggleTheme()" title="Alterar Tema">🌓</button>
+                    </div>
+                </div>
+                <div class="dash-container slide-up">
+                    <div class="dash-metrics">
+                        <div class="metric-card" style="border-bottom: 4px solid var(--color-sched);"><span>Receita Total (MRR + Freelas)</span><h3 style="color:var(--color-sched)">${formatBRL(receita)}</h3></div>
+                        <div class="metric-card" style="border-bottom: 4px solid var(--danger);"><span>Despesas Fixas</span><h3 style="color:var(--danger)">${formatBRL(custos)}</h3></div>
+                        <div class="metric-card" style="border-bottom: 4px solid var(--accent);"><span>Lucro Líquido Real</span><h3 style="color:var(--accent)">${formatBRL(lucro)}</h3></div>
+                    </div>
+
+                    <div class="dash-tables-grid">
+                        <div class="dash-panel">
+                            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+                                <h3>Mensalidades dos Contratos</h3>
+                            </div>
+                            <div class="fin-table-wrapper">
+                                <table class="fin-table">
+                                    <thead><tr><th>Parceiro</th><th>Dia Venc.</th><th>Status</th><th>Valor</th></tr></thead>
+                                    <tbody>
+                                        ${clients.map(c => `
+                                            <tr><td><strong>${c.name}</strong></td><td>Dia ${c.payday}</td><td><span class="status-badge ${c.paid?'status-ok':'status-late'}">${c.paid?'Pago ✓':'Pendente'}</span></td><td>${formatBRL(c.fee)}</td></tr>
+                                        `).join('')}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <div class="dash-panel">
+                            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+                                <h3>Custos Fixos / Ferramentas</h3>
+                                <button class="btn-primary" style="padding:6px 12px; font-size:0.75rem;" onclick="openModal('subModal')">+ Inserir Gasto</button>
+                            </div>
+                            <div class="fin-table-wrapper">
+                                <table class="fin-table">
+                                    <thead><tr><th>Ferramenta/Serviço</th><th>Dia Ren.</th><th>Ações</th><th>Valor</th></tr></thead>
+                                    <tbody>
+                                        ${subs.length === 0 ? '<tr><td colspan="4" style="text-align:center; color:var(--text-muted)">Nenhuma ferramenta fixada.</td></tr>' : subs.map(s => `
+                                            <tr><td><strong>${s.title}</strong></td><td>Dia ${s.day}</td><td><button onclick="deleteSub('${s.id}')" style="background:none; border:none; color:var(--danger); cursor:pointer;">Remover</button></td><td style="color:var(--danger); font-weight:600;">- ${formatBRL(s.val)}</td></tr>
+                                        `).join('')}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function unlockFinance() {
+            const pass = prompt("Digite a senha financeira restrita:");
+            if(pass === "saturno2024") { isFinanceUnlocked = true; switchMainView('finance'); }
+            else if(pass !== null) alert("Acesso Negado!");
+        }
+        function lockFinance() { isFinanceUnlocked = false; switchMainView('dashboard'); }
+
+        // 4. KANBAN DE FREELAS / AVULSOS
+        function renderFreelaView(container) {
+            container.innerHTML = `
+                <div class="workspace-header">
+                    <div class="client-meta"><h2>🚀 Demandas Avulsas / Freelas Extra</h2><span style="color:var(--text-muted); font-size:0.9rem;">Projetos de identidade visual, sites e jobs que não entram no MRR fixo.</span></div>
+                    <div style="display:flex; gap:12px;">
+                        <button class="btn-primary" onclick="openFreelaModal()"><svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg> Cadastrar Job</button>
+                        <button class="theme-toggle" onclick="toggleTheme()">🌓</button>
+                    </div>
+                </div>
+                <div class="workspace-body slide-up">
+                    <div class="panel-right" style="background:transparent; border:none; box-shadow:none;">
+                        <div class="production-grid" style="padding:0;">
+                            ${renderFreelaColumn('todo', 'A Produzir')}
+                            ${renderFreelaColumn('doing', 'Em Desenvolvimento')}
+                            ${renderFreelaColumn('done', 'Concluído & Faturado ✓')}
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderFreelaColumn(stage, title) {
+            const filtered = freelas.filter(f => f.stage === stage);
+            let cards = '';
+            
+            filtered.forEach(f => {
+                const cardClass = stage === 'todo' ? 'freela-todo' : stage === 'doing' ? 'freela-doing' : '';
+                const dateBadge = f.date ? `<div class="post-date">📅 Prazo: ${f.date.split('-').reverse().join('/')}</div>` : '';
+                const refHTML = f.img ? `<img src="${f.img}" class="post-preview-img">` : (f.link ? `<a href="${f.link}" target="_blank" class="post-attachment">🔗 Link do Job</a>` : '');
+                
+                const ownerObj = team.find(t => t.id === f.ownerId);
+                const ownerName = ownerObj ? ownerObj.name : 'Equipe Geral';
+                const ownerColor = ownerObj ? ownerObj.color : 'var(--border)';
+                const ownerAvatar = ownerObj && ownerObj.img ? `<img src="${ownerObj.img}">` : getInitials(ownerName);
+
+                const opts = ['todo','doing','done'].map(s => {
+                    const sName = s==='todo'?'A Produzir':s==='doing'?'Em Criação':'Concluído';
+                    return `<option value="${s}" ${f.stage===s?'selected':''}>${sName}</option>`;
+                }).join('');
+
+                cards += `
+                    <div class="post-card ${cardClass}">
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+                            <span class="post-val">${formatBRL(f.val || 0)}</span>
+                            <button onclick="deleteFreela('${f.id}')" style="background:none; border:none; color:var(--text-muted); cursor:pointer;">✕</button>
+                        </div>
+                        <h5 onclick="openFreelaModal('${f.id}')">${f.title}</h5>
+                        ${dateBadge}
+                        ${refHTML}
+                        <div class="post-footer">
+                            <div class="assignee"><div class="avatar" style="background:${ownerColor}; width:22px; height:22px; font-size:0.6rem;">${ownerAvatar}</div> ${ownerName}</div>
+                            <select class="stage-select" onchange="moveFreela('${f.id}', this.value, '${f.title}')">${opts}</select>
+                        </div>
+                    </div>
+                `;
+            });
+
+            return `
+                <div class="prod-column">
+                    <div class="prod-column-header"><span>${title}</span> <span style="background:var(--bg-card); padding:2px 6px; border-radius:8px; font-size:0.7rem;">${filtered.length}</span></div>
+                    <div class="col-content">${cards}</div>
+                </div>
+            `;
+        }
+
+        // 5. VISÃO DA EQUIPE
+        function renderTeamView(container) {
+            container.innerHTML = `
+                <div class="workspace-header">
+                    <div class="client-meta"><h2>👥 Integrantes do Time & Squad</h2><span style="color:var(--text-muted); font-size:0.9rem;">Profissionais e colaboradores vinculados ao ecossistema da agência.</span></div>
+                    <div style="display:flex; gap:12px;">
+                        <button class="btn-primary" onclick="openModal('teamModal')"><svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg> Cadastrar Integrante</button>
+                        <button class="theme-toggle" onclick="toggleTheme()">🌓</button>
+                    </div>
+                </div>
+                <div class="dash-container slide-up">
+                    <div class="team-grid">
+                        ${team.length === 0 ? '<div style="color:var(--text-muted); font-size:0.85rem;">Nenhum profissional cadastrado no time.</div>' : team.map(t => `
+                            <div class="team-card fade-in">
+                                <div class="team-card-actions">
+                                    <button class="btn-icon danger" onclick="deleteTeam('${t.id}')">✕</button>
+                                </div>
+                                <div class="avatar" style="background:${t.color || 'var(--accent)'}">${t.img ? `<img src="${t.img}">` : getInitials(t.name)}</div>
+                                <h4>${t.name}</h4>
+                                <span class="role">${t.role}</span>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+        }
+
+        // 6. AGENDA DE REUNIÕES
+        function renderMeetingsView(container) {
+            container.innerHTML = `
+                <div class="workspace-header">
+                    <div class="client-meta"><h2>📅 Agenda e Alinhamentos</h2><span style="color:var(--text-muted); font-size:0.9rem;">Próximas reuniões estratégicas marcadas.</span></div>
+                    <div style="display:flex; gap:12px;">
+                        <button class="btn-primary" onclick="openModal('meetingModal')"><svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg> Marcar Reunião</button>
+                        <button class="theme-toggle" onclick="toggleTheme()">🌓</button>
+                    </div>
+                </div>
+                <div class="dash-container slide-up">
+                    <div class="dash-panel">
+                        <div class="fin-table-wrapper">
+                            <table class="fin-table">
+                                <thead><tr><th>Compromisso / Assunto</th><th>Data Marcada</th><th>Horário</th><th>Sala Virtual</th><th>Ações</th></tr></thead>
+                                <tbody>
+                                    ${meetings.length === 0 ? '<tr><td colspan="5" style="text-align:center; color:var(--text-muted);">Nenhuma reunião agendada no cronograma.</td></tr>' : meetings.map(m => `
+                                        <tr>
+                                            <td><strong>${m.title}</strong></td>
+                                            <td>${m.date.split('-').reverse().join('/')}</td>
+                                            <td>${m.time} h</td>
+                                            <td>${m.link ? `<a href="${m.link}" target="_blank" style="color:var(--accent); text-decoration:none; font-weight:600;">Entrar na Chamada Video 🎥</a>` : '<span style="color:var(--text-muted)">Presencial / Sem Link</span>'}</td>
+                                            <td><button onclick="deleteMeeting('${m.id}')" style="background:none; border:none; color:var(--danger); cursor:pointer; font-weight:600;">Excluir</button></td>
+                                        </tr>
+                                    `).join('')}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+
+        // ================= FUNÇÕES DE PERSISTÊNCIA E CRUD =================
+
+        function saveData() {
+            // Backup imediato e preventivo em formato local
             localStorage.setItem('sat_final_cli', JSON.stringify(clients || []));
             localStorage.setItem('sat_final_tsk', JSON.stringify(tasks || []));
             localStorage.setItem('sat_final_freelas', JSON.stringify(freelas || []));
             localStorage.setItem('sat_final_meetings', JSON.stringify(meetings || []));
             localStorage.setItem('sat_final_team', JSON.stringify(team || []));
             localStorage.setItem('sat_final_subs', JSON.stringify(subs || []));
+            localStorage.setItem('sat_final_agency', JSON.stringify({name: window.agencyNameText, logo: window.agencyLogoText}));
 
-            // 2. CORREÇÃO CRÍTICA: Isola e limpa os dados da agência para não enviar lixo HTML
-            let dadosAgenciaLimpos = { name: 'Saturno Studio', logo: '' };
-            
-            // Verifica se a variável global não virou um elemento HTML do navegador
-            if (window.agency && typeof window.agency === 'object' && !window.agency.nodeType) {
-                dadosAgenciaLimpos.name = window.agency.name || 'Saturno Studio';
-                dadosAgenciaLimpos.logo = window.agency.logo || '';
-            } else {
-                // Se virou elemento HTML, busca direto dos campos salvos na tela
-                dadosAgenciaLimpos.name = document.getElementById('ag-name')?.value || 'Saturno Studio';
-                dadosAgenciaLimpos.logo = document.getElementById('ag-logo-b64')?.value || '';
-            }
-            localStorage.setItem('sat_final_agency', JSON.stringify(dadosAgenciaLimpos));
-
-            // 3. Garante objetos puros e limpos para o Firestore aceitar de primeira
-            const dadosParaEnviar = {
-                clients: Array.isArray(clients) ? clients.map(c => ({...c})) : [],
-                tasks: Array.isArray(tasks) ? tasks.map(t => ({...t})) : [],
-                freelas: Array.isArray(freelas) ? freelas.map(f => ({...f})) : [],
-                meetings: Array.isArray(meetings) ? meetings.map(m => ({...m})) : [],
-                team: Array.isArray(team) ? team.map(t => ({...t})) : [],
-                subs: Array.isArray(subs) ? subs.map(s => ({...s})) : [],
-                agency: dadosAgenciaLimpos
-            };
-
-            // 4. Envia para o Firestore
-            db.collection("saturno_dados").doc("hub_operacional").set(dadosParaEnviar)
+            // Envia o payload total limpo para a coleção do Firebase
+            db.collection("saturno_dados").doc("hub_operacional").set({
+                clients, 
+                tasks, 
+                freelas, 
+                meetings, 
+                team, 
+                subs,
+                agency: {
+                    name: window.agencyNameText || "Saturno Studio",
+                    logo: window.agencyLogoText || ""
+                }
+            })
             .then(() => {
-                console.log("✅ Sincronizado com o Firebase com sucesso!");
+                console.log("✅ Banco de dados nuvem atualizado com sucesso!");
             })
             .catch(err => {
-                console.error("❌ Erro ao salvar no Firebase: ", err);
+                console.error("❌ Erro ao enviar dados ao Firebase: ", err);
             });
         }
 
-        function deleteMeeting(id) { if(confirm(\"Excluir Reunião?\")){ meetings = meetings.filter(m=>m.id!==id); saveData(); } }
-
-        function closeModal(id) { document.getElementById(id).style.display='none'; }
-
-        /* --- AGÊNCIA (CORRIGIDO PARA EVITAR CONFLITO DE NOME) --- */
-        function openAgencyModal() {
-            document.getElementById('agencyModal').style.display='flex';
+        // CONTROLADORES DE SUBMISSÃO DE FORMULÁRIO (CRUD)
+        function saveClient(e) {
+            e.preventDefault();
+            const id = document.getElementById('client-id').value;
             
-            let nomeAgencia = 'Saturno Studio';
-            let logoAgencia = '';
-            if (window.agency && typeof window.agency === 'object' && !window.agency.nodeType) {
-                nomeAgencia = window.agency.name || 'Saturno Studio';
-                logoAgencia = window.agency.logo || '';
+            const cData = {
+                id: id || 'c_' + Date.now(),
+                name: document.getElementById('c-name').value,
+                fee: document.getElementById('c-fee').value,
+                phone: document.getElementById('c-phone').value,
+                payday: document.getElementById('c-payday').value,
+                drive: document.getElementById('c-drive').value,
+                trello: document.getElementById('c-trello').value,
+                designerId: document.getElementById('c-designer').value,
+                smId: document.getElementById('c-sm').value,
+                img: document.getElementById('c-img-b64').value,
+                paid: id ? (clients.find(i=>i.id===id)?.paid || false) : true
+            };
+
+            if(id) {
+                const idx = clients.findIndex(i => i.id === id);
+                clients[idx] = cData;
+                showToast("Cliente atualizado!");
+            } else {
+                clients.push(cData);
+                showToast("Novo cliente cadastrado com sucesso!");
             }
 
-            document.getElementById('ag-name').value = nomeAgencia;
+            closeModal('clientModal');
+            saveData();
+        }
+
+        function deleteClient(id) {
+            if(confirm("Tem certeza que deseja remover este cliente? Todos os posts serão limpos.")) {
+                clients = clients.filter(c => c.id !== id);
+                tasks = tasks.filter(t => t.clientId !== id);
+                saveData();
+                switchMainView('dashboard');
+            }
+        }
+
+        function toggleClientPayment(id) {
+            const c = clients.find(i => i.id === id);
+            c.paid = !c.paid;
+            showToast(`Status alterado!`);
+            saveData();
+            routeView();
+        }
+
+        function saveTask(e) {
+            e.preventDefault();
+            const id = document.getElementById('t-id').value;
+            
+            const tData = {
+                id: id || 't_' + Date.now(),
+                clientId: selectedClientId,
+                title: document.getElementById('t-title').value,
+                date: document.getElementById('t-date').value,
+                priority: document.getElementById('t-priority').value,
+                desc: document.getElementById('t-desc').value,
+                img: document.getElementById('t-img-b64').value,
+                link: document.getElementById('t-link').value,
+                stage: document.getElementById('t-stage').value
+            };
+
+            if(id) {
+                const idx = tasks.findIndex(i => i.id === id);
+                tasks[idx] = tData;
+                showToast("Postagem atualizada!");
+            } else {
+                tasks.push(tData);
+                showToast("Peça inserida no cronograma!");
+            }
+
+            closeModal('taskModal');
+            saveData();
+            routeView();
+        }
+
+        function openTaskModal(id=null) {
+            document.getElementById('taskModal').style.display='flex';
+            document.getElementById('task-form').reset();
+            document.getElementById('t-id').value = '';
+            const p = document.getElementById('t-preview');
+            p.style.display = 'none'; p.src = '';
+            document.getElementById('t-img-b64').value = '';
+            
+            if(id) {
+                const t = tasks.find(i => i.id === id);
+                document.getElementById('t-id').value = t.id;
+                document.getElementById('t-title').value = t.title;
+                document.getElementById('t-date').value = t.date;
+                document.getElementById('t-priority').value = t.priority;
+                document.getElementById('t-desc').value = t.desc;
+                document.getElementById('t-link').value = t.link;
+                document.getElementById('t-stage').value = t.stage;
+                if(t.img) { p.src = t.img; p.style.display = 'block'; document.getElementById('t-img-b64').value = t.img; }
+            }
+        }
+
+        function deleteTask(id) {
+            if(confirm("Deseja apagar esta postagem da grade?")) {
+                tasks = tasks.filter(t => t.id !== id);
+                saveData();
+                routeView();
+            }
+        }
+
+        function saveFreela(e) {
+            e.preventDefault();
+            const id = document.getElementById('f-id').value;
+            const fData = {
+                id: id || 'f_' + Date.now(),
+                title: document.getElementById('f-title').value,
+                val: document.getElementById('f-val').value,
+                ownerId: document.getElementById('f-owner').value,
+                date: document.getElementById('f-date').value,
+                img: document.getElementById('f-img-b64').value,
+                link: document.getElementById('f-link').value,
+                stage: document.getElementById('f-stage').value
+            };
+
+            if(id) {
+                const idx = freelas.findIndex(i=>i.id===id);
+                freelas[idx] = fData;
+            } else {
+                freelas.push(fData);
+            }
+            closeModal('freelaModal'); saveData(); routeView(); showToast('Freela Registrado!');
+        }
+
+        function openFreelaModal(id=null) {
+            populateTeamSelects();
+            document.getElementById('freelaModal').style.display='flex';
+            document.getElementById('freela-form').reset();
+            document.getElementById('f-id').value = '';
+            const p = document.getElementById('f-preview');
+            p.style.display = 'none'; p.src = '';
+            document.getElementById('f-img-b64').value = '';
+
+            if(id) {
+                const f = freelas.find(i=>i.id===id);
+                document.getElementById('f-id').value = f.id;
+                document.getElementById('f-title').value = f.title;
+                document.getElementById('f-val').value = f.val;
+                document.getElementById('f-owner').value = f.ownerId || '';
+                document.getElementById('f-date').value = f.date;
+                document.getElementById('f-link').value = f.link;
+                document.getElementById('f-stage').value = f.stage;
+                if(f.img) { p.src = f.img; p.style.display = 'block'; document.getElementById('f-img-b64').value = f.img; }
+            }
+        }
+
+        function deleteFreela(id) { if(confirm("Remover este Freela?")){ freelas = freelas.filter(f=>f.id!==id); saveData(); routeView(); } }
+
+        function saveTeam(e) {
+            e.preventDefault();
+            const tData = {
+                id: 'tm_' + Date.now(),
+                name: document.getElementById('tm-name').value,
+                role: document.getElementById('tm-role').value,
+                color: document.getElementById('tm-color').value,
+                img: document.getElementById('tm-img-b64').value
+            };
+            team.push(tData); closeModal('teamModal'); saveData(); routeView(); showToast('Membro Integrado!');
+        }
+        function deleteTeam(id) { if(confirm("Excluir este integrante do squad?")){ team = team.filter(t=>t.id!==id); saveData(); routeView(); } }
+
+        function saveSub(e) {
+            e.preventDefault();
+            const sData = {
+                id: 's_' + Date.now(),
+                title: document.getElementById('s-title').value,
+                val: document.getElementById('s-val').value,
+                day: document.getElementById('s-day').value
+            };
+            subs.push(sData); closeModal('subModal'); saveData(); routeView(); showToast('Custo Adicionado!');
+        }
+        function deleteSub(id) { if(confirm("Excluir custo?")){ subs = subs.filter(s=>s.id!==id); saveData(); routeView(); } }
+
+        function saveMeeting(e) {
+            e.preventDefault();
+            const mData = {
+                id: 'm_' + Date.now(),
+                title: document.getElementById('m-title').value,
+                date: document.getElementById('m-date').value,
+                time: document.getElementById('m-time').value,
+                link: document.getElementById('m-link').value
+            };
+            meetings.push(mData); 
+            if(mData.link) { showToast(`📅 Reunião Marcada: ${mData.title}`); }
+            closeModal('meetingModal'); saveData(); routeView();
+        }
+        function deleteMeeting(id) { if(confirm("Excluir Reunião?")){ meetings = meetings.filter(m=>m.id!==id); saveData(); routeView(); } }
+
+        function closeModal(id) { document.getElementById(id).style.display='none'; }
+        function openModal(id) { document.getElementById(id).style.display='flex'; }
+
+        /* --- AGÊNCIA --- */
+        function openAgencyModal() {
+            document.getElementById('agencyModal').style.display='flex';
+            document.getElementById('ag-name').value = window.agencyNameText || '';
             const p = document.getElementById('ag-preview');
-            if (logoAgencia) {
-                document.getElementById('ag-logo-b64').value = logoAgencia;
-                p.src = logoAgencia;
+            if (window.agencyLogoText) {
+                document.getElementById('ag-logo-b64').value = window.agencyLogoText;
+                p.src = window.agencyLogoText;
                 p.style.display = 'block';
             } else {
                 document.getElementById('ag-logo-b64').value = '';
@@ -657,61 +1233,129 @@
 
         function saveAgency(e) {
             e.preventDefault();
-            
-            // Força a inicialização como objeto limpo antes de receber os valores
-            if (!window.agency || window.agency.nodeType) {
-                window.agency = { name: '', logo: '' };
-            }
-            
-            window.agency.name = document.getElementById('ag-name').value || 'Saturno Studio';
-            window.agency.logo = document.getElementById('ag-logo-b64').value || '';
-            
+            window.agencyNameText = document.getElementById('ag-name').value || 'Saturno Studio';
+            window.agencyLogoText = document.getElementById('ag-logo-b64').value || '';
             closeModal('agencyModal');
             saveData();
-            showToast('Perfil da Agência atualizado!');
-            
-            // Atualiza os elementos visuais da agência na barra lateral se existirem
             renderSidebar();
+            showToast('Perfil da Agência atualizado!');
         }
 
-        // --- SISTEMA DE ESCUTA EM TEMPO REAL (REALTIME ATIVADO) ---
+        // INICIALIZAÇÃO FINAL E UTILS
+        function populateTeamSelects() {
+            const des = document.getElementById('c-designer');
+            const sm = document.getElementById('c-sm');
+            const fOwn = document.getElementById('f-owner');
+            
+            if(des) des.innerHTML = '<option value="">Selecionar...</option>' + team.map(t => `<option value="${t.id}">${t.name}</option>`).join('');
+            if(sm) sm.innerHTML = '<option value="">Selecionar...</option>' + team.map(t => `<option value="${t.id}">${t.name}</option>`).join('');
+            if(fOwn) fOwn.innerHTML = '<option value="">Equipe Geral</option>' + team.map(t => `<option value="${t.id}">${t.name}</option>`).join('');
+        }
+
+        const formatBRL = (val) => Number(val).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+        const getInitials = (n) => n ? n.split(' ').map(x=>x[0]).join('').substring(0,2).toUpperCase() : 'U';
+        
+        function showToast(msg) {
+            const container = document.getElementById('toast-container');
+            const t = document.createElement('div');
+            t.className = 'toast';
+            t.innerText = msg;
+            container.appendChild(t);
+            setTimeout(() => t.remove(), 3500);
+        }
+
+        function isDueSoon(dateStr) {
+            if(!dateStr) return false;
+            const dueDate = new Date(dateStr);
+            const now = new Date();
+            const diffTime = (dueDate - now);
+            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+            return diffDays <= 2 && diffDays >= -1;
+        }
+
+        function encodeImageFileAsURL(element, previewId, hiddenInputId) {
+            const file = element.files[0];
+            if(!file) return;
+            const reader = new FileReader();
+            reader.onloadend = function() {
+                document.getElementById(hiddenInputId).value = reader.result;
+                const p = document.getElementById(previewId);
+                p.src = reader.result;
+                p.style.display = 'block';
+            }
+            reader.readAsDataURL(file);
+        }
+
+        function toggleTheme() {
+            const current = document.body.getAttribute('data-theme');
+            const target = current === 'light' ? 'dark' : 'light';
+            document.body.setAttribute('data-theme', target);
+            routeView();
+        }
+
+        function moveTask(id, stage, title) {
+            const t = tasks.find(i => i.id === id);
+            t.stage = stage;
+            if(stage === 'design' || stage === 'copy') showToast(`🚀 Produção iniciada: ${title}`);
+            if(stage === 'sched') showToast(`✅ Peça Programada: ${title}`);
+            saveData();
+            routeView();
+        }
+
+        function moveFreela(id, stage, title) {
+            const f = freelas.find(i => i.id === id);
+            f.stage = stage;
+            if(stage === 'doing') showToast(`⚡ Freela em andamento: ${title}`);
+            if(stage === 'done') showToast(`💸 Freela Entregue: ${title}`);
+            saveData();
+            routeView();
+        }
+
+        // --- SISTEMA DE ESCUTA EM TEMPO REAL ---
         window.onload = function() {
-            // Escuta qualquer mudança no Firestore em tempo real
             db.collection("saturno_dados").doc("hub_operacional")
             .onSnapshot((doc) => {
                 if (doc.exists) {
                     const data = doc.data();
-                    
-                    // Substitui os dados locais pelos dados em tempo real da nuvem
                     clients = data.clients || [];
                     tasks = data.tasks || [];
                     freelas = data.freelas || [];
                     meetings = data.meetings || [];
                     team = data.team || [];
                     subs = data.subs || [];
-                    window.agency = data.agency || { name: 'Saturno Studio', logo: '' };
+                    
+                    const agData = data.agency || {};
+                    window.agencyNameText = agData.name || "Saturno Studio";
+                    window.agencyLogoText = agData.logo || "";
 
-                    // Atualiza o backup local para segurança
+                    // Sincroniza LocalStorage para redundância local rápida
                     localStorage.setItem('sat_final_cli', JSON.stringify(clients));
                     localStorage.setItem('sat_final_tsk', JSON.stringify(tasks));
                     localStorage.setItem('sat_final_freelas', JSON.stringify(freelas));
                     localStorage.setItem('sat_final_meetings', JSON.stringify(meetings));
                     localStorage.setItem('sat_final_team', JSON.stringify(team));
                     localStorage.setItem('sat_final_subs', JSON.stringify(subs));
-                    localStorage.setItem('sat_final_agency', JSON.stringify(window.agency));
+                    localStorage.setItem('sat_final_agency', JSON.stringify({name: window.agencyNameText, logo: window.agencyLogoText}));
 
-                    console.log("🔄 Dados atualizados em tempo real via Firebase!");
-                } else {
-                    console.log("Banco de dados vazio na nuvem. Mantendo dados locais.");
+                    console.log("🔄 Dados atualizados em tempo real via Firebase Firestore!");
                 }
                 
-                // Renderiza as telas com as informações mais recentes
                 updateBadges();
                 renderSidebar();
                 routeView();
-                
             }, (error) => {
-                console.error("Erro na escuta em tempo real do Firebase. Usando LocalStorage.", error);
+                console.error("Erro na escuta Firestore. Carregando redundância offline.", error);
+                // Caso ocorra falha de rede/permissão, recupera os dados salvos localmente
+                clients = JSON.parse(localStorage.getItem('sat_final_cli')) || [];
+                tasks = JSON.parse(localStorage.getItem('sat_final_tsk')) || [];
+                freelas = JSON.parse(localStorage.getItem('sat_final_freelas')) || [];
+                meetings = JSON.parse(localStorage.getItem('sat_final_meetings')) || [];
+                team = JSON.parse(localStorage.getItem('sat_final_team')) || [];
+                subs = JSON.parse(localStorage.getItem('sat_final_subs')) || [];
+                const localAg = JSON.parse(localStorage.getItem('sat_final_agency')) || {};
+                window.agencyNameText = localAg.name || "Saturno Studio";
+                window.agencyLogoText = localAg.logo || "";
+
                 updateBadges();
                 renderSidebar();
                 routeView();
