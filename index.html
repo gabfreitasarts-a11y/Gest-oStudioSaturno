@@ -4,6 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Saturno Studio | Hub Operacional</title>
+    
+    <!-- ÍCONE DA GUIA DO NAVEGADOR (FAVICON) -->
+    <link rel="icon" type="image/png" href="imagem/ICONE - STUDIO SATURNO 2.png">
+
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -11,7 +15,7 @@
     <!-- Script do Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     
-    <!-- Script do Supabase (Substituindo o Firebase) -->
+    <!-- Script do Supabase -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
     <style>
@@ -512,7 +516,6 @@
         const SUPABASE_URL = 'https://ygomjnnuscczvijcodlc.supabase.co';
         const SUPABASE_KEY = 'sb_publishable_CzFf6Cs0NdILtbgohHFBcg_W7gNDec1';
         
-        // MUDANÇA IMPORTANTE: O nome da variável agora é 'supabaseClient'
         const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
         /* --- DADOS LOCAIS --- */
@@ -565,7 +568,7 @@
             return diffDays <= 2 && diffDays >= -1;
         }
 
-        /* Função isolada para evitar erros de leitura */
+        /* --- CORREÇÃO DO UPLOAD DE IMAGEM --- */
         function encodeImageFileAsURL(element, previewId, hiddenInputId) {
             const file = element.files[0];
             if(!file) return;
@@ -576,6 +579,7 @@
                 preview.src = reader.result;
                 preview.style.display = 'block';
             };
+            reader.readAsDataURL(file); // Linha adicionada de volta para ler o arquivo!
         }
 
         /* --- SALVAR DADOS NO SUPABASE --- */
@@ -727,7 +731,7 @@
             });
         }
 
-        /* --- DASHBOARD GERAL --- */
+        /* --- DASHBOARD GERAL E CORREÇÃO DO CHART --- */
         function renderDashboard(container) {
             let globalTarget = 0, globalSched = 0;
             let countCopy = 0, countDesign = 0, countReview = 0;
@@ -769,7 +773,10 @@
             `;
 
             setTimeout(() => {
-                const ctx = document.getElementById('prodChart').getContext('2d');
+                const chartEl = document.getElementById('prodChart');
+                if (!chartEl) return; // Esta linha evita o erro vermelho no console
+                
+                const ctx = chartEl.getContext('2d');
                 if(chartInstance) chartInstance.destroy();
                 const legendColor = currentTheme === 'dark' ? '#8b929e' : '#64748b';
                 chartInstance = new Chart(ctx, {
