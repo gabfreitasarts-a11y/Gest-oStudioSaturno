@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Saturno Studio | Hub Operacional</title>
     
-    <!-- ÍCONE DA GUIA DO NAVEGADOR -->
+    <!-- ÍCONE DA GUIA DO NAVEGADOR (FAVICON) -->
     <link rel="icon" type="image/png" href="imagem/ICONE - STUDIO SATURNO 2.png">
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -98,8 +98,7 @@
         /* MAIN WORKSPACE E GRIDS */
         .main-workspace { flex: 1; display: flex; flex-direction: column; overflow-y: auto; background-color: var(--bg-main); position: relative; }
         .workspace-header { padding: 24px 32px; background-color: var(--bg-card); border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: flex-start; flex-shrink: 0; }
-        .client-meta h2 { font-size: 1.6rem; font-weight: 700; color: var(--text-main); margin-bottom: 12px; display: flex; align-items: center; gap: 12px; transition: 0.2s; }
-        .client-meta h2:hover { opacity: 0.8; cursor:pointer;}
+        .client-meta h2 { font-size: 1.6rem; font-weight: 700; color: var(--text-main); margin-bottom: 12px; display: flex; align-items: center; gap: 12px; }
         .client-info-badges { display: flex; flex-wrap: wrap; gap: 10px; font-size: 0.75rem; font-weight: 600; }
         .info-badge { background: var(--bg-input); border: 1px solid var(--border); padding: 4px 10px; border-radius: 6px; display: flex; align-items: center; gap: 6px; color: var(--text-muted); }
         .info-badge strong { color: var(--text-main); }
@@ -153,7 +152,7 @@
         .col-content { padding: 12px; flex: 1; overflow-y: auto; }
 
         /* Post & Freela Cards */
-        .post-card { background-color: var(--bg-card); border: 1px solid var(--border); border-radius: 10px; padding: 14px; margin-bottom: 12px; transition: 0.2s; position: relative; box-shadow: 0 2px 5px var(--shadow-sm);}
+        .post-card { background-color: var(--bg-card); border: 1px solid var(--border); border-radius: 10px; padding: 14px; margin-bottom: 12px; transition: 0.2s; position: relative; box-shadow: 0 2px 5px var(--shadow-sm); }
         .post-card:hover { border-color: var(--accent); transform: translateY(-2px); }
         
         /* Modificadores Visuais de Alerta e Aprovação */
@@ -172,11 +171,16 @@
 
         .post-card h5 { font-size: 0.9rem; margin-bottom: 6px; color: var(--text-main); line-height: 1.3; cursor: pointer; }
         .post-card h5:hover { color: var(--accent); }
+        
+        /* ESTILO PARA O TEXTO CORRIDO DENTRO DO CARD */
+        .card-desc-text { font-size: 0.75rem; color: var(--text-muted); line-height: 1.4; margin-bottom: 10px; white-space: pre-wrap; word-break: break-word; }
+
         .post-date { font-size: 0.7rem; color: var(--text-muted); display: flex; align-items: center; gap: 4px; margin-bottom: 10px; background: var(--bg-input); padding: 4px 8px; border-radius: 4px; display: inline-flex;}
         .post-val { display: inline-block; background: rgba(16, 185, 129, 0.15); color: #10b981; font-weight: 700; font-size: 0.75rem; padding: 2px 6px; border-radius: 4px; margin-bottom: 8px; }
 
-        /* NOVA IMAGEM PREVIEW MINIATURA (THUMBNAIL) */
-        .post-preview-img { width: 56px; height: 56px; object-fit: cover; border-radius: 8px; border: 1px solid var(--border); display: block; cursor: pointer; transition: 0.2s; }
+        /* NOVO PREVIEW MINIATURA (THUMBNAIL PROPORCIONAL) */
+        .post-preview-img { width: 56px; height: 56px; border-radius: 8px; border: 1px solid var(--border); display: block; cursor: pointer; transition: 0.2s; overflow: hidden; margin-bottom: 10px;}
+        .post-preview-img img { width: 100%; height: 100%; object-fit: cover; }
         .post-preview-img:hover { opacity: 0.8; border-color: var(--accent); transform: scale(1.05); }
         
         .post-attachment { display: inline-flex; align-items: center; gap: 4px; font-size: 0.75rem; color: var(--accent); text-decoration: none; margin-bottom: 12px; background: rgba(138,43,226,0.1); padding: 4px 8px; border-radius: 6px; }
@@ -302,7 +306,7 @@
 
     <main class="main-workspace" id="workspace-area"></main>
 
-    <!-- NOVO MODAL: Visualizador de Imagens (Lightbox) -->
+    <!-- Visualizador de Imagens (Lightbox) -->
     <div class="modal-overlay" id="imageViewerModal" onclick="closeModal('imageViewerModal')" style="z-index: 99999;">
         <img id="viewer-img" src="" style="max-width: 90%; max-height: 90%; border-radius: 8px; box-shadow: 0 10px 40px rgba(0,0,0,0.5);">
     </div>
@@ -443,7 +447,11 @@
             <h2>Novo Conteúdo (Esteira)</h2>
             <form id="task-form" onsubmit="saveTask(event)" class="form-grid">
                 <input type="hidden" id="t-id">
-                <div class="form-group full"><label>Título / Descrição *</label><input type="text" id="t-title" required></div>
+                <div class="form-group full"><label>Título *</label><input type="text" id="t-title" required></div>
+                
+                <!-- NOVO CAMPO: TEXTO DO POST / HEADLINE -->
+                <div class="form-group full"><label>Texto do Post (Headline, Subtítulo, Legenda)</label><textarea id="t-desc" rows="4" placeholder="Headline:&#10;Subtítulo:&#10;Texto corrido..."></textarea></div>
+                
                 <div class="form-group"><label>Delegar para (Resp.)</label><select id="t-owner"><option value="">Equipe Geral</option></select></div>
                 <div class="form-group"><label>Prioridade</label><select id="t-priority"><option value="media">Média</option><option value="alta">Alta</option><option value="baixa">Baixa</option></select></div>
                 
@@ -482,6 +490,10 @@
             <form id="freela-form" onsubmit="saveFreela(event)" class="form-grid">
                 <input type="hidden" id="f-id">
                 <div class="form-group full"><label>Nome do Projeto / Demanda *</label><input type="text" id="f-title" required placeholder="Ex: Criação de Logo Barbearia"></div>
+                
+                <!-- NOVO CAMPO: TEXTO DO FREELA / DETALHES -->
+                <div class="form-group full"><label>Descrição Completa / Direcionamento Corrido</label><textarea id="f-desc" rows="4" placeholder="Headline:&#10;Subtítulo:&#10;Informações adicionais do frila..."></textarea></div>
+                
                 <div class="form-group"><label>Valor Cobrado (R$) *</label><input type="number" step="0.01" id="f-val" required></div>
                 <div class="form-group"><label>Responsável</label><select id="f-owner"><option value="">Equipe Geral</option></select></div>
                 
@@ -774,11 +786,10 @@
                 countReview += cTasks.filter(t => t.stage === 'review').length;
                 countSched += cTasks.filter(t => t.stage === 'sched').length;
                 
-                // Meta agora contabiliza Aprovação e Programados
                 globalSched += cTasks.filter(t => t.stage === 'sched' || t.stage === 'review').length;
             });
             
-            inProduction = countCopy + countDesign; // Peças que ainda estão sendo trabalhadas
+            inProduction = countCopy + countDesign;
 
             const globalHealth = globalTarget > 0 ? Math.round((globalSched / globalTarget) * 100) : 0;
             const healthColor = globalHealth >= 100 ? 'var(--color-sched)' : (globalHealth > 50 ? 'var(--color-review)' : 'var(--danger)');
@@ -790,7 +801,7 @@
                 </div>
                 <div class="dash-container">
                     <div class="dash-metrics slide-up">
-                        <div class="metric-card"><span>Posts em Produção</span><h3>${inProduction} <span style="font-size:1rem; color:var(--text-muted); font-weight:400;">peças</span></h3></div>
+                        <div class="metric-card"><span>Posts em Produção</span> castings<h3>${inProduction} <span style="font-size:1rem; color:var(--text-muted); font-weight:400;">peças</span></h3></div>
                         <div class="metric-card"><span>Aprovados & Prontos / Meta</span><h3>${globalSched} <span style="font-size:1rem; color:var(--text-muted); font-weight:400;">/ ${globalTarget}</span></h3></div>
                         <div class="metric-card" style="border-bottom: 4px solid ${healthColor}">
                             <span>Saúde Geral das Esteiras</span>
@@ -976,10 +987,10 @@
                 return `
                 <div class="team-card slide-up">
                     <div class="team-card-actions">
-                        <button class="btn-icon" onclick="openTeamModalPassword('${t.id}')" title="Editar">
+                        <button class="btn-icon" onclick="openTeamModalPassword('${t.id}')">
                             <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
                         </button>
-                        <button class="btn-icon danger" onclick="deleteTeamPassword('${t.id}')" title="Excluir">
+                        <button class="btn-icon danger" onclick="deleteTeamPassword('${t.id}')">
                             <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
                         </button>
                     </div>
@@ -1074,7 +1085,7 @@
                     
                     let refHTML = '';
                     if(f.imgBase64) {
-                        refHTML = `<div style="margin-bottom:10px;"><img src="${f.imgBase64}" class="post-preview-img" onclick="openImageViewer('${f.imgBase64}')" title="Clique para ampliar"></div>`;
+                        refHTML = `<div class="post-preview-img" onclick="openImageViewer('${f.imgBase64}')" title="Clique para ampliar"><img src="${f.imgBase64}"></div>`;
                     } else if (f.link) {
                         refHTML = `<a href="${f.link.includes('http') ? f.link : 'https://'+f.link}" class="post-attachment" target="_blank"><svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg> Link Útil</a>`;
                     }
@@ -1086,6 +1097,9 @@
                     let ownerColor = ownerObj ? ownerObj.color : 'var(--accent)';
                     let ownerAvatar = ownerObj && ownerObj.img ? `<img src="${ownerObj.img}">` : getInitials(ownerName);
 
+                    // RENDERIZAÇÃO DA DESCRIÇÃO NO FREELA
+                    let descHTML = f.desc ? `<div class="card-desc-text">${f.desc}</div>` : '';
+
                     cards += `
                         <div class="post-card ${cardClass}">
                             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
@@ -1093,6 +1107,7 @@
                                 ${isDueSoon(f.date) && f.stage !== 'done' ? '<span style="font-size:0.6rem; color:var(--danger); font-weight:bold; background:rgba(239,68,68,0.1); padding:2px 6px; border-radius:4px;">⚠️ PRAZO CURTO</span>' : ''}
                             </div>
                             <h5 onclick="openFreelaModal('${f.id}')">${f.title}</h5>
+                            ${descHTML}
                             ${dateBadge} ${refHTML}
                             <div class="post-footer">
                                 <div class="assignee"><div class="avatar" style="background:${ownerColor}">${ownerAvatar}</div> ${ownerName}</div>
@@ -1173,7 +1188,7 @@
                     <div style="display:flex; align-items:center; gap:16px;">
                         <div class="dropdown">
                             <button class="btn-outline">
-                                <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg> 
+                                <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31(2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg> 
                                 Opções ▼
                             </button>
                             <div class="dropdown-content">
@@ -1252,7 +1267,7 @@
                     
                     let refHTML = '';
                     if(t.imgBase64) {
-                        refHTML = `<div style="margin-bottom:10px;"><img src="${t.imgBase64}" class="post-preview-img" onclick="openImageViewer('${t.imgBase64}')" title="Clique para ampliar"></div>`;
+                        refHTML = `<div class="post-preview-img" onclick="openImageViewer('${t.imgBase64}')" title="Clique para ampliar"><img src="${t.imgBase64}"></div>`;
                     } else if (t.link) {
                         refHTML = `<a href="${t.link.includes('http') ? t.link : 'https://'+t.link}" class="post-attachment" target="_blank"><svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg> Link de Referência</a>`;
                     }
@@ -1264,7 +1279,6 @@
                     let ownerColor = ownerObj ? ownerObj.color : 'var(--border)';
                     let ownerAvatar = ownerObj && ownerObj.img ? `<img src="${ownerObj.img}">` : getInitials(ownerName);
 
-                    // LÓGICA DO BOTÃO E BORDA DE APROVAÇÃO
                     let isApproved = (t.stage === 'review' && t.approved);
                     let approvedClass = isApproved ? 'approved-card' : '';
                     
@@ -1277,6 +1291,9 @@
                         }
                     }
 
+                    // RENDERIZAÇÃO DA DESCRIÇÃO / TEXTO DO POST CORRIDO
+                    let descHTML = t.desc ? `<div class="card-desc-text">${t.desc}</div>` : '';
+
                     cards += `
                         <div class="post-card ${dueClass} ${approvedClass}">
                             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
@@ -1284,6 +1301,7 @@
                                 ${isDueSoon(t.date) && t.stage !== 'sched' ? '<span style="font-size:0.6rem; color:var(--danger); font-weight:bold; background:rgba(239,68,68,0.1); padding:2px 6px; border-radius:4px;">⚠️ PRAZO CURTO</span>' : ''}
                             </div>
                             <h5 onclick="openTaskModal('${t.id}')">${t.title}</h5>
+                            ${descHTML}
                             ${dateBadge}
                             ${refHTML}
                             <div class="post-footer">
@@ -1318,7 +1336,7 @@
         function moveTask(id, stage, title) { 
             const t = tasks.find(i => i.id === id); 
             t.stage = stage; 
-            if (stage !== 'review') t.approved = false; // Se sair da revisão, reseta o check de aprovado
+            if (stage !== 'review') t.approved = false; 
             if(stage === 'design' || stage === 'copy') showToast(`🚀 Produção iniciada: ${title}`);
             if(stage === 'sched') showToast(`✅ Peça Programada: ${title}`);
             saveData(); 
@@ -1397,6 +1415,10 @@
             if(id) {
                 const t = tasks.find(i=>i.id===id);
                 document.getElementById('t-id').value = t.id; document.getElementById('t-title').value = t.title;
+                
+                // CARREGA A DESCRIÇÃO NO FORMULÁRIO
+                document.getElementById('t-desc').value = t.desc || '';
+                
                 document.getElementById('t-owner').value = t.owner; document.getElementById('t-priority').value = t.priority;
                 document.getElementById('t-date').value = t.date || '';
                 document.getElementById('t-link').value = t.link || ''; document.getElementById('t-stage').value = t.stage;
@@ -1410,10 +1432,11 @@
             const id = document.getElementById('t-id').value || 't'+Date.now();
             const tData = { 
                 id, clientId: activeClient, title: document.getElementById('t-title').value, 
+                desc: document.getElementById('t-desc').value, // SALVA A DESCRIÇÃO DO POST
                 owner: document.getElementById('t-owner').value, priority: document.getElementById('t-priority').value, 
                 date: document.getElementById('t-date').value, imgBase64: document.getElementById('t-img-b64').value,
                 link: document.getElementById('t-link').value, stage: document.getElementById('t-stage').value,
-                approved: tasks.find(i=>i.id===id)?.approved || false // Preserva a aprovação se já tiver
+                approved: tasks.find(i=>i.id===id)?.approved || false 
             };
             const idx = tasks.findIndex(i=>i.id===id);
             if(idx>-1) tasks[idx]=tData; else { tasks.push(tData); showToast(`📌 Tarefa Adicionada: ${tData.title}`); }
@@ -1430,6 +1453,10 @@
             if(id) {
                 const f = freelas.find(i=>i.id===id);
                 document.getElementById('f-id').value = f.id; document.getElementById('f-title').value = f.title;
+                
+                // CARREGA A DESCRIÇÃO NO FORMULÁRIO DO FREELA
+                document.getElementById('f-desc').value = f.desc || '';
+                
                 document.getElementById('f-val').value = f.val; document.getElementById('f-owner').value = f.owner;
                 document.getElementById('f-date').value = f.date || '';
                 document.getElementById('f-link').value = f.link || ''; document.getElementById('f-stage').value = f.stage;
@@ -1442,7 +1469,9 @@
             e.preventDefault();
             const id = document.getElementById('f-id').value || 'f'+Date.now();
             const fData = { 
-                id, title: document.getElementById('f-title').value, val: document.getElementById('f-val').value, 
+                id, title: document.getElementById('f-title').value, 
+                desc: document.getElementById('f-desc').value, // SALVA A DESCRIÇÃO DO FREELA
+                val: document.getElementById('f-val').value, 
                 owner: document.getElementById('f-owner').value, date: document.getElementById('f-date').value,
                 imgBase64: document.getElementById('f-img-b64').value, link: document.getElementById('f-link').value, stage: document.getElementById('f-stage').value 
             };
@@ -1502,20 +1531,18 @@
             agency.logo = document.getElementById('ag-logo-b64').value || '';
             closeModal('agencyModal');
             saveData();
-            showToast('Perfil da Agência atualizado!');
+            showToast('Perfil da Agência updated!');
         }
 
         /* --- INICIALIZAÇÃO COM SUPABASE --- */
         async function initApp() {
             try {
-                // 1. Busca os dados iniciais salvos no banco
                 const { data, error } = await supabaseClient
                     .from('app_data')
                     .select('payload')
                     .eq('id', 'hub_operacional')
                     .single();
 
-                // Se encontrou dados no banco de dados, substitui os dados locais
                 if (data && data.payload) {
                     const d = data.payload;
                     clients = d.clients || [];
@@ -1526,7 +1553,6 @@
                     subs = d.subs || [];
                     agency = d.agency || { name: 'Saturno Studio', logo: '' };
                     
-                    // Atualiza o backup local
                     localStorage.setItem('sat_final_cli', JSON.stringify(clients));
                     localStorage.setItem('sat_final_tsk', JSON.stringify(tasks));
                     localStorage.setItem('sat_final_freelas', JSON.stringify(freelas));
@@ -1536,10 +1562,9 @@
                     localStorage.setItem('sat_final_agency', JSON.stringify(agency));
                 }
             } catch (err) {
-                console.error("Modo offline ativo ou banco de dados vazio: ", err);
+                console.error("Modo offline ativo: ", err);
             }
 
-            // 2. Fica "escutando" mudanças em tempo real (Realtime Sync)
             supabaseClient.channel('custom-all-channel')
                 .on('postgres_changes', { event: '*', schema: 'public', table: 'app_data' }, (payloadDB) => {
                     if (payloadDB.new && payloadDB.new.id === 'hub_operacional') {
@@ -1560,14 +1585,12 @@
                 })
                 .subscribe();
 
-            // 3. Monta a tela inicial
             populateTeamSelects();
             updateBadges();
             renderSidebar();
             routeView();
         }
         
-        // Dá o pontapé inicial no sistema
         initApp();
     </script>
 </body>
