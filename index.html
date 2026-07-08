@@ -5,8 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Saturno Studio | Hub Operacional</title>
     
-    <!-- ÍCONE DA GUIA DO NAVEGADOR (Com pasta Imagem Maiúscula) -->
-    <link rel="icon" type="image/png" href="Imagem/ICONE - STUDIO SATURNO 2.png">
+    <!-- ÍCONE DA GUIA DO NAVEGADOR (Corrigido para 'imagem' minúsculo) -->
+    <link rel="icon" type="image/png" href="imagem/ICONE - STUDIO SATURNO 2.png">
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -99,7 +99,7 @@
         .main-workspace { flex: 1; display: flex; flex-direction: column; overflow-y: auto; background-color: var(--bg-main); position: relative; }
         .workspace-header { padding: 24px 32px; background-color: var(--bg-card); border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: flex-start; flex-shrink: 0; }
         .client-meta h2 { font-size: 1.6rem; font-weight: 700; color: var(--text-main); margin-bottom: 12px; display: flex; align-items: center; gap: 12px; transition: 0.2s; }
-        .client-meta h2:hover { opacity: 0.8; }
+        .client-meta h2:hover { opacity: 0.8; cursor:pointer;}
         .client-info-badges { display: flex; flex-wrap: wrap; gap: 10px; font-size: 0.75rem; font-weight: 600; }
         .info-badge { background: var(--bg-input); border: 1px solid var(--border); padding: 4px 10px; border-radius: 6px; display: flex; align-items: center; gap: 6px; color: var(--text-muted); }
         .info-badge strong { color: var(--text-main); }
@@ -171,7 +171,9 @@
         .post-date { font-size: 0.7rem; color: var(--text-muted); display: flex; align-items: center; gap: 4px; margin-bottom: 10px; background: var(--bg-input); padding: 4px 8px; border-radius: 4px; display: inline-flex;}
         .post-val { display: inline-block; background: rgba(16, 185, 129, 0.15); color: #10b981; font-weight: 700; font-size: 0.75rem; padding: 2px 6px; border-radius: 4px; margin-bottom: 8px; }
 
-        .post-preview-img { width: 100%; height: 140px; object-fit: cover; border-radius: 6px; margin-bottom: 10px; border: 1px solid var(--border); display: block; }
+        /* MODIFICAÇÃO: Imagem com zoom in */
+        .post-preview-img { width: 100%; height: 140px; object-fit: cover; border-radius: 6px; margin-bottom: 10px; border: 1px solid var(--border); display: block; cursor: zoom-in; }
+        
         .post-attachment { display: inline-flex; align-items: center; gap: 4px; font-size: 0.75rem; color: var(--accent); text-decoration: none; margin-bottom: 12px; background: rgba(138,43,226,0.1); padding: 4px 8px; border-radius: 6px; }
 
         .post-footer { display: flex; justify-content: space-between; align-items: center; border-top: 1px dashed var(--border); padding-top: 12px; }
@@ -295,6 +297,12 @@
 
     <main class="main-workspace" id="workspace-area"></main>
 
+    <!-- NOVO MODAL: Visualizador de Imagens (Lightbox) -->
+    <div class="modal-overlay" id="imageViewerModal" onclick="closeModal('imageViewerModal')" style="z-index: 99999;">
+        <img id="viewer-img" src="" style="max-width: 90%; max-height: 90%; border-radius: 8px; box-shadow: 0 10px 40px rgba(0,0,0,0.5);">
+    </div>
+
+    <!-- Modais de Formulários mantidos -->
     <div class="modal-overlay" id="teamModal">
         <div class="modal">
             <h2>Cadastrar Colaborador</h2>
@@ -382,7 +390,6 @@
                     <select id="c-team-owner"><option value="">Nenhum / Toda a Equipe</option></select>
                 </div>
 
-                <!-- NOVA FUNÇÃO: OCULTAR ATRASO DE DEMANDAS FIXAS -->
                 <div class="form-group full">
                     <label>Ocultar Alerta de Atraso?</label>
                     <select id="c-hide-delay">
@@ -578,7 +585,21 @@
             return diffDays <= 2 && diffDays >= -1;
         }
 
-        /* --- CORREÇÃO DO UPLOAD DE IMAGEM --- */
+        /* --- VISUALIZADOR DE IMAGEM (LIGHTBOX) --- */
+        function openImageViewer(src) {
+            document.getElementById('viewer-img').src = src;
+            document.getElementById('imageViewerModal').style.display = 'flex';
+        }
+
+        /* --- MUDAR STATUS MANUAL DA META --- */
+        function toggleForceMeta(id) {
+            const c = clients.find(i => i.id === id);
+            c.forceMeta = !c.forceMeta;
+            saveData();
+            showToast(c.forceMeta ? 'Meta marcada como concluída manualmente.' : 'Meta retornou ao cálculo automático.');
+        }
+
+        /* --- UPLOAD DE IMAGEM --- */
         function encodeImageFileAsURL(element, previewId, hiddenInputId) {
             const file = element.files[0];
             if(!file) return;
@@ -589,7 +610,7 @@
                 preview.src = reader.result;
                 preview.style.display = 'block';
             };
-            reader.readAsDataURL(file);
+            reader.readAsDataURL(file); 
         }
 
         /* --- NAVEGAR PARA O CLIENTE ESPECÍFICO (Das Notificações) --- */
@@ -603,7 +624,6 @@
 
         /* --- SALVAR DADOS NO SUPABASE --- */
         async function saveData() {
-            // Backup Local Imediato
             localStorage.setItem('sat_final_cli', JSON.stringify(clients));
             localStorage.setItem('sat_final_tsk', JSON.stringify(tasks));
             localStorage.setItem('sat_final_freelas', JSON.stringify(freelas));
@@ -611,31 +631,14 @@
             localStorage.setItem('sat_final_team', JSON.stringify(team));
             localStorage.setItem('sat_final_subs', JSON.stringify(subs));
             
-            const dadosAgenciaLimpos = {
-                name: agency.name || 'Saturno Studio',
-                logo: agency.logo || ''
-            };
-            
+            const dadosAgenciaLimpos = { name: agency.name || 'Saturno Studio', logo: agency.logo || '' };
             localStorage.setItem('sat_final_agency', JSON.stringify(dadosAgenciaLimpos));
             
-            // Sincroniza com a nuvem Supabase
-            const payloadData = {
-                clients, tasks, freelas, meetings, team, subs, agency: dadosAgenciaLimpos
-            };
+            const payloadData = { clients, tasks, freelas, meetings, team, subs, agency: dadosAgenciaLimpos };
+            const { error } = await supabaseClient.from('app_data').upsert({ id: 'hub_operacional', payload: payloadData });
 
-            const { error } = await supabaseClient
-                .from('app_data')
-                .upsert({ id: 'hub_operacional', payload: payloadData });
-
-            if (error) {
-                console.error("Erro ao salvar no Supabase: ", error);
-            } else {
-                console.log("Dados sincronizados com o Supabase com sucesso!");
-            }
-
-            updateBadges();
-            renderSidebar();
-            routeView();
+            if (error) console.error("Erro ao salvar no Supabase: ", error);
+            updateBadges(); renderSidebar(); routeView();
         }
 
         function updateBadges() {
@@ -693,22 +696,20 @@
             
             clients.forEach(c => {
                 const target = (c.freq || 0) * 2;
-                // AGORA: Aprovação e Programado contam para a meta
                 const sched = tasks.filter(t => t.clientId === c.id && (t.stage === 'sched' || t.stage === 'review')).length;
-                const pct = target > 0 ? Math.min(Math.round((sched / target)*100), 100) : 0;
+                let pct = target > 0 ? Math.min(Math.round((sched / target)*100), 100) : 0;
                 
                 let colorClass = 'var(--danger)'; let stTxt = 'Atrasado';
                 
-                // LÓGICA DE CORES E TEXTOS DA BARRA
-                if(pct >= 100) { colorClass = 'var(--color-sched)'; stTxt = 'No Alvo'; }
+                if (c.forceMeta) { pct = 100; colorClass = 'var(--color-sched)'; stTxt = 'Parceria / OK'; }
+                else if(pct >= 100) { colorClass = 'var(--color-sched)'; stTxt = 'No Alvo'; }
                 else if(pct >= 50) { colorClass = 'var(--color-review)'; stTxt = 'Rodando'; }
-                else if (c.hideDelay === 'Sim') { colorClass = 'var(--text-muted)'; stTxt = 'Demanda Fixa'; } // Oculta o vermelho de atraso
+                else if (c.hideDelay === 'Sim') { colorClass = 'var(--text-muted)'; stTxt = 'Demanda Fixa'; }
 
                 let ownerBadge = '';
                 if (c.teamOwner) {
                     const tm = team.find(t => t.id === c.teamOwner);
                     if (tm) {
-                        // Avisa se tem tarefa do colaborador que não está aprovada nem pronta
                         const pendingTasks = tasks.filter(t => t.clientId === c.id && t.owner === tm.id && t.stage !== 'sched' && t.stage !== 'review').length;
                         const notifDot = pendingTasks > 0 ? `<div style="position:absolute; top:-2px; right:-2px; width:8px; height:8px; background:var(--danger); border-radius:50%; border:1px solid var(--bg-card);"></div>` : '';
                         ownerBadge = `
@@ -768,11 +769,10 @@
                 countReview += cTasks.filter(t => t.stage === 'review').length;
                 countSched += cTasks.filter(t => t.stage === 'sched').length;
                 
-                // Meta agora contabiliza Aprovação e Programados
                 globalSched += cTasks.filter(t => t.stage === 'sched' || t.stage === 'review').length;
             });
             
-            inProduction = countCopy + countDesign; // Peças que ainda estão sendo trabalhadas
+            inProduction = countCopy + countDesign;
 
             const globalHealth = globalTarget > 0 ? Math.round((globalSched / globalTarget) * 100) : 0;
             const healthColor = globalHealth >= 100 ? 'var(--color-sched)' : (globalHealth > 50 ? 'var(--color-review)' : 'var(--danger)');
@@ -948,12 +948,10 @@
         /* --- EQUIPE / COLABORADORES --- */
         function renderTeam(container) {
             let teamHTML = team.map(t => {
-                // Filtra as demandas que estão "nas mãos" do colaborador (em andamento)
                 const myTasks = tasks.filter(tsk => tsk.owner === t.id && (tsk.stage === 'copy' || tsk.stage === 'design'));
                 const myFreelas = freelas.filter(fr => fr.owner === t.id && (fr.stage === 'todo' || fr.stage === 'doing'));
                 const pendingCount = myTasks.length + myFreelas.length;
                 
-                // Monta o bloco de notificações clicáveis
                 let notificationsHTML = '';
                 if (pendingCount > 0) {
                     notificationsHTML = `
@@ -1070,7 +1068,7 @@
                     
                     let refHTML = '';
                     if(f.imgBase64) {
-                        refHTML = `<div class="post-preview-img"><img src="${f.imgBase64}" style="width:100%;height:100%;object-fit:cover;border-radius:6px;"></div>`;
+                        refHTML = `<div class="post-preview-img" onclick="openImageViewer('${f.imgBase64}')" title="Clique para ampliar"><img src="${f.imgBase64}"></div>`;
                     } else if (f.link) {
                         refHTML = `<a href="${f.link.includes('http') ? f.link : 'https://'+f.link}" class="post-attachment" target="_blank"><svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg> Link Útil</a>`;
                     }
@@ -1142,14 +1140,14 @@
             const c = clients.find(i => i.id === activeClient);
             const target = (c.freq || 0) * 2;
             
-            // AGORA: Aprovação e Programado contam para a meta
-            const schedPosts = tasks.filter(t => t.clientId === c.id && (t.stage === 'sched' || t.stage === 'review')).length;
-            const pct = target > 0 ? Math.min(Math.round((schedPosts / target)*100), 100) : 0;
+            let schedPosts = tasks.filter(t => t.clientId === c.id && (t.stage === 'sched' || t.stage === 'review')).length;
+            let pct = target > 0 ? Math.min(Math.round((schedPosts / target)*100), 100) : 0;
             
             let colorBar = 'var(--danger)';
-            if (pct >= 100) colorBar = 'var(--color-sched)';
+            if (c.forceMeta) { pct = 100; colorBar = 'var(--color-sched)'; }
+            else if (pct >= 100) colorBar = 'var(--color-sched)';
             else if (pct >= 50) colorBar = 'var(--color-review)';
-            else if (c.hideDelay === 'Sim') colorBar = 'var(--text-muted)'; // Oculta o atrasado vermelho
+            else if (c.hideDelay === 'Sim') colorBar = 'var(--text-muted)';
             
             const avatarHTML = c.img ? `<img src="${c.img}">` : getInitials(c.name);
             const whatsLink = c.finPhone ? `https://wa.me/55${c.finPhone.replace(/\D/g,'')}?text=Ol%C3%A1!%20Passando%20para%20lembrar%20da%20mensalidade%20da%20ag%C3%AAncia.` : '#';
@@ -1159,7 +1157,6 @@
             container.innerHTML = `
                 <div class="workspace-header">
                     <div class="client-meta">
-                        <!-- MUDANÇA: Avatar e Nome Clicáveis para Editar Cliente -->
                         <h2 style="cursor:pointer;" onclick="openClientModal('${c.id}')" title="Editar Perfil do Cliente"><div class="avatar" style="width:48px;height:48px;font-size:1.3rem;">${avatarHTML}</div> ${c.name}</h2>
                         <div class="client-info-badges">
                             <div class="info-badge">Resp: <strong>${respHTML}</strong></div>
@@ -1178,6 +1175,12 @@
                                 <button onclick="deleteClient('${c.id}')" class="danger-btn" style="color:var(--danger);"><svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg> Excluir Cliente</button>
                             </div>
                         </div>
+                        
+                        <!-- BOTÃO DE FORÇAR META -->
+                        <button class="btn-outline" onclick="toggleForceMeta('${c.id}')" style="padding: 10px; border-color: ${c.forceMeta ? 'var(--color-sched)' : 'var(--border)'}; color: ${c.forceMeta ? 'var(--color-sched)' : 'var(--text-muted)'};" title="${c.forceMeta ? 'Meta Forçada' : 'Marcar Meta como Concluída Manualmente'}">
+                            <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                        </button>
+
                         <div class="buffer-meter-box">
                             <div class="meter-label"><span>Meta de Frente (2 Sem.)</span><span style="color:${colorBar}">${pct}%</span></div>
                             <div class="meter-bg"><div class="meter-bar" style="width:${pct}%; background:${colorBar}"></div></div>
@@ -1244,7 +1247,7 @@
                     
                     let refHTML = '';
                     if(t.imgBase64) {
-                        refHTML = `<div class="post-preview-img"><img src="${t.imgBase64}" style="width:100%;height:100%;object-fit:cover;border-radius:6px;"></div>`;
+                        refHTML = `<div class="post-preview-img" onclick="openImageViewer('${t.imgBase64}')" title="Clique para ampliar"><img src="${t.imgBase64}"></div>`;
                     } else if (t.link) {
                         refHTML = `<a href="${t.link.includes('http') ? t.link : 'https://'+t.link}" class="post-attachment" target="_blank"><svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg> Link de Referência</a>`;
                     }
@@ -1266,7 +1269,10 @@
                             ${dateBadge}
                             ${refHTML}
                             <div class="post-footer">
-                                <div class="assignee"><div class="avatar" style="background:${ownerColor}">${ownerAvatar}</div> <span style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:80px;">${ownerName}</span></div>
+                                <div style="display:flex; align-items:center; gap:8px;">
+                                    ${t.stage === 'review' ? `<button onclick="moveTask('${t.id}', 'sched', '${t.title}')" style="background:var(--color-sched); color:#fff; border:none; width:24px; height:24px; border-radius:6px; cursor:pointer; display:flex; align-items:center; justify-content:center;" title="Aprovar Peça">✓</button>` : ''}
+                                    <div class="assignee"><div class="avatar" style="background:${ownerColor}">${ownerAvatar}</div> <span style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:80px;">${ownerName}</span></div>
+                                </div>
                                 <select class="stage-select" onchange="moveTask('${t.id}', this.value, '${t.title}')">${opts}</select>
                             </div>
                             <div style="text-align:right; margin-top:8px;">
@@ -1316,7 +1322,6 @@
                 document.getElementById('c-poster').value = c.poster || 'Agência Saturno';
                 document.getElementById('c-team-owner').value = c.teamOwner || ''; 
                 
-                // Puxa o status de ocultar atraso salvo ou joga para Não
                 document.getElementById('c-hide-delay').value = c.hideDelay || 'Nao';
                 
                 document.getElementById('c-notes').value = c.notes || '';
@@ -1344,7 +1349,7 @@
                 id, name: document.getElementById('c-name').value, img: document.getElementById('c-img-b64').value,
                 profile: document.getElementById('c-profile').value, login: document.getElementById('c-login').value, freq: parseInt(document.getElementById('c-freq').value),
                 poster: document.getElementById('c-poster').value, teamOwner: document.getElementById('c-team-owner').value, 
-                hideDelay: document.getElementById('c-hide-delay').value, // Salva o status de ocultar
+                hideDelay: document.getElementById('c-hide-delay').value, forceMeta: clients.find(i=>i.id===id)?.forceMeta || false,
                 notes: document.getElementById('c-notes').value,
                 finDesc: document.getElementById('c-fin-desc').value, finValue: document.getElementById('c-fin-value').value, finDay: document.getElementById('c-fin-day').value, 
                 finPhone: document.getElementById('c-fin-phone').value, finStatus: document.getElementById('c-fin-status').value, needsNf: document.getElementById('c-needs-nf').value, cnpj: document.getElementById('c-cnpj').value,
