@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Saturno Studio | Hub Operacional</title>
     
-    <!-- ÍCONE DA GUIA DO NAVEGADOR (Corrigido para 'imagem' minúsculo) -->
+    <!-- ÍCONE DA GUIA DO NAVEGADOR -->
     <link rel="icon" type="image/png" href="imagem/ICONE - STUDIO SATURNO 2.png">
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -156,9 +156,13 @@
         .post-card { background-color: var(--bg-card); border: 1px solid var(--border); border-radius: 10px; padding: 14px; margin-bottom: 12px; transition: 0.2s; position: relative; box-shadow: 0 2px 5px var(--shadow-sm);}
         .post-card:hover { border-color: var(--accent); transform: translateY(-2px); }
         
+        /* Modificadores Visuais de Alerta e Aprovação */
         .due-alert { border-color: var(--danger); animation: pulseAlert 2s infinite; }
         .freela-todo { border-color: var(--danger); box-shadow: inset 0 0 10px rgba(239, 68, 68, 0.1); }
         .freela-doing { border-color: var(--gold); box-shadow: inset 0 0 10px rgba(250, 204, 21, 0.1); }
+        
+        .approved-card { border-color: var(--color-sched) !important; box-shadow: 0 0 10px rgba(16, 185, 129, 0.15) !important; }
+
         @keyframes pulseAlert { 0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4); } 70% { box-shadow: 0 0 0 6px rgba(239, 68, 68, 0); } 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); } }
 
         .priority-tag { font-size: 0.65rem; padding: 2px 6px; border-radius: 4px; font-weight: 700; text-transform: uppercase; margin-bottom: 8px; display: inline-block; }
@@ -171,12 +175,13 @@
         .post-date { font-size: 0.7rem; color: var(--text-muted); display: flex; align-items: center; gap: 4px; margin-bottom: 10px; background: var(--bg-input); padding: 4px 8px; border-radius: 4px; display: inline-flex;}
         .post-val { display: inline-block; background: rgba(16, 185, 129, 0.15); color: #10b981; font-weight: 700; font-size: 0.75rem; padding: 2px 6px; border-radius: 4px; margin-bottom: 8px; }
 
-        /* MODIFICAÇÃO: Imagem com zoom in */
-        .post-preview-img { width: 100%; height: 140px; object-fit: cover; border-radius: 6px; margin-bottom: 10px; border: 1px solid var(--border); display: block; cursor: zoom-in; }
+        /* NOVA IMAGEM PREVIEW MINIATURA (THUMBNAIL) */
+        .post-preview-img { width: 56px; height: 56px; object-fit: cover; border-radius: 8px; border: 1px solid var(--border); display: block; cursor: pointer; transition: 0.2s; }
+        .post-preview-img:hover { opacity: 0.8; border-color: var(--accent); transform: scale(1.05); }
         
         .post-attachment { display: inline-flex; align-items: center; gap: 4px; font-size: 0.75rem; color: var(--accent); text-decoration: none; margin-bottom: 12px; background: rgba(138,43,226,0.1); padding: 4px 8px; border-radius: 6px; }
 
-        .post-footer { display: flex; justify-content: space-between; align-items: center; border-top: 1px dashed var(--border); padding-top: 12px; }
+        .post-footer { display: flex; justify-content: space-between; align-items: center; border-top: 1px dashed var(--border); padding-top: 12px; margin-top: 12px;}
         .assignee { display: flex; align-items: center; gap: 8px; font-size: 0.75rem; color: var(--text-muted); font-weight: 500;}
         .assignee .avatar { width: 24px; height: 24px; font-size: 0.65rem; background: var(--border); }
         .stage-select { background: var(--bg-input); color: var(--text-muted); border: 1px solid var(--border); padding: 4px; border-radius: 6px; font-size: 0.7rem; cursor: pointer; max-width: 110px; outline: none; }
@@ -302,7 +307,7 @@
         <img id="viewer-img" src="" style="max-width: 90%; max-height: 90%; border-radius: 8px; box-shadow: 0 10px 40px rgba(0,0,0,0.5);">
     </div>
 
-    <!-- Modais de Formulários mantidos -->
+    <!-- Modais de Formulários -->
     <div class="modal-overlay" id="teamModal">
         <div class="modal">
             <h2>Cadastrar Colaborador</h2>
@@ -769,10 +774,11 @@
                 countReview += cTasks.filter(t => t.stage === 'review').length;
                 countSched += cTasks.filter(t => t.stage === 'sched').length;
                 
+                // Meta agora contabiliza Aprovação e Programados
                 globalSched += cTasks.filter(t => t.stage === 'sched' || t.stage === 'review').length;
             });
             
-            inProduction = countCopy + countDesign;
+            inProduction = countCopy + countDesign; // Peças que ainda estão sendo trabalhadas
 
             const globalHealth = globalTarget > 0 ? Math.round((globalSched / globalTarget) * 100) : 0;
             const healthColor = globalHealth >= 100 ? 'var(--color-sched)' : (globalHealth > 50 ? 'var(--color-review)' : 'var(--danger)');
@@ -1068,7 +1074,7 @@
                     
                     let refHTML = '';
                     if(f.imgBase64) {
-                        refHTML = `<div class="post-preview-img" onclick="openImageViewer('${f.imgBase64}')" title="Clique para ampliar"><img src="${f.imgBase64}"></div>`;
+                        refHTML = `<div style="margin-bottom:10px;"><img src="${f.imgBase64}" class="post-preview-img" onclick="openImageViewer('${f.imgBase64}')" title="Clique para ampliar"></div>`;
                     } else if (f.link) {
                         refHTML = `<a href="${f.link.includes('http') ? f.link : 'https://'+f.link}" class="post-attachment" target="_blank"><svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg> Link Útil</a>`;
                     }
@@ -1147,7 +1153,7 @@
             if (c.forceMeta) { pct = 100; colorBar = 'var(--color-sched)'; }
             else if (pct >= 100) colorBar = 'var(--color-sched)';
             else if (pct >= 50) colorBar = 'var(--color-review)';
-            else if (c.hideDelay === 'Sim') colorBar = 'var(--text-muted)';
+            else if (c.hideDelay === 'Sim') colorBar = 'var(--text-muted)'; 
             
             const avatarHTML = c.img ? `<img src="${c.img}">` : getInitials(c.name);
             const whatsLink = c.finPhone ? `https://wa.me/55${c.finPhone.replace(/\D/g,'')}?text=Ol%C3%A1!%20Passando%20para%20lembrar%20da%20mensalidade%20da%20ag%C3%AAncia.` : '#';
@@ -1176,7 +1182,6 @@
                             </div>
                         </div>
                         
-                        <!-- BOTÃO DE FORÇAR META -->
                         <button class="btn-outline" onclick="toggleForceMeta('${c.id}')" style="padding: 10px; border-color: ${c.forceMeta ? 'var(--color-sched)' : 'var(--border)'}; color: ${c.forceMeta ? 'var(--color-sched)' : 'var(--text-muted)'};" title="${c.forceMeta ? 'Meta Forçada' : 'Marcar Meta como Concluída Manualmente'}">
                             <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                         </button>
@@ -1247,7 +1252,7 @@
                     
                     let refHTML = '';
                     if(t.imgBase64) {
-                        refHTML = `<div class="post-preview-img" onclick="openImageViewer('${t.imgBase64}')" title="Clique para ampliar"><img src="${t.imgBase64}"></div>`;
+                        refHTML = `<div style="margin-bottom:10px;"><img src="${t.imgBase64}" class="post-preview-img" onclick="openImageViewer('${t.imgBase64}')" title="Clique para ampliar"></div>`;
                     } else if (t.link) {
                         refHTML = `<a href="${t.link.includes('http') ? t.link : 'https://'+t.link}" class="post-attachment" target="_blank"><svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg> Link de Referência</a>`;
                     }
@@ -1259,8 +1264,21 @@
                     let ownerColor = ownerObj ? ownerObj.color : 'var(--border)';
                     let ownerAvatar = ownerObj && ownerObj.img ? `<img src="${ownerObj.img}">` : getInitials(ownerName);
 
+                    // LÓGICA DO BOTÃO E BORDA DE APROVAÇÃO
+                    let isApproved = (t.stage === 'review' && t.approved);
+                    let approvedClass = isApproved ? 'approved-card' : '';
+                    
+                    let approvalBtn = '';
+                    if (t.stage === 'review') {
+                        if (t.approved) {
+                            approvalBtn = `<button onclick="toggleApproval('${t.id}')" style="background:var(--color-sched); color:#fff; border:none; width:24px; height:24px; border-radius:6px; cursor:pointer; display:flex; align-items:center; justify-content:center;" title="Remover Aprovação"><svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg></button>`;
+                        } else {
+                            approvalBtn = `<button onclick="toggleApproval('${t.id}')" style="background:transparent; color:var(--text-muted); border:2px solid var(--text-muted); width:24px; height:24px; border-radius:6px; cursor:pointer; display:flex; align-items:center; justify-content:center; transition:0.2s;" onmouseover="this.style.borderColor='var(--color-sched)'; this.style.color='var(--color-sched)';" onmouseout="this.style.borderColor='var(--text-muted)'; this.style.color='var(--text-muted)';" title="Marcar como Aprovado"></button>`;
+                        }
+                    }
+
                     cards += `
-                        <div class="post-card ${dueClass}">
+                        <div class="post-card ${dueClass} ${approvedClass}">
                             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
                                 <span class="priority-tag ${pClass}">${t.priority}</span>
                                 ${isDueSoon(t.date) && t.stage !== 'sched' ? '<span style="font-size:0.6rem; color:var(--danger); font-weight:bold; background:rgba(239,68,68,0.1); padding:2px 6px; border-radius:4px;">⚠️ PRAZO CURTO</span>' : ''}
@@ -1270,7 +1288,7 @@
                             ${refHTML}
                             <div class="post-footer">
                                 <div style="display:flex; align-items:center; gap:8px;">
-                                    ${t.stage === 'review' ? `<button onclick="moveTask('${t.id}', 'sched', '${t.title}')" style="background:var(--color-sched); color:#fff; border:none; width:24px; height:24px; border-radius:6px; cursor:pointer; display:flex; align-items:center; justify-content:center;" title="Aprovar Peça">✓</button>` : ''}
+                                    ${approvalBtn}
                                     <div class="assignee"><div class="avatar" style="background:${ownerColor}">${ownerAvatar}</div> <span style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:80px;">${ownerName}</span></div>
                                 </div>
                                 <select class="stage-select" onchange="moveTask('${t.id}', this.value, '${t.title}')">${opts}</select>
@@ -1288,11 +1306,20 @@
         /* --- AÇÕES DE DADOS COM NOTIFICAÇÃO --- */
         function toggleChk(field) { const c = clients.find(i => i.id === activeClient); if(!c.chk) c.chk = {}; c.chk[field] = !c.chk[field]; saveData(); }
         
+        function toggleApproval(id) {
+            const t = tasks.find(i => i.id === id);
+            if(t) {
+                t.approved = !t.approved;
+                saveData();
+                if(t.approved) showToast(`✅ Post aprovado: ${t.title}`);
+            }
+        }
+
         function moveTask(id, stage, title) { 
             const t = tasks.find(i => i.id === id); 
             t.stage = stage; 
+            if (stage !== 'review') t.approved = false; // Se sair da revisão, reseta o check de aprovado
             if(stage === 'design' || stage === 'copy') showToast(`🚀 Produção iniciada: ${title}`);
-            if(stage === 'review') showToast(`👀 Em Aprovação: ${title}`);
             if(stage === 'sched') showToast(`✅ Peça Programada: ${title}`);
             saveData(); 
         }
@@ -1385,7 +1412,8 @@
                 id, clientId: activeClient, title: document.getElementById('t-title').value, 
                 owner: document.getElementById('t-owner').value, priority: document.getElementById('t-priority').value, 
                 date: document.getElementById('t-date').value, imgBase64: document.getElementById('t-img-b64').value,
-                link: document.getElementById('t-link').value, stage: document.getElementById('t-stage').value 
+                link: document.getElementById('t-link').value, stage: document.getElementById('t-stage').value,
+                approved: tasks.find(i=>i.id===id)?.approved || false // Preserva a aprovação se já tiver
             };
             const idx = tasks.findIndex(i=>i.id===id);
             if(idx>-1) tasks[idx]=tData; else { tasks.push(tData); showToast(`📌 Tarefa Adicionada: ${tData.title}`); }
