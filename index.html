@@ -5,8 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Saturno Studio | Hub Operacional</title>
     
-    <!-- ÍCONE DA GUIA DO NAVEGADOR (FAVICON) -->
-    <link rel="icon" type="image/png" href="imagem/ICONE - STUDIO SATURNO 2.png">
+    <!-- ÍCONE DA GUIA DO NAVEGADOR (Com pasta Imagem Maiúscula) -->
+    <link rel="icon" type="image/png" href="Imagem/ICONE - STUDIO SATURNO 2.png">
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -98,7 +98,8 @@
         /* MAIN WORKSPACE E GRIDS */
         .main-workspace { flex: 1; display: flex; flex-direction: column; overflow-y: auto; background-color: var(--bg-main); position: relative; }
         .workspace-header { padding: 24px 32px; background-color: var(--bg-card); border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: flex-start; flex-shrink: 0; }
-        .client-meta h2 { font-size: 1.6rem; font-weight: 700; color: var(--text-main); margin-bottom: 12px; display: flex; align-items: center; gap: 12px; }
+        .client-meta h2 { font-size: 1.6rem; font-weight: 700; color: var(--text-main); margin-bottom: 12px; display: flex; align-items: center; gap: 12px; transition: 0.2s; }
+        .client-meta h2:hover { opacity: 0.8; }
         .client-info-badges { display: flex; flex-wrap: wrap; gap: 10px; font-size: 0.75rem; font-weight: 600; }
         .info-badge { background: var(--bg-input); border: 1px solid var(--border); padding: 4px 10px; border-radius: 6px; display: flex; align-items: center; gap: 6px; color: var(--text-muted); }
         .info-badge strong { color: var(--text-main); }
@@ -381,6 +382,15 @@
                     <select id="c-team-owner"><option value="">Nenhum / Toda a Equipe</option></select>
                 </div>
 
+                <!-- NOVA FUNÇÃO: OCULTAR ATRASO DE DEMANDAS FIXAS -->
+                <div class="form-group full">
+                    <label>Ocultar Alerta de Atraso?</label>
+                    <select id="c-hide-delay">
+                        <option value="Nao">Não (Padrão)</option>
+                        <option value="Sim">Sim (Para Demandas Contínuas)</option>
+                    </select>
+                </div>
+
                 <div class="form-group full">
                     <label>Briefing / Informações Importantes</label>
                     <textarea id="c-notes" rows="2" placeholder="Bio estrita de 150 caracteres..."></textarea>
@@ -579,7 +589,16 @@
                 preview.src = reader.result;
                 preview.style.display = 'block';
             };
-            reader.readAsDataURL(file); // Linha adicionada de volta para ler o arquivo!
+            reader.readAsDataURL(file);
+        }
+
+        /* --- NAVEGAR PARA O CLIENTE ESPECÍFICO (Das Notificações) --- */
+        function goToClient(id) {
+            document.querySelectorAll('.nav-item').forEach(e => e.classList.remove('active'));
+            activeClient = id;
+            mainView = 'client';
+            renderSidebar();
+            routeView();
         }
 
         /* --- SALVAR DADOS NO SUPABASE --- */
@@ -674,18 +693,23 @@
             
             clients.forEach(c => {
                 const target = (c.freq || 0) * 2;
-                const sched = tasks.filter(t => t.clientId === c.id && t.stage === 'sched').length;
+                // AGORA: Aprovação e Programado contam para a meta
+                const sched = tasks.filter(t => t.clientId === c.id && (t.stage === 'sched' || t.stage === 'review')).length;
                 const pct = target > 0 ? Math.min(Math.round((sched / target)*100), 100) : 0;
                 
                 let colorClass = 'var(--danger)'; let stTxt = 'Atrasado';
+                
+                // LÓGICA DE CORES E TEXTOS DA BARRA
                 if(pct >= 100) { colorClass = 'var(--color-sched)'; stTxt = 'No Alvo'; }
                 else if(pct >= 50) { colorClass = 'var(--color-review)'; stTxt = 'Rodando'; }
+                else if (c.hideDelay === 'Sim') { colorClass = 'var(--text-muted)'; stTxt = 'Demanda Fixa'; } // Oculta o vermelho de atraso
 
                 let ownerBadge = '';
                 if (c.teamOwner) {
                     const tm = team.find(t => t.id === c.teamOwner);
                     if (tm) {
-                        const pendingTasks = tasks.filter(t => t.clientId === c.id && t.owner === tm.id && t.stage !== 'sched').length;
+                        // Avisa se tem tarefa do colaborador que não está aprovada nem pronta
+                        const pendingTasks = tasks.filter(t => t.clientId === c.id && t.owner === tm.id && t.stage !== 'sched' && t.stage !== 'review').length;
                         const notifDot = pendingTasks > 0 ? `<div style="position:absolute; top:-2px; right:-2px; width:8px; height:8px; background:var(--danger); border-radius:50%; border:1px solid var(--bg-card);"></div>` : '';
                         ownerBadge = `
                             <div style="position:relative; display:inline-flex;" title="Resp: ${tm.name}">
@@ -731,19 +755,24 @@
             });
         }
 
-        /* --- DASHBOARD GERAL E CORREÇÃO DO CHART --- */
+        /* --- DASHBOARD GERAL --- */
         function renderDashboard(container) {
-            let globalTarget = 0, globalSched = 0;
-            let countCopy = 0, countDesign = 0, countReview = 0;
+            let globalTarget = 0, globalSched = 0, inProduction = 0;
+            let countCopy = 0, countDesign = 0, countReview = 0, countSched = 0;
             
             clients.forEach(c => {
                 globalTarget += (c.freq || 0) * 2;
                 const cTasks = tasks.filter(t => t.clientId === c.id);
-                globalSched += cTasks.filter(t => t.stage === 'sched').length;
                 countCopy += cTasks.filter(t => t.stage === 'copy').length;
                 countDesign += cTasks.filter(t => t.stage === 'design').length;
                 countReview += cTasks.filter(t => t.stage === 'review').length;
+                countSched += cTasks.filter(t => t.stage === 'sched').length;
+                
+                // Meta agora contabiliza Aprovação e Programados
+                globalSched += cTasks.filter(t => t.stage === 'sched' || t.stage === 'review').length;
             });
+            
+            inProduction = countCopy + countDesign; // Peças que ainda estão sendo trabalhadas
 
             const globalHealth = globalTarget > 0 ? Math.round((globalSched / globalTarget) * 100) : 0;
             const healthColor = globalHealth >= 100 ? 'var(--color-sched)' : (globalHealth > 50 ? 'var(--color-review)' : 'var(--danger)');
@@ -755,8 +784,8 @@
                 </div>
                 <div class="dash-container">
                     <div class="dash-metrics slide-up">
-                        <div class="metric-card"><span>Posts em Produção</span><h3>${countCopy+countDesign+countReview} <span style="font-size:1rem; color:var(--text-muted); font-weight:400;">peças</span></h3></div>
-                        <div class="metric-card"><span>Posts Finalizados / Meta</span><h3>${globalSched} <span style="font-size:1rem; color:var(--text-muted); font-weight:400;">/ ${globalTarget}</span></h3></div>
+                        <div class="metric-card"><span>Posts em Produção</span><h3>${inProduction} <span style="font-size:1rem; color:var(--text-muted); font-weight:400;">peças</span></h3></div>
+                        <div class="metric-card"><span>Aprovados & Prontos / Meta</span><h3>${globalSched} <span style="font-size:1rem; color:var(--text-muted); font-weight:400;">/ ${globalTarget}</span></h3></div>
                         <div class="metric-card" style="border-bottom: 4px solid ${healthColor}">
                             <span>Saúde Geral das Esteiras</span>
                             <h3 style="color:${healthColor}">${globalHealth}%</h3>
@@ -774,14 +803,14 @@
 
             setTimeout(() => {
                 const chartEl = document.getElementById('prodChart');
-                if (!chartEl) return; // Esta linha evita o erro vermelho no console
+                if (!chartEl) return; 
                 
                 const ctx = chartEl.getContext('2d');
                 if(chartInstance) chartInstance.destroy();
                 const legendColor = currentTheme === 'dark' ? '#8b929e' : '#64748b';
                 chartInstance = new Chart(ctx, {
                     type: 'doughnut',
-                    data: { labels: ['Roteiro/Copy', 'Arte/Edição', 'Em Aprovação', 'Prontos'], datasets: [{ data: [countCopy, countDesign, countReview, globalSched], backgroundColor: ['#ec4899', '#3b82f6', '#f59e0b', '#10b981'], borderWidth: 0, hoverOffset: 4 }] },
+                    data: { labels: ['Roteiro/Copy', 'Arte/Edição', 'Em Aprovação', 'Programados'], datasets: [{ data: [countCopy, countDesign, countReview, countSched], backgroundColor: ['#ec4899', '#3b82f6', '#f59e0b', '#10b981'], borderWidth: 0, hoverOffset: 4 }] },
                     options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { color: legendColor, padding: 20, font: { family: "'Plus Jakarta Sans', sans-serif" } } } }, cutout: '70%' }
                 });
             }, 100);
@@ -918,21 +947,45 @@
 
         /* --- EQUIPE / COLABORADORES --- */
         function renderTeam(container) {
-            let teamHTML = team.map(t => `
+            let teamHTML = team.map(t => {
+                // Filtra as demandas que estão "nas mãos" do colaborador (em andamento)
+                const myTasks = tasks.filter(tsk => tsk.owner === t.id && (tsk.stage === 'copy' || tsk.stage === 'design'));
+                const myFreelas = freelas.filter(fr => fr.owner === t.id && (fr.stage === 'todo' || fr.stage === 'doing'));
+                const pendingCount = myTasks.length + myFreelas.length;
+                
+                // Monta o bloco de notificações clicáveis
+                let notificationsHTML = '';
+                if (pendingCount > 0) {
+                    notificationsHTML = `
+                        <div style="margin-top:16px; border-top:1px solid var(--border); padding-top:12px; text-align:left;">
+                            <span style="font-size:0.75rem; color:var(--text-main); font-weight:600;">Demandas Ativas <span style="background:var(--danger); color:#fff; padding:2px 6px; border-radius:10px; font-size:0.6rem; margin-left:4px;">${pendingCount}</span></span>
+                            <div style="max-height: 120px; overflow-y:auto; margin-top:8px; display:flex; flex-direction:column; gap:6px; padding-right:4px;">
+                                ${myTasks.map(tsk => `<div style="font-size:0.75rem; background:var(--bg-input); padding:6px 8px; border-radius:6px; cursor:pointer; color:var(--text-muted); border:1px solid transparent; transition:0.2s;" onmouseover="this.style.borderColor='var(--accent)'" onmouseout="this.style.borderColor='transparent'" onclick="goToClient('${tsk.clientId}')">📌 ${tsk.title}</div>`).join('')}
+                                ${myFreelas.map(fr => `<div style="font-size:0.75rem; background:var(--bg-input); padding:6px 8px; border-radius:6px; cursor:pointer; color:var(--text-muted); border:1px solid transparent; transition:0.2s;" onmouseover="this.style.borderColor='var(--accent)'" onmouseout="this.style.borderColor='transparent'" onclick="switchMainView('freelas')">⚡ ${fr.title}</div>`).join('')}
+                            </div>
+                        </div>
+                    `;
+                } else {
+                    notificationsHTML = `<div style="margin-top:16px; border-top:1px solid var(--border); padding-top:12px; text-align:center; font-size:0.75rem; color:var(--text-muted);">Nenhuma demanda pendente</div>`;
+                }
+
+                return `
                 <div class="team-card slide-up">
                     <div class="team-card-actions">
-                        <button class="btn-icon" onclick="openTeamModalPassword('${t.id}')">
+                        <button class="btn-icon" onclick="openTeamModalPassword('${t.id}')" title="Editar">
                             <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
                         </button>
-                        <button class="btn-icon danger" onclick="deleteTeamPassword('${t.id}')">
+                        <button class="btn-icon danger" onclick="deleteTeamPassword('${t.id}')" title="Excluir">
                             <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
                         </button>
                     </div>
                     <div class="avatar" style="width:80px; height:80px; margin:0 auto 16px auto; font-size:1.8rem; border: 3px solid ${t.color || 'transparent'};">${t.img ? `<img src="${t.img}">` : getInitials(t.name)}</div>
                     <h4>${t.name}</h4>
                     <span class="role" style="color: ${t.color || 'var(--accent)'}; border-color: ${t.color || 'var(--accent)'};">${t.role || 'Geral'}</span>
+                    
+                    ${notificationsHTML}
                 </div>
-            `).join('');
+            `}).join('');
 
             container.innerHTML = `
                 <div class="workspace-header">
@@ -1088,9 +1141,16 @@
         function renderClientWorkspace(container) {
             const c = clients.find(i => i.id === activeClient);
             const target = (c.freq || 0) * 2;
-            const schedPosts = tasks.filter(t => t.clientId === c.id && t.stage === 'sched').length;
+            
+            // AGORA: Aprovação e Programado contam para a meta
+            const schedPosts = tasks.filter(t => t.clientId === c.id && (t.stage === 'sched' || t.stage === 'review')).length;
             const pct = target > 0 ? Math.min(Math.round((schedPosts / target)*100), 100) : 0;
-            const colorBar = pct >= 100 ? 'var(--color-sched)' : (pct >= 50 ? 'var(--color-review)' : 'var(--danger)');
+            
+            let colorBar = 'var(--danger)';
+            if (pct >= 100) colorBar = 'var(--color-sched)';
+            else if (pct >= 50) colorBar = 'var(--color-review)';
+            else if (c.hideDelay === 'Sim') colorBar = 'var(--text-muted)'; // Oculta o atrasado vermelho
+            
             const avatarHTML = c.img ? `<img src="${c.img}">` : getInitials(c.name);
             const whatsLink = c.finPhone ? `https://wa.me/55${c.finPhone.replace(/\D/g,'')}?text=Ol%C3%A1!%20Passando%20para%20lembrar%20da%20mensalidade%20da%20ag%C3%AAncia.` : '#';
             const resp = team.find(t=>t.id===c.teamOwner);
@@ -1099,7 +1159,8 @@
             container.innerHTML = `
                 <div class="workspace-header">
                     <div class="client-meta">
-                        <h2><div class="avatar" style="width:48px;height:48px;font-size:1.3rem;">${avatarHTML}</div> ${c.name}</h2>
+                        <!-- MUDANÇA: Avatar e Nome Clicáveis para Editar Cliente -->
+                        <h2 style="cursor:pointer;" onclick="openClientModal('${c.id}')" title="Editar Perfil do Cliente"><div class="avatar" style="width:48px;height:48px;font-size:1.3rem;">${avatarHTML}</div> ${c.name}</h2>
                         <div class="client-info-badges">
                             <div class="info-badge">Resp: <strong>${respHTML}</strong></div>
                             <div class="info-badge">Instagram: <strong>${c.profile || '-'}</strong></div>
@@ -1225,6 +1286,7 @@
             const t = tasks.find(i => i.id === id); 
             t.stage = stage; 
             if(stage === 'design' || stage === 'copy') showToast(`🚀 Produção iniciada: ${title}`);
+            if(stage === 'review') showToast(`👀 Em Aprovação: ${title}`);
             if(stage === 'sched') showToast(`✅ Peça Programada: ${title}`);
             saveData(); 
         }
@@ -1253,6 +1315,10 @@
                 document.getElementById('c-freq').value = c.freq || 3;
                 document.getElementById('c-poster').value = c.poster || 'Agência Saturno';
                 document.getElementById('c-team-owner').value = c.teamOwner || ''; 
+                
+                // Puxa o status de ocultar atraso salvo ou joga para Não
+                document.getElementById('c-hide-delay').value = c.hideDelay || 'Nao';
+                
                 document.getElementById('c-notes').value = c.notes || '';
                 document.getElementById('c-fin-desc').value = c.finDesc || '';
                 document.getElementById('c-fin-value').value = c.finValue || '';
@@ -1267,6 +1333,7 @@
             } else {
                 document.getElementById('client-id').value = '';
                 document.getElementById('client-modal-title').innerText = 'Novo Cliente';
+                document.getElementById('c-hide-delay').value = 'Nao';
             }
         }
 
@@ -1276,7 +1343,9 @@
             const cData = {
                 id, name: document.getElementById('c-name').value, img: document.getElementById('c-img-b64').value,
                 profile: document.getElementById('c-profile').value, login: document.getElementById('c-login').value, freq: parseInt(document.getElementById('c-freq').value),
-                poster: document.getElementById('c-poster').value, teamOwner: document.getElementById('c-team-owner').value, notes: document.getElementById('c-notes').value,
+                poster: document.getElementById('c-poster').value, teamOwner: document.getElementById('c-team-owner').value, 
+                hideDelay: document.getElementById('c-hide-delay').value, // Salva o status de ocultar
+                notes: document.getElementById('c-notes').value,
                 finDesc: document.getElementById('c-fin-desc').value, finValue: document.getElementById('c-fin-value').value, finDay: document.getElementById('c-fin-day').value, 
                 finPhone: document.getElementById('c-fin-phone').value, finStatus: document.getElementById('c-fin-status').value, needsNf: document.getElementById('c-needs-nf').value, cnpj: document.getElementById('c-cnpj').value,
                 nfStatus: clients.find(i=>i.id===id)?.nfStatus || 'Pendente', chk: clients.find(i=>i.id===id)?.chk || { group:false, briefing:false, strategy:false, pic:false, bio:false, highlights:false }
