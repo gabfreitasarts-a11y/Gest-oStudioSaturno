@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Saturno Studio | Hub Operacional</title>
     
-    <!-- ÍCONE DA GUIA DO NAVEGADOR (FAVICON) -->
+    <!-- ÍCONE DA GUIA DO NAVEGADOR -->
     <link rel="icon" type="image/png" href="imagem/ICONE - STUDIO SATURNO 2.png">
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -98,7 +98,8 @@
         /* MAIN WORKSPACE E GRIDS */
         .main-workspace { flex: 1; display: flex; flex-direction: column; overflow-y: auto; background-color: var(--bg-main); position: relative; }
         .workspace-header { padding: 24px 32px; background-color: var(--bg-card); border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: flex-start; flex-shrink: 0; }
-        .client-meta h2 { font-size: 1.6rem; font-weight: 700; color: var(--text-main); margin-bottom: 12px; display: flex; align-items: center; gap: 12px; }
+        .client-meta h2 { font-size: 1.6rem; font-weight: 700; color: var(--text-main); margin-bottom: 12px; display: flex; align-items: center; gap: 12px; transition: 0.2s; }
+        .client-meta h2:hover { opacity: 0.8; cursor:pointer;}
         .client-info-badges { display: flex; flex-wrap: wrap; gap: 10px; font-size: 0.75rem; font-weight: 600; }
         .info-badge { background: var(--bg-input); border: 1px solid var(--border); padding: 4px 10px; border-radius: 6px; display: flex; align-items: center; gap: 6px; color: var(--text-muted); }
         .info-badge strong { color: var(--text-main); }
@@ -178,7 +179,7 @@
         .post-date { font-size: 0.7rem; color: var(--text-muted); display: flex; align-items: center; gap: 4px; margin-bottom: 10px; background: var(--bg-input); padding: 4px 8px; border-radius: 4px; display: inline-flex;}
         .post-val { display: inline-block; background: rgba(16, 185, 129, 0.15); color: #10b981; font-weight: 700; font-size: 0.75rem; padding: 2px 6px; border-radius: 4px; margin-bottom: 8px; }
 
-        /* NOVO PREVIEW MINIATURA (THUMBNAIL PROPORCIONAL) */
+        /* PREVIEW MINIATURA (THUMBNAIL PROPORCIONAL) */
         .post-preview-img { width: 56px; height: 56px; border-radius: 8px; border: 1px solid var(--border); display: block; cursor: pointer; transition: 0.2s; overflow: hidden; margin-bottom: 10px;}
         .post-preview-img img { width: 100%; height: 100%; object-fit: cover; }
         .post-preview-img:hover { opacity: 0.8; border-color: var(--accent); transform: scale(1.05); }
@@ -449,7 +450,6 @@
                 <input type="hidden" id="t-id">
                 <div class="form-group full"><label>Título *</label><input type="text" id="t-title" required></div>
                 
-                <!-- NOVO CAMPO: TEXTO DO POST / HEADLINE -->
                 <div class="form-group full"><label>Texto do Post (Headline, Subtítulo, Legenda)</label><textarea id="t-desc" rows="4" placeholder="Headline:&#10;Subtítulo:&#10;Texto corrido..."></textarea></div>
                 
                 <div class="form-group"><label>Delegar para (Resp.)</label><select id="t-owner"><option value="">Equipe Geral</option></select></div>
@@ -491,7 +491,6 @@
                 <input type="hidden" id="f-id">
                 <div class="form-group full"><label>Nome do Projeto / Demanda *</label><input type="text" id="f-title" required placeholder="Ex: Criação de Logo Barbearia"></div>
                 
-                <!-- NOVO CAMPO: TEXTO DO FREELA / DETALHES -->
                 <div class="form-group full"><label>Descrição Completa / Direcionamento Corrido</label><textarea id="f-desc" rows="4" placeholder="Headline:&#10;Subtítulo:&#10;Informações adicionais do frila..."></textarea></div>
                 
                 <div class="form-group"><label>Valor Cobrado (R$) *</label><input type="number" step="0.01" id="f-val" required></div>
@@ -562,7 +561,7 @@
         let agency = JSON.parse(localStorage.getItem('sat_final_agency')) || { name: 'Saturno Studio', logo: '' };
         let currentTheme = localStorage.getItem('sat_theme') || 'dark';
         
-        const ADMIN_PASS = '400289'; // Senha Mestra Definitiva
+        const ADMIN_PASS = '400289'; 
         let mainView = 'dashboard';
         let activeClient = null;
         let chartInstance = null; 
@@ -616,16 +615,46 @@
             showToast(c.forceMeta ? 'Meta marcada como concluída manualmente.' : 'Meta retornou ao cálculo automático.');
         }
 
-        /* --- UPLOAD DE IMAGEM --- */
+        /* --- UPLOAD DE IMAGEM COM COMPRESSÃO (EVITA ERRO DE MEMÓRIA) --- */
         function encodeImageFileAsURL(element, previewId, hiddenInputId) {
             const file = element.files[0];
             if(!file) return;
             const reader = new FileReader();
             reader.onloadend = function() {
-                document.getElementById(hiddenInputId).value = reader.result;
-                const preview = document.getElementById(previewId);
-                preview.src = reader.result;
-                preview.style.display = 'block';
+                // Comprime a imagem antes de salvar no sistema para não explodir o banco de dados e o navegador
+                const img = new Image();
+                img.src = reader.result;
+                img.onload = function() {
+                    const canvas = document.createElement('canvas');
+                    const MAX_WIDTH = 800;
+                    const MAX_HEIGHT = 800;
+                    let width = img.width;
+                    let height = img.height;
+
+                    if (width > height) {
+                        if (width > MAX_WIDTH) {
+                            height *= MAX_WIDTH / width;
+                            width = MAX_WIDTH;
+                        }
+                    } else {
+                        if (height > MAX_HEIGHT) {
+                            width *= MAX_HEIGHT / height;
+                            height = MAX_HEIGHT;
+                        }
+                    }
+                    canvas.width = width;
+                    canvas.height = height;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, width, height);
+                    
+                    // Converte para JPEG com qualidade de 70% (fica leve e mantém qualidade visual)
+                    const dataUrl = canvas.toDataURL('image/jpeg', 0.7); 
+                    
+                    document.getElementById(hiddenInputId).value = dataUrl;
+                    const preview = document.getElementById(previewId);
+                    preview.src = dataUrl;
+                    preview.style.display = 'block';
+                }
             };
             reader.readAsDataURL(file); 
         }
@@ -641,20 +670,27 @@
 
         /* --- SALVAR DADOS NO SUPABASE --- */
         async function saveData() {
-            localStorage.setItem('sat_final_cli', JSON.stringify(clients));
-            localStorage.setItem('sat_final_tsk', JSON.stringify(tasks));
-            localStorage.setItem('sat_final_freelas', JSON.stringify(freelas));
-            localStorage.setItem('sat_final_meetings', JSON.stringify(meetings));
-            localStorage.setItem('sat_final_team', JSON.stringify(team));
-            localStorage.setItem('sat_final_subs', JSON.stringify(subs));
+            // Backup Local com proteção para caso o navegador fique cheio
+            try {
+                localStorage.setItem('sat_final_cli', JSON.stringify(clients));
+                localStorage.setItem('sat_final_tsk', JSON.stringify(tasks));
+                localStorage.setItem('sat_final_freelas', JSON.stringify(freelas));
+                localStorage.setItem('sat_final_meetings', JSON.stringify(meetings));
+                localStorage.setItem('sat_final_team', JSON.stringify(team));
+                localStorage.setItem('sat_final_subs', JSON.stringify(subs));
+                const dadosAgenciaLimpos = { name: agency.name || 'Saturno Studio', logo: agency.logo || '' };
+                localStorage.setItem('sat_final_agency', JSON.stringify(dadosAgenciaLimpos));
+            } catch (e) {
+                console.warn("Navegador com memória cheia, mas salvando na nuvem...", e);
+            }
             
             const dadosAgenciaLimpos = { name: agency.name || 'Saturno Studio', logo: agency.logo || '' };
-            localStorage.setItem('sat_final_agency', JSON.stringify(dadosAgenciaLimpos));
-            
             const payloadData = { clients, tasks, freelas, meetings, team, subs, agency: dadosAgenciaLimpos };
+            
             const { error } = await supabaseClient.from('app_data').upsert({ id: 'hub_operacional', payload: payloadData });
 
             if (error) console.error("Erro ao salvar no Supabase: ", error);
+            
             updateBadges(); renderSidebar(); routeView();
         }
 
@@ -801,7 +837,7 @@
                 </div>
                 <div class="dash-container">
                     <div class="dash-metrics slide-up">
-                        <div class="metric-card"><span>Posts em Produção</span> castings<h3>${inProduction} <span style="font-size:1rem; color:var(--text-muted); font-weight:400;">peças</span></h3></div>
+                        <div class="metric-card"><span>Posts em Produção</span><h3>${inProduction} <span style="font-size:1rem; color:var(--text-muted); font-weight:400;">peças</span></h3></div>
                         <div class="metric-card"><span>Aprovados & Prontos / Meta</span><h3>${globalSched} <span style="font-size:1rem; color:var(--text-muted); font-weight:400;">/ ${globalTarget}</span></h3></div>
                         <div class="metric-card" style="border-bottom: 4px solid ${healthColor}">
                             <span>Saúde Geral das Esteiras</span>
@@ -1085,7 +1121,7 @@
                     
                     let refHTML = '';
                     if(f.imgBase64) {
-                        refHTML = `<div class="post-preview-img" onclick="openImageViewer('${f.imgBase64}')" title="Clique para ampliar"><img src="${f.imgBase64}"></div>`;
+                        refHTML = `<div style="margin-bottom:10px;"><img src="${f.imgBase64}" class="post-preview-img" onclick="openImageViewer('${f.imgBase64}')" title="Clique para ampliar"></div>`;
                     } else if (f.link) {
                         refHTML = `<a href="${f.link.includes('http') ? f.link : 'https://'+f.link}" class="post-attachment" target="_blank"><svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg> Link Útil</a>`;
                     }
@@ -1097,7 +1133,6 @@
                     let ownerColor = ownerObj ? ownerObj.color : 'var(--accent)';
                     let ownerAvatar = ownerObj && ownerObj.img ? `<img src="${ownerObj.img}">` : getInitials(ownerName);
 
-                    // RENDERIZAÇÃO DA DESCRIÇÃO NO FREELA
                     let descHTML = f.desc ? `<div class="card-desc-text">${f.desc}</div>` : '';
 
                     cards += `
@@ -1188,7 +1223,7 @@
                     <div style="display:flex; align-items:center; gap:16px;">
                         <div class="dropdown">
                             <button class="btn-outline">
-                                <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31(2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg> 
+                                <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg> 
                                 Opções ▼
                             </button>
                             <div class="dropdown-content">
@@ -1267,7 +1302,7 @@
                     
                     let refHTML = '';
                     if(t.imgBase64) {
-                        refHTML = `<div class="post-preview-img" onclick="openImageViewer('${t.imgBase64}')" title="Clique para ampliar"><img src="${t.imgBase64}"></div>`;
+                        refHTML = `<div style="margin-bottom:10px;"><img src="${t.imgBase64}" class="post-preview-img" onclick="openImageViewer('${t.imgBase64}')" title="Clique para ampliar"></div>`;
                     } else if (t.link) {
                         refHTML = `<a href="${t.link.includes('http') ? t.link : 'https://'+t.link}" class="post-attachment" target="_blank"><svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg> Link de Referência</a>`;
                     }
@@ -1291,7 +1326,6 @@
                         }
                     }
 
-                    // RENDERIZAÇÃO DA DESCRIÇÃO / TEXTO DO POST CORRIDO
                     let descHTML = t.desc ? `<div class="card-desc-text">${t.desc}</div>` : '';
 
                     cards += `
@@ -1416,7 +1450,6 @@
                 const t = tasks.find(i=>i.id===id);
                 document.getElementById('t-id').value = t.id; document.getElementById('t-title').value = t.title;
                 
-                // CARREGA A DESCRIÇÃO NO FORMULÁRIO
                 document.getElementById('t-desc').value = t.desc || '';
                 
                 document.getElementById('t-owner').value = t.owner; document.getElementById('t-priority').value = t.priority;
@@ -1432,7 +1465,7 @@
             const id = document.getElementById('t-id').value || 't'+Date.now();
             const tData = { 
                 id, clientId: activeClient, title: document.getElementById('t-title').value, 
-                desc: document.getElementById('t-desc').value, // SALVA A DESCRIÇÃO DO POST
+                desc: document.getElementById('t-desc').value,
                 owner: document.getElementById('t-owner').value, priority: document.getElementById('t-priority').value, 
                 date: document.getElementById('t-date').value, imgBase64: document.getElementById('t-img-b64').value,
                 link: document.getElementById('t-link').value, stage: document.getElementById('t-stage').value,
@@ -1454,7 +1487,6 @@
                 const f = freelas.find(i=>i.id===id);
                 document.getElementById('f-id').value = f.id; document.getElementById('f-title').value = f.title;
                 
-                // CARREGA A DESCRIÇÃO NO FORMULÁRIO DO FREELA
                 document.getElementById('f-desc').value = f.desc || '';
                 
                 document.getElementById('f-val').value = f.val; document.getElementById('f-owner').value = f.owner;
@@ -1470,7 +1502,7 @@
             const id = document.getElementById('f-id').value || 'f'+Date.now();
             const fData = { 
                 id, title: document.getElementById('f-title').value, 
-                desc: document.getElementById('f-desc').value, // SALVA A DESCRIÇÃO DO FREELA
+                desc: document.getElementById('f-desc').value,
                 val: document.getElementById('f-val').value, 
                 owner: document.getElementById('f-owner').value, date: document.getElementById('f-date').value,
                 imgBase64: document.getElementById('f-img-b64').value, link: document.getElementById('f-link').value, stage: document.getElementById('f-stage').value 
@@ -1531,7 +1563,7 @@
             agency.logo = document.getElementById('ag-logo-b64').value || '';
             closeModal('agencyModal');
             saveData();
-            showToast('Perfil da Agência updated!');
+            showToast('Perfil da Agência atualizado!');
         }
 
         /* --- INICIALIZAÇÃO COM SUPABASE --- */
