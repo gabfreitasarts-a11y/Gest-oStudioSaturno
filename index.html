@@ -52,6 +52,10 @@
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
         @keyframes slideUp { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
 
+        /* TELA DE CARREGAMENTO (PERFORMANCE) */
+        #loader { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background-color: var(--bg-main); z-index: 999999; display: flex; flex-direction: column; align-items: center; justify-content: center; transition: opacity 0.5s; }
+        .spinner-logo { width: 60px; height: 60px; background: linear-gradient(135deg, var(--accent), #4a00e0); border-radius: 16px; display: flex; align-items: center; justify-content: center; font-weight: 700; color: #fff; font-size: 1.5rem; margin-bottom: 20px; animation: pulseAlert 1.5s infinite; }
+
         /* TOAST */
         #toast-container { position: fixed; top: 20px; right: 20px; z-index: 9999; display: flex; flex-direction: column; gap: 10px; }
         .toast { background: var(--color-sched); color: white; padding: 12px 20px; border-radius: 8px; font-size: 0.85rem; font-weight: 600; box-shadow: 0 4px 12px var(--shadow); animation: slideIn 0.3s forwards, fadeOut 0.3s 3s forwards; }
@@ -250,6 +254,12 @@
 </head>
 <body data-theme="dark">
 
+    <!-- TELA DE CARREGAMENTO PARA PERFORMANCE -->
+    <div id="loader">
+        <div class="spinner-logo">S</div>
+        <h3 style="color:var(--text-main); font-weight:600;">Sincronizando Hub...</h3>
+    </div>
+
     <div id="toast-container"></div>
 
     <aside class="sidebar">
@@ -270,6 +280,12 @@
             <div class="nav-item active" id="nav-dash" onclick="switchMainView('dashboard')">
                 <div style="display:flex; align-items:center; gap:12px;">
                     <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path></svg> Dashboard Geral
+                </div>
+            </div>
+            <!-- NOVA ABA: RELATÓRIOS -->
+            <div class="nav-item" id="nav-reports" onclick="switchMainView('reports')">
+                <div style="display:flex; align-items:center; gap:12px;">
+                    <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg> Relatórios Diários
                 </div>
             </div>
             <div class="nav-item" id="nav-finance" onclick="switchMainView('finance')">
@@ -310,6 +326,32 @@
     <!-- Visualizador de Imagens (Lightbox) -->
     <div class="modal-overlay" id="imageViewerModal" onclick="closeModal('imageViewerModal')" style="z-index: 99999;">
         <img id="viewer-img" src="" style="max-width: 90%; max-height: 90%; border-radius: 8px; box-shadow: 0 10px 40px rgba(0,0,0,0.5);">
+    </div>
+
+    <!-- MODAL RELATÓRIO DIÁRIO -->
+    <div class="modal-overlay" id="reportModal">
+        <div class="modal">
+            <h2>Relatório de Produção</h2>
+            <form id="report-form" onsubmit="saveReport(event)" class="form-grid">
+                <input type="hidden" id="r-id">
+                <div class="form-group"><label>Membro da Equipe *</label><select id="r-member" required></select></div>
+                <div class="form-group"><label>Data do Relatório *</label><input type="date" id="r-date" required></div>
+                
+                <div class="form-group full">
+                    <label>O que foi produzido hoje? *</label>
+                    <textarea id="r-done" rows="5" required placeholder="Ex: Finalizei 3 artes do cliente X.&#10;Programei as postagens da semana."></textarea>
+                </div>
+                <div class="form-group full">
+                    <label>Impedimentos / Observações (Opcional)</label>
+                    <textarea id="r-blockers" rows="2" placeholder="Faltou aprovação de X, internet caiu, etc."></textarea>
+                </div>
+
+                <div class="modal-actions">
+                    <button type="button" class="btn-cancel" onclick="closeModal('reportModal')">Cancelar</button>
+                    <button type="submit" class="btn-primary">Enviar Relatório</button>
+                </div>
+            </form>
+        </div>
     </div>
 
     <!-- Modais de Formulários -->
@@ -558,6 +600,7 @@
         let meetings = JSON.parse(localStorage.getItem('sat_final_meetings')) || [];
         let team = JSON.parse(localStorage.getItem('sat_final_team')) || [];
         let subs = JSON.parse(localStorage.getItem('sat_final_subs')) || []; 
+        let reports = JSON.parse(localStorage.getItem('sat_final_reports')) || []; // NOVO: Relatórios
         let agency = JSON.parse(localStorage.getItem('sat_final_agency')) || { name: 'Saturno Studio', logo: '' };
         let currentTheme = localStorage.getItem('sat_theme') || 'dark';
         
@@ -566,6 +609,7 @@
         let activeClient = null;
         let chartInstance = null; 
         let financeUnlocked = false;
+        let lastPokeTime = 0; // Controle de notificação sonora
 
         // TEMA
         document.body.setAttribute('data-theme', currentTheme);
@@ -615,39 +659,54 @@
             showToast(c.forceMeta ? 'Meta marcada como concluída manualmente.' : 'Meta retornou ao cálculo automático.');
         }
 
+        /* --- PLAY BEEP SONORO PARA CUTUCAR --- */
+        function playBeep() {
+            try {
+                const AudioContext = window.AudioContext || window.webkitAudioContext;
+                if(!AudioContext) return;
+                const ctx = new AudioContext();
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(880, ctx.currentTime); // Frequência do Beep (Nota A5)
+                gain.gain.setValueAtTime(0.3, ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.00001, ctx.currentTime + 0.5);
+                osc.start(ctx.currentTime);
+                osc.stop(ctx.currentTime + 0.5);
+            } catch(e) { console.log("Áudio bloqueado pelo navegador até haver interação na página.", e) }
+        }
+
+        /* --- CUTUCAR MEMBRO --- */
+        function pokeMember(name) {
+            agency.lastPoke = { target: name, time: Date.now() }; 
+            saveData();
+            showToast(`🔔 Chamando ${name}...`);
+        }
+
         /* --- UPLOAD DE IMAGEM COM COMPRESSÃO (EVITA ERRO DE MEMÓRIA) --- */
         function encodeImageFileAsURL(element, previewId, hiddenInputId) {
             const file = element.files[0];
             if(!file) return;
             const reader = new FileReader();
             reader.onloadend = function() {
-                // Comprime a imagem antes de salvar no sistema para não explodir o banco de dados e o navegador
                 const img = new Image();
                 img.src = reader.result;
                 img.onload = function() {
                     const canvas = document.createElement('canvas');
-                    const MAX_WIDTH = 800;
-                    const MAX_HEIGHT = 800;
-                    let width = img.width;
-                    let height = img.height;
+                    const MAX_WIDTH = 800; const MAX_HEIGHT = 800;
+                    let width = img.width; let height = img.height;
 
                     if (width > height) {
-                        if (width > MAX_WIDTH) {
-                            height *= MAX_WIDTH / width;
-                            width = MAX_WIDTH;
-                        }
+                        if (width > MAX_WIDTH) { height *= MAX_WIDTH / width; width = MAX_WIDTH; }
                     } else {
-                        if (height > MAX_HEIGHT) {
-                            width *= MAX_HEIGHT / height;
-                            height = MAX_HEIGHT;
-                        }
+                        if (height > MAX_HEIGHT) { width *= MAX_HEIGHT / height; height = MAX_HEIGHT; }
                     }
-                    canvas.width = width;
-                    canvas.height = height;
+                    canvas.width = width; canvas.height = height;
                     const ctx = canvas.getContext('2d');
                     ctx.drawImage(img, 0, 0, width, height);
                     
-                    // Converte para JPEG com qualidade de 70% (fica leve e mantém qualidade visual)
                     const dataUrl = canvas.toDataURL('image/jpeg', 0.7); 
                     
                     document.getElementById(hiddenInputId).value = dataUrl;
@@ -670,7 +729,6 @@
 
         /* --- SALVAR DADOS NO SUPABASE --- */
         async function saveData() {
-            // Backup Local com proteção para caso o navegador fique cheio
             try {
                 localStorage.setItem('sat_final_cli', JSON.stringify(clients));
                 localStorage.setItem('sat_final_tsk', JSON.stringify(tasks));
@@ -678,14 +736,15 @@
                 localStorage.setItem('sat_final_meetings', JSON.stringify(meetings));
                 localStorage.setItem('sat_final_team', JSON.stringify(team));
                 localStorage.setItem('sat_final_subs', JSON.stringify(subs));
-                const dadosAgenciaLimpos = { name: agency.name || 'Saturno Studio', logo: agency.logo || '' };
+                localStorage.setItem('sat_final_reports', JSON.stringify(reports)); // NOVO: Salva relatórios localmente
+                const dadosAgenciaLimpos = { name: agency.name || 'Saturno Studio', logo: agency.logo || '', lastPoke: agency.lastPoke || null };
                 localStorage.setItem('sat_final_agency', JSON.stringify(dadosAgenciaLimpos));
             } catch (e) {
-                console.warn("Navegador com memória cheia, mas salvando na nuvem...", e);
+                console.warn("Memória local cheia, prosseguindo com nuvem...");
             }
             
-            const dadosAgenciaLimpos = { name: agency.name || 'Saturno Studio', logo: agency.logo || '' };
-            const payloadData = { clients, tasks, freelas, meetings, team, subs, agency: dadosAgenciaLimpos };
+            const dadosAgenciaLimpos = { name: agency.name || 'Saturno Studio', logo: agency.logo || '', lastPoke: agency.lastPoke || null };
+            const payloadData = { clients, tasks, freelas, meetings, team, subs, reports, agency: dadosAgenciaLimpos }; // Adicionado reports no payload
             
             const { error } = await supabaseClient.from('app_data').upsert({ id: 'hub_operacional', payload: payloadData });
 
@@ -708,7 +767,7 @@
         function populateTeamSelects() {
             let opts = '<option value="">Equipe Geral</option>';
             team.forEach(t => opts += `<option value="${t.id}">${t.name} (${t.role})</option>`);
-            ['c-team-owner', 't-owner', 'f-owner'].forEach(id => {
+            ['c-team-owner', 't-owner', 'f-owner', 'r-member'].forEach(id => {
                 const el = document.getElementById(id);
                 if(el) { const val = el.value; el.innerHTML = opts; el.value = val; }
             });
@@ -730,6 +789,7 @@
             setTimeout(()=>area.classList.remove('fade-in'), 400);
 
             if(mainView === 'dashboard') renderDashboard(area);
+            else if(mainView === 'reports') renderReports(area); // NOVO: Tela de relatórios
             else if(mainView === 'finance') renderFinance(area); 
             else if(mainView === 'freelas') renderFreelas(area);
             else if(mainView === 'team') renderTeam(area);
@@ -868,6 +928,64 @@
                 });
             }, 100);
         }
+
+        /* --- RELATÓRIOS DIÁRIOS --- */
+        function renderReports(container) {
+            let reportsHTML = reports.sort((a,b) => new Date(b.date) - new Date(a.date)).map(r => {
+                let ownerObj = team.find(tm=>tm.id===r.member);
+                let ownerName = ownerObj ? ownerObj.name : 'Equipe';
+                let ownerColor = ownerObj ? ownerObj.color : 'var(--accent)';
+                
+                return `
+                <div class="post-card slide-up" style="margin-bottom:16px;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; border-bottom:1px dashed var(--border); padding-bottom:8px;">
+                        <strong style="color:${ownerColor}; display:flex; align-items:center; gap:8px;">
+                            <div class="avatar" style="width:24px; height:24px; font-size:0.6rem; background:${ownerColor};">${ownerObj && ownerObj.img ? `<img src="${ownerObj.img}">` : getInitials(ownerName)}</div>
+                            ${ownerName}
+                        </strong>
+                        <span style="font-size:0.75rem; color:var(--text-muted); background:var(--bg-input); padding:4px 8px; border-radius:6px;">📅 ${r.date.split('-').reverse().join('/')}</span>
+                    </div>
+                    <div style="font-size:0.85rem; color:var(--text-main); margin-bottom:12px; white-space:pre-wrap; line-height:1.5;"><strong>O que foi feito:</strong><br>${r.done}</div>
+                    ${r.blockers ? `<div style="font-size:0.8rem; color:var(--danger); white-space:pre-wrap; background:rgba(239, 68, 68, 0.1); padding:8px; border-radius:6px;"><strong>Impedimentos:</strong><br>${r.blockers}</div>` : ''}
+                    <div style="text-align:right; margin-top:12px;">
+                        <button onclick="deleteReport('${r.id}')" style="background:none; border:none; color:var(--text-muted); cursor:pointer; font-size:0.75rem;">Excluir Relatório</button>
+                    </div>
+                </div>`;
+            }).join('');
+
+            container.innerHTML = `
+                <div class="workspace-header">
+                    <div class="client-meta"><h2>📝 Relatórios de Produção</h2><span style="color:var(--text-muted); font-size:0.9rem;">Fechamento diário da equipe.</span></div>
+                    <div style="display:flex; gap:12px;"><button class="btn-primary" onclick="openReportModal()">+ Novo Relatório</button><button class="theme-toggle" onclick="toggleTheme()">🌓</button></div>
+                </div>
+                <div class="workspace-body" style="flex-direction:column; overflow-y:auto; align-items:center;">
+                    <div style="max-width: 800px; width: 100%;">
+                        ${reportsHTML || '<p style="color:var(--text-muted); text-align:center; margin-top:40px;">Nenhum relatório preenchido ainda.</p>'}
+                    </div>
+                </div>
+            `;
+        }
+
+        function openReportModal() {
+            document.getElementById('reportModal').style.display='flex';
+            document.getElementById('report-form').reset();
+            document.getElementById('r-id').value = '';
+            document.getElementById('r-date').value = new Date().toISOString().split('T')[0]; // Preenche com o dia atual
+        }
+
+        function saveReport(e) {
+            e.preventDefault();
+            const id = document.getElementById('r-id').value || 'r'+Date.now();
+            const rData = {
+                id, member: document.getElementById('r-member').value, date: document.getElementById('r-date').value,
+                done: document.getElementById('r-done').value, blockers: document.getElementById('r-blockers').value
+            };
+            const idx = reports.findIndex(i=>i.id===id);
+            if(idx>-1) reports[idx]=rData; else reports.push(rData);
+            closeModal('reportModal'); saveData(); showToast('✅ Relatório enviado!');
+        }
+
+        function deleteReport(id) { if(confirm("Excluir este relatório?")) { reports = reports.filter(r=>r.id!==id); saveData(); } }
 
         /* --- FINANCEIRO RESTRITO --- */
         function renderFinance(container) {
@@ -1023,10 +1141,14 @@
                 return `
                 <div class="team-card slide-up">
                     <div class="team-card-actions">
-                        <button class="btn-icon" onclick="openTeamModalPassword('${t.id}')">
+                        <!-- NOVO BOTÃO CUTUCAR -->
+                        <button class="btn-icon" style="color:var(--gold);" onclick="pokeMember('${t.name}')" title="Notificar / Chamar Atenção">
+                            <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path></svg>
+                        </button>
+                        <button class="btn-icon" onclick="openTeamModalPassword('${t.id}')" title="Editar">
                             <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
                         </button>
-                        <button class="btn-icon danger" onclick="deleteTeamPassword('${t.id}')">
+                        <button class="btn-icon danger" onclick="deleteTeamPassword('${t.id}')" title="Excluir">
                             <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
                         </button>
                     </div>
@@ -1089,482 +1211,7 @@
         }
         function deleteTeam(id) { if(confirm("Remover colaborador? O histórico financeiro dele será perdido.")){ team = team.filter(t=>t.id!==id); populateTeamSelects(); saveData(); } }
 
-        /* --- FREELAS / AVULSOS --- */
-        function renderFreelas(container) {
-            const total = freelas.length;
-            const done = freelas.filter(f => f.stage === 'done').length;
-            const pct = total > 0 ? Math.round((done / total) * 100) : 0;
-
-            container.innerHTML = `
-                <div class="workspace-header">
-                    <div class="client-meta"><h2>⚡ Fábrica de Freelas</h2><span style="color:var(--text-muted); font-size:0.9rem;">Demandas avulsas. Progresso Global: <strong style="color:var(--text-main);">${done}/${total} concluídos</strong></span></div>
-                    <div style="display:flex; align-items:center; gap:16px;">
-                        <div style="width: 150px;">
-                            <div style="display:flex; justify-content:space-between; font-size:0.75rem; font-weight:600; margin-bottom:4px; color:var(--text-muted);"><span>Avanço</span> <span style="color:var(--color-sched);">${pct}%</span></div>
-                            <div class="meter-bg"><div class="meter-bar" style="width:${pct}%; background:var(--color-sched);"></div></div>
-                        </div>
-                        <button class="btn-primary" onclick="openFreelaModal()">+ Novo Freela</button>
-                        <button class="theme-toggle" onclick="toggleTheme()" title="Alterar Tema">🌓</button>
-                    </div>
-                </div>
-                <div class="workspace-body slide-up"><div class="panel-right" style="border:none; background:transparent; box-shadow:none;"><div class="production-grid" id="freela-kanban"></div></div></div>
-            `;
-
-            const kArea = document.getElementById('freela-kanban');
-            const cols = [{ id: 'todo', title: 'A Produzir', color: '#ef4444' }, { id: 'doing', title: 'Produzindo', color: '#facc15' }, { id: 'done', title: 'Entregue / Aprovado', color: '#10b981' }];
-
-            cols.forEach(col => {
-                const colF = freelas.filter(f => f.stage === col.id);
-                let cards = '';
-                colF.forEach(f => {
-                    let opts = cols.map(c => `<option value="${c.id}" ${f.stage === c.id ? 'selected':''}>${c.title}</option>`).join('');
-                    
-                    let refHTML = '';
-                    if(f.imgBase64) {
-                        refHTML = `<div style="margin-bottom:10px;"><img src="${f.imgBase64}" class="post-preview-img" onclick="openImageViewer('${f.imgBase64}')" title="Clique para ampliar"></div>`;
-                    } else if (f.link) {
-                        refHTML = `<a href="${f.link.includes('http') ? f.link : 'https://'+f.link}" class="post-attachment" target="_blank"><svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg> Link Útil</a>`;
-                    }
-
-                    let cardClass = f.stage === 'todo' ? 'freela-todo' : (f.stage === 'doing' ? 'freela-doing' : '');
-                    let dateBadge = f.date ? `<div class="post-date" style="color: ${isDueSoon(f.date) && f.stage !== 'done' ? 'var(--danger)' : ''}">📅 Entrega: ${f.date.split('-').reverse().join('/')}</div>` : '';
-                    let ownerObj = team.find(tm=>tm.id===f.owner);
-                    let ownerName = ownerObj ? ownerObj.name : 'Equipe';
-                    let ownerColor = ownerObj ? ownerObj.color : 'var(--accent)';
-                    let ownerAvatar = ownerObj && ownerObj.img ? `<img src="${ownerObj.img}">` : getInitials(ownerName);
-
-                    let descHTML = f.desc ? `<div class="card-desc-text">${f.desc}</div>` : '';
-
-                    cards += `
-                        <div class="post-card ${cardClass}">
-                            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
-                                <span class="post-val">${formatBRL(f.val || 0)}</span>
-                                ${isDueSoon(f.date) && f.stage !== 'done' ? '<span style="font-size:0.6rem; color:var(--danger); font-weight:bold; background:rgba(239,68,68,0.1); padding:2px 6px; border-radius:4px;">⚠️ PRAZO CURTO</span>' : ''}
-                            </div>
-                            <h5 onclick="openFreelaModal('${f.id}')">${f.title}</h5>
-                            ${descHTML}
-                            ${dateBadge} ${refHTML}
-                            <div class="post-footer">
-                                <div class="assignee"><div class="avatar" style="background:${ownerColor}">${ownerAvatar}</div> ${ownerName}</div>
-                                <select class="stage-select" onchange="moveFreela('${f.id}', this.value, '${f.title}')">${opts}</select>
-                            </div>
-                            <div style="text-align:right; margin-top:8px;"><button onclick="deleteFreela('${f.id}')" style="background:none; border:none; color:var(--danger); cursor:pointer; font-size:0.75rem;">Excluir</button></div>
-                        </div>
-                    `;
-                });
-                kArea.innerHTML += `<div class="prod-column"><div class="prod-column-header" style="color:${col.color}"><div style="display:flex; align-items:center; gap:8px;"><div class="dot" style="background:${col.color}"></div> ${col.title}</div><span style="background:var(--bg-card); padding:2px 8px; border-radius:10px; font-size:0.7rem; color:var(--text-main);">${colF.length}</span></div><div class="col-content">${cards}</div></div>`;
-            });
-        }
-
-        /* --- REUNIÕES --- */
-        function renderMeetings(container) {
-            const todayStr = new Date().toISOString().split('T')[0];
-            const up = meetings.filter(m => m.date >= todayStr).sort((a,b) => new Date(a.date) - new Date(b.date));
-            
-            let upHTML = up.map(m => {
-                let cName = m.client ? (clients.find(c=>c.id===m.client)?.name || 'Interna') : 'Interna';
-                return `
-                <div class="post-card slide-up" style="display:flex; justify-content:space-between; align-items:center;">
-                    <div>
-                        <div style="color:var(--accent); font-size:0.75rem; font-weight:700; margin-bottom:4px;">${cName}</div>
-                        <h4 style="color:var(--text-main); margin-bottom:4px;">${m.title}</h4>
-                        <div style="font-size:0.8rem; color:var(--text-muted);">📅 ${m.date.split('-').reverse().join('/')} às ⏰ ${m.time}</div>
-                    </div>
-                    <div style="display:flex; gap:10px; align-items:center;">
-                        ${m.link ? `<a href="${m.link}" target="_blank" class="btn-outline" style="padding:6px 12px; font-size:0.8rem; color:var(--color-design); border-color:var(--color-design);">Entrar na Call</a>` : ''}
-                        <button class="btn-cancel" onclick="deleteMeeting('${m.id}')" style="padding:6px 12px; font-size:0.8rem; border-color:var(--danger); color:var(--danger);">✕</button>
-                    </div>
-                </div>`;
-            }).join('');
-
-            container.innerHTML = `
-                <div class="workspace-header">
-                    <div class="client-meta"><h2>📅 Reuniões & Calls</h2><span style="color:var(--text-muted); font-size:0.9rem;">Agenda da Agência.</span></div>
-                    <div style="display:flex; gap:12px;"><button class="btn-primary" onclick="openMeetingModal()">+ Agendar Reunião</button><button class="theme-toggle" onclick="toggleTheme()" title="Tema">🌓</button></div>
-                </div>
-                <div class="workspace-body" style="flex-direction:column; overflow-y:auto;">
-                    <div style="max-width: 800px; width: 100%;">
-                        <h3 style="color:var(--text-main); margin-bottom:16px;">Próximas Reuniões</h3>
-                        ${upHTML || '<p style="color:var(--text-muted); font-size:0.9rem;">Nenhuma reunião futura agendada.</p>'}
-                    </div>
-                </div>
-            `;
-        }
-
-        /* --- CLIENT WORKSPACE --- */
-        function renderClientWorkspace(container) {
-            const c = clients.find(i => i.id === activeClient);
-            const target = (c.freq || 0) * 2;
-            
-            let schedPosts = tasks.filter(t => t.clientId === c.id && (t.stage === 'sched' || t.stage === 'review')).length;
-            let pct = target > 0 ? Math.min(Math.round((schedPosts / target)*100), 100) : 0;
-            
-            let colorBar = 'var(--danger)';
-            if (c.forceMeta) { pct = 100; colorBar = 'var(--color-sched)'; }
-            else if (pct >= 100) colorBar = 'var(--color-sched)';
-            else if (pct >= 50) colorBar = 'var(--color-review)';
-            else if (c.hideDelay === 'Sim') colorBar = 'var(--text-muted)'; 
-            
-            const avatarHTML = c.img ? `<img src="${c.img}">` : getInitials(c.name);
-            const whatsLink = c.finPhone ? `https://wa.me/55${c.finPhone.replace(/\D/g,'')}?text=Ol%C3%A1!%20Passando%20para%20lembrar%20da%20mensalidade%20da%20ag%C3%AAncia.` : '#';
-            const resp = team.find(t=>t.id===c.teamOwner);
-            const respHTML = resp ? `<div class="assignee"><div class="avatar" style="background:${resp.color || 'var(--accent)'}">${resp.img ? `<img src="${resp.img}">`: getInitials(resp.name)}</div> ${resp.name}</div>` : 'Equipe Geral';
-
-            container.innerHTML = `
-                <div class="workspace-header">
-                    <div class="client-meta">
-                        <h2 style="cursor:pointer;" onclick="openClientModal('${c.id}')" title="Editar Perfil do Cliente"><div class="avatar" style="width:48px;height:48px;font-size:1.3rem;">${avatarHTML}</div> ${c.name}</h2>
-                        <div class="client-info-badges">
-                            <div class="info-badge">Resp: <strong>${respHTML}</strong></div>
-                            <div class="info-badge">Instagram: <strong>${c.profile || '-'}</strong></div>
-                            <div class="info-badge">Postagem: <strong>${c.poster || 'Agência'}</strong></div>
-                        </div>
-                    </div>
-                    <div style="display:flex; align-items:center; gap:16px;">
-                        <div class="dropdown">
-                            <button class="btn-outline">
-                                <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg> 
-                                Opções ▼
-                            </button>
-                            <div class="dropdown-content">
-                                <button onclick="openClientModal('${c.id}')"><svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg> Editar Perfil</button>
-                                <button onclick="deleteClient('${c.id}')" class="danger-btn" style="color:var(--danger);"><svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg> Excluir Cliente</button>
-                            </div>
-                        </div>
-                        
-                        <button class="btn-outline" onclick="toggleForceMeta('${c.id}')" style="padding: 10px; border-color: ${c.forceMeta ? 'var(--color-sched)' : 'var(--border)'}; color: ${c.forceMeta ? 'var(--color-sched)' : 'var(--text-muted)'};" title="${c.forceMeta ? 'Meta Forçada' : 'Marcar Meta como Concluída Manualmente'}">
-                            <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                        </button>
-
-                        <div class="buffer-meter-box">
-                            <div class="meter-label"><span>Meta de Frente (2 Sem.)</span><span style="color:${colorBar}">${pct}%</span></div>
-                            <div class="meter-bg"><div class="meter-bar" style="width:${pct}%; background:${colorBar}"></div></div>
-                        </div>
-                        <button class="theme-toggle" onclick="toggleTheme()" title="Alterar Tema">🌓</button>
-                    </div>
-                </div>
-
-                <div class="workspace-body slide-up">
-                    <div class="panel-left">
-                        <div class="box">
-                            <div class="box-header"><h3>🚀 Checklist Inicial</h3></div>
-                            <div class="checklist-group">
-                                <div class="chk-item ${c.chk?.group ? 'done':''}" onclick="toggleChk('group')"><div class="chk-circle"></div> 1. Grupo do WhatsApp</div>
-                                <div class="chk-item ${c.chk?.briefing ? 'done':''}" onclick="toggleChk('briefing')"><div class="chk-circle"></div> 2. Enviar Briefing</div>
-                                <div class="chk-item ${c.chk?.strategy ? 'done':''}" onclick="toggleChk('strategy')"><div class="chk-circle"></div> 3. Enviar Estratégia</div>
-                                <div class="chk-item ${c.chk?.pic ? 'done':''}" onclick="toggleChk('pic')"><div class="chk-circle"></div> 4. Foto de Perfil</div>
-                                <div class="chk-item ${c.chk?.bio ? 'done':''}" onclick="toggleChk('bio')"><div class="chk-circle"></div> 5. Criar Bio</div>
-                                <div class="chk-item ${c.chk?.highlights ? 'done':''}" onclick="toggleChk('highlights')"><div class="chk-circle"></div> 6. Capas Destaque</div>
-                            </div>
-                        </div>
-                        <div class="box">
-                            <div class="box-header"><h3>📝 Briefing / Diretrizes</h3></div>
-                            <div style="font-size:0.8rem; color:var(--text-main); line-height:1.5;">${c.notes || 'Sem anotações.'}</div>
-                        </div>
-                        <div class="box">
-                            <div class="box-header"><h3>💸 Financeiro Mensal</h3></div>
-                            <div class="fin-detail"><span>Plano</span> <strong>${c.finDesc || '-'}</strong></div>
-                            <div class="fin-detail"><span>Valor</span> <strong>${formatBRL(c.finValue || 0)}</strong></div>
-                            <div class="fin-detail"><span>Venc.</span> <strong>Dia ${c.finDay || '-'}</strong></div>
-                            <div class="fin-detail" style="border:none;"><span>Status</span> <span class="status-badge ${c.finStatus === 'Em Dia' ? 'status-ok' : 'status-late'}">${c.finStatus || '-'}</span></div>
-                            <a href="${whatsLink}" target="_blank" class="btn-whatsapp">
-                                <svg width="18" height="18" fill="currentColor" viewBox="0 0 24 24"><path d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.582 2.128 2.182-.573c.978.58 1.911.928 3.145.929 3.178 0 5.767-2.587 5.768-5.766.001-3.187-2.575-5.77-5.764-5.771zm3.392 8.244c-.144.405-.837.774-1.17.824-.299.045-.677.063-1.092-.069-.252-.08-.575-.187-.988-.365-1.739-.751-2.874-2.502-2.961-2.617-.087-.116-.708-.94-.708-1.793s.448-1.273.607-1.446c.159-.173.346-.217.462-.217l.332.006c.106.005.249-.04.39.298.144.347.491 1.2.534 1.287.043.087.072.188.014.304-.058.116-.087.188-.173.289l-.26.304c-.087.086-.177.18-.076.322.101.144.453.712 1.033 1.234.75.674 1.349.882 1.493.968.144.087.231.072.318-.029l.364-.428c.116-.144.231-.116.362-.072.13.044.837.398.981.47.144.072.241.109.276.166.035.058.035.341-.109.746z"/></svg>
-                                Cobrar Cliente
-                            </a>
-                        </div>
-                    </div>
-
-                    <div class="panel-right">
-                        <div class="kanban-header-actions">
-                            <span style="font-size:0.9rem; color:var(--text-muted); font-weight:600;">🔥 Esteira de Produção</span>
-                            <button class="btn-primary" onclick="openTaskModal()">+ Novo Post</button>
-                        </div>
-                        <div class="production-grid" id="kanban-area"></div>
-                    </div>
-                </div>
-            `;
-            renderClientKanban();
-        }
-
-        function renderClientKanban() {
-            const kArea = document.getElementById('kanban-area');
-            const clientTasks = tasks.filter(t => t.clientId === activeClient);
-            kArea.innerHTML = '';
-            const cols = [{ id: 'copy', title: '1. Roteiro/Copy', color: 'var(--color-copy)' }, { id: 'design', title: '2. Arte/Edição', color: 'var(--color-design)' }, { id: 'review', title: '3. Aprovação', color: 'var(--color-review)' }, { id: 'sched', title: '4. Programado', color: 'var(--color-sched)' }];
-
-            cols.forEach(col => {
-                const colTasks = clientTasks.filter(t => t.stage === col.id);
-                let cards = '';
-                
-                colTasks.forEach(t => {
-                    let pClass = t.priority === 'alta' ? 'p-alta' : t.priority === 'media' ? 'p-media' : 'p-baixa';
-                    let opts = cols.map(c => `<option value="${c.id}" ${t.stage === c.id ? 'selected':''}>${c.title}</option>`).join('');
-                    
-                    let refHTML = '';
-                    if(t.imgBase64) {
-                        refHTML = `<div style="margin-bottom:10px;"><img src="${t.imgBase64}" class="post-preview-img" onclick="openImageViewer('${t.imgBase64}')" title="Clique para ampliar"></div>`;
-                    } else if (t.link) {
-                        refHTML = `<a href="${t.link.includes('http') ? t.link : 'https://'+t.link}" class="post-attachment" target="_blank"><svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg> Link de Referência</a>`;
-                    }
-
-                    const dueClass = isDueSoon(t.date) && t.stage !== 'sched' ? 'due-alert' : '';
-                    let dateBadge = t.date ? `<div class="post-date" style="color: ${isDueSoon(t.date) && t.stage !== 'sched' ? 'var(--danger)' : ''}">📅 Entrega: ${t.date.split('-').reverse().join('/')}</div>` : '';
-                    let ownerObj = team.find(tm=>tm.id===t.owner);
-                    let ownerName = ownerObj ? ownerObj.name : 'Equipe';
-                    let ownerColor = ownerObj ? ownerObj.color : 'var(--border)';
-                    let ownerAvatar = ownerObj && ownerObj.img ? `<img src="${ownerObj.img}">` : getInitials(ownerName);
-
-                    let isApproved = (t.stage === 'review' && t.approved);
-                    let approvedClass = isApproved ? 'approved-card' : '';
-                    
-                    let approvalBtn = '';
-                    if (t.stage === 'review') {
-                        if (t.approved) {
-                            approvalBtn = `<button onclick="toggleApproval('${t.id}')" style="background:var(--color-sched); color:#fff; border:none; width:24px; height:24px; border-radius:6px; cursor:pointer; display:flex; align-items:center; justify-content:center;" title="Remover Aprovação"><svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg></button>`;
-                        } else {
-                            approvalBtn = `<button onclick="toggleApproval('${t.id}')" style="background:transparent; color:var(--text-muted); border:2px solid var(--text-muted); width:24px; height:24px; border-radius:6px; cursor:pointer; display:flex; align-items:center; justify-content:center; transition:0.2s;" onmouseover="this.style.borderColor='var(--color-sched)'; this.style.color='var(--color-sched)';" onmouseout="this.style.borderColor='var(--text-muted)'; this.style.color='var(--text-muted)';" title="Marcar como Aprovado"></button>`;
-                        }
-                    }
-
-                    let descHTML = t.desc ? `<div class="card-desc-text">${t.desc}</div>` : '';
-
-                    cards += `
-                        <div class="post-card ${dueClass} ${approvedClass}">
-                            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
-                                <span class="priority-tag ${pClass}">${t.priority}</span>
-                                ${isDueSoon(t.date) && t.stage !== 'sched' ? '<span style="font-size:0.6rem; color:var(--danger); font-weight:bold; background:rgba(239,68,68,0.1); padding:2px 6px; border-radius:4px;">⚠️ PRAZO CURTO</span>' : ''}
-                            </div>
-                            <h5 onclick="openTaskModal('${t.id}')">${t.title}</h5>
-                            ${descHTML}
-                            ${dateBadge}
-                            ${refHTML}
-                            <div class="post-footer">
-                                <div style="display:flex; align-items:center; gap:8px;">
-                                    ${approvalBtn}
-                                    <div class="assignee"><div class="avatar" style="background:${ownerColor}">${ownerAvatar}</div> <span style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:80px;">${ownerName}</span></div>
-                                </div>
-                                <select class="stage-select" onchange="moveTask('${t.id}', this.value, '${t.title}')">${opts}</select>
-                            </div>
-                            <div style="text-align:right; margin-top:8px;">
-                                <button onclick="deleteTask('${t.id}')" style="background:none; border:none; color:var(--danger); cursor:pointer; font-size:0.75rem;">Excluir Post</button>
-                            </div>
-                        </div>
-                    `;
-                });
-                kArea.innerHTML += `<div class="prod-column"><div class="prod-column-header" style="color:${col.color}"><div style="display:flex; align-items:center; gap:8px;"><div class="dot" style="background:${col.color}"></div> ${col.title}</div><span style="background:var(--bg-card); padding:2px 8px; border-radius:10px; font-size:0.7rem; color:var(--text-main);">${colTasks.length}</span></div><div class="col-content">${cards}</div></div>`;
-            });
-        }
-
-        /* --- AÇÕES DE DADOS COM NOTIFICAÇÃO --- */
-        function toggleChk(field) { const c = clients.find(i => i.id === activeClient); if(!c.chk) c.chk = {}; c.chk[field] = !c.chk[field]; saveData(); }
-        
-        function toggleApproval(id) {
-            const t = tasks.find(i => i.id === id);
-            if(t) {
-                t.approved = !t.approved;
-                saveData();
-                if(t.approved) showToast(`✅ Post aprovado: ${t.title}`);
-            }
-        }
-
-        function moveTask(id, stage, title) { 
-            const t = tasks.find(i => i.id === id); 
-            t.stage = stage; 
-            if (stage !== 'review') t.approved = false; 
-            if(stage === 'design' || stage === 'copy') showToast(`🚀 Produção iniciada: ${title}`);
-            if(stage === 'sched') showToast(`✅ Peça Programada: ${title}`);
-            saveData(); 
-        }
-
-        function moveFreela(id, stage, title) { 
-            const f = freelas.find(i => i.id === id); 
-            f.stage = stage; 
-            if(stage === 'doing') showToast(`⚡ Freela em andamento: ${title}`);
-            if(stage === 'done') showToast(`💸 Freela Entregue: ${title}`);
-            saveData(); 
-        }
-
-        /* --- MODAL CLIENTE --- */
-        function openClientModal(id=null) {
-            populateTeamSelects();
-            document.getElementById('clientModal').style.display='flex';
-            document.getElementById('client-form').reset();
-            const p = document.getElementById('c-preview'); p.style.display = 'none'; p.src = ''; document.getElementById('c-img-b64').value = '';
-
-            if(id) {
-                const c = clients.find(i=>i.id===id);
-                document.getElementById('client-id').value = c.id;
-                document.getElementById('c-name').value = c.name;
-                document.getElementById('c-profile').value = c.profile || '';
-                document.getElementById('c-login').value = c.login || '';
-                document.getElementById('c-freq').value = c.freq || 3;
-                document.getElementById('c-poster').value = c.poster || 'Agência Saturno';
-                document.getElementById('c-team-owner').value = c.teamOwner || ''; 
-                
-                document.getElementById('c-hide-delay').value = c.hideDelay || 'Nao';
-                
-                document.getElementById('c-notes').value = c.notes || '';
-                document.getElementById('c-fin-desc').value = c.finDesc || '';
-                document.getElementById('c-fin-value').value = c.finValue || '';
-                document.getElementById('c-fin-day').value = c.finDay || '';
-                document.getElementById('c-fin-phone').value = c.finPhone || '';
-                document.getElementById('c-fin-status').value = c.finStatus || 'Em Dia';
-                document.getElementById('c-needs-nf').value = c.needsNf || 'Nao';
-                document.getElementById('c-cnpj').value = c.cnpj || '';
-                
-                if(c.img) { document.getElementById('c-img-b64').value = c.img; p.src = c.img; p.style.display = 'block'; }
-                document.getElementById('client-modal-title').innerText = 'Editar Cliente';
-            } else {
-                document.getElementById('client-id').value = '';
-                document.getElementById('client-modal-title').innerText = 'Novo Cliente';
-                document.getElementById('c-hide-delay').value = 'Nao';
-            }
-        }
-
-        function saveClient(e) {
-            e.preventDefault();
-            const id = document.getElementById('client-id').value || 'c'+Date.now();
-            const cData = {
-                id, name: document.getElementById('c-name').value, img: document.getElementById('c-img-b64').value,
-                profile: document.getElementById('c-profile').value, login: document.getElementById('c-login').value, freq: parseInt(document.getElementById('c-freq').value),
-                poster: document.getElementById('c-poster').value, teamOwner: document.getElementById('c-team-owner').value, 
-                hideDelay: document.getElementById('c-hide-delay').value, forceMeta: clients.find(i=>i.id===id)?.forceMeta || false,
-                notes: document.getElementById('c-notes').value,
-                finDesc: document.getElementById('c-fin-desc').value, finValue: document.getElementById('c-fin-value').value, finDay: document.getElementById('c-fin-day').value, 
-                finPhone: document.getElementById('c-fin-phone').value, finStatus: document.getElementById('c-fin-status').value, needsNf: document.getElementById('c-needs-nf').value, cnpj: document.getElementById('c-cnpj').value,
-                nfStatus: clients.find(i=>i.id===id)?.nfStatus || 'Pendente', chk: clients.find(i=>i.id===id)?.chk || { group:false, briefing:false, strategy:false, pic:false, bio:false, highlights:false }
-            };
-            const idx = clients.findIndex(i=>i.id===id);
-            if(idx > -1) clients[idx] = cData; else { clients.push(cData); activeClient = id; mainView = 'client'; }
-            closeModal('clientModal'); saveData(); showToast(`Cliente ${cData.name} salvo!`);
-        }
-        function deleteClient(id) { if(confirm("Apagar cliente e todas as suas peças?")) { clients = clients.filter(c=>c.id!==id); tasks = tasks.filter(t=>t.clientId!==id); activeClient = null; mainView = 'dashboard'; saveData(); } }
-
-        /* --- MODAL TAREFA (ESTEIRA) --- */
-        function openTaskModal(id=null) {
-            document.getElementById('taskModal').style.display='flex';
-            document.getElementById('task-form').reset();
-            const p = document.getElementById('t-preview'); p.style.display = 'none'; p.src = ''; document.getElementById('t-img-b64').value = '';
-
-            if(id) {
-                const t = tasks.find(i=>i.id===id);
-                document.getElementById('t-id').value = t.id; document.getElementById('t-title').value = t.title;
-                
-                document.getElementById('t-desc').value = t.desc || '';
-                
-                document.getElementById('t-owner').value = t.owner; document.getElementById('t-priority').value = t.priority;
-                document.getElementById('t-date').value = t.date || '';
-                document.getElementById('t-link').value = t.link || ''; document.getElementById('t-stage').value = t.stage;
-                if(t.imgBase64) { document.getElementById('t-img-b64').value = t.imgBase64; p.src = t.imgBase64; p.style.display = 'block'; }
-            } else {
-                document.getElementById('t-id').value = '';
-            }
-        }
-        function saveTask(e) {
-            e.preventDefault();
-            const id = document.getElementById('t-id').value || 't'+Date.now();
-            const tData = { 
-                id, clientId: activeClient, title: document.getElementById('t-title').value, 
-                desc: document.getElementById('t-desc').value,
-                owner: document.getElementById('t-owner').value, priority: document.getElementById('t-priority').value, 
-                date: document.getElementById('t-date').value, imgBase64: document.getElementById('t-img-b64').value,
-                link: document.getElementById('t-link').value, stage: document.getElementById('t-stage').value,
-                approved: tasks.find(i=>i.id===id)?.approved || false 
-            };
-            const idx = tasks.findIndex(i=>i.id===id);
-            if(idx>-1) tasks[idx]=tData; else { tasks.push(tData); showToast(`📌 Tarefa Adicionada: ${tData.title}`); }
-            closeModal('taskModal'); saveData();
-        }
-        function deleteTask(id) { if(confirm("Excluir peça de conteúdo?")){ tasks = tasks.filter(t=>t.id!==id); saveData(); } }
-
-        /* --- MODAL FREELA --- */
-        function openFreelaModal(id=null) {
-            document.getElementById('freelaModal').style.display='flex';
-            document.getElementById('freela-form').reset();
-            const p = document.getElementById('f-preview'); p.style.display = 'none'; p.src = ''; document.getElementById('f-img-b64').value = '';
-
-            if(id) {
-                const f = freelas.find(i=>i.id===id);
-                document.getElementById('f-id').value = f.id; document.getElementById('f-title').value = f.title;
-                
-                document.getElementById('f-desc').value = f.desc || '';
-                
-                document.getElementById('f-val').value = f.val; document.getElementById('f-owner').value = f.owner;
-                document.getElementById('f-date').value = f.date || '';
-                document.getElementById('f-link').value = f.link || ''; document.getElementById('f-stage').value = f.stage;
-                if(f.imgBase64) { document.getElementById('f-img-b64').value = f.imgBase64; p.src = f.imgBase64; p.style.display = 'block'; }
-            } else {
-                document.getElementById('f-id').value = '';
-            }
-        }
-        function saveFreela(e) {
-            e.preventDefault();
-            const id = document.getElementById('f-id').value || 'f'+Date.now();
-            const fData = { 
-                id, title: document.getElementById('f-title').value, 
-                desc: document.getElementById('f-desc').value,
-                val: document.getElementById('f-val').value, 
-                owner: document.getElementById('f-owner').value, date: document.getElementById('f-date').value,
-                imgBase64: document.getElementById('f-img-b64').value, link: document.getElementById('f-link').value, stage: document.getElementById('f-stage').value 
-            };
-            const idx = freelas.findIndex(i=>i.id===id);
-            if(idx>-1) freelas[idx]=fData; else { freelas.push(fData); showToast(`⚡ Novo Freela: ${fData.title}`); }
-            closeModal('freelaModal'); saveData();
-        }
-        function deleteFreela(id) { if(confirm("Excluir Freela?")){ freelas = freelas.filter(f=>f.id!==id); saveData(); } }
-
-        /* --- MODAL REUNIÕES --- */
-        function openMeetingModal(id=null) {
-            document.getElementById('meetingModal').style.display='flex';
-            document.getElementById('meeting-form').reset();
-            
-            const sel = document.getElementById('m-client');
-            sel.innerHTML = '<option value="">Nenhum / Reunião Interna</option>';
-            clients.forEach(c => sel.innerHTML += `<option value="${c.id}">${c.name}</option>`);
-
-            if(id) {
-                const m = meetings.find(i=>i.id===id);
-                document.getElementById('m-id').value = m.id; document.getElementById('m-title').value = m.title;
-                document.getElementById('m-date').value = m.date; document.getElementById('m-time').value = m.time;
-                document.getElementById('m-client').value = m.client || ''; document.getElementById('m-link').value = m.link || '';
-            } else { document.getElementById('m-id').value = ''; }
-        }
-        function saveMeeting(e) {
-            e.preventDefault();
-            const id = document.getElementById('m-id').value || 'm'+Date.now();
-            const mData = { id, title: document.getElementById('m-title').value, date: document.getElementById('m-date').value, time: document.getElementById('m-time').value, client: document.getElementById('m-client').value, link: document.getElementById('m-link').value };
-            const idx = meetings.findIndex(i=>i.id===id);
-            if(idx>-1) meetings[idx]=mData; else { meetings.push(mData); showToast(`📅 Reunião Marcada: ${mData.title}`); }
-            closeModal('meetingModal'); saveData();
-        }
-        function deleteMeeting(id) { if(confirm("Excluir Reunião?")){ meetings = meetings.filter(m=>m.id!==id); saveData(); } }
-
         function closeModal(id) { document.getElementById(id).style.display='none'; }
-
-        /* --- AGÊNCIA --- */
-        function openAgencyModal() {
-            document.getElementById('agencyModal').style.display='flex';
-            document.getElementById('ag-name').value = agency.name || '';
-            const p = document.getElementById('ag-preview');
-            if (agency.logo) {
-                document.getElementById('ag-logo-b64').value = agency.logo;
-                p.src = agency.logo;
-                p.style.display = 'block';
-            } else {
-                document.getElementById('ag-logo-b64').value = '';
-                p.src = '';
-                p.style.display = 'none';
-            }
-        }
-
-        function saveAgency(e) {
-            e.preventDefault();
-            agency.name = document.getElementById('ag-name').value || 'Saturno Studio';
-            agency.logo = document.getElementById('ag-logo-b64').value || '';
-            closeModal('agencyModal');
-            saveData();
-            showToast('Perfil da Agência atualizado!');
-        }
 
         /* --- INICIALIZAÇÃO COM SUPABASE --- */
         async function initApp() {
@@ -1583,30 +1230,50 @@
                     meetings = d.meetings || [];
                     team = d.team || [];
                     subs = d.subs || [];
+                    reports = d.reports || []; // Busca relatórios
                     agency = d.agency || { name: 'Saturno Studio', logo: '' };
                     
-                    localStorage.setItem('sat_final_cli', JSON.stringify(clients));
-                    localStorage.setItem('sat_final_tsk', JSON.stringify(tasks));
-                    localStorage.setItem('sat_final_freelas', JSON.stringify(freelas));
-                    localStorage.setItem('sat_final_meetings', JSON.stringify(meetings));
-                    localStorage.setItem('sat_final_team', JSON.stringify(team));
-                    localStorage.setItem('sat_final_subs', JSON.stringify(subs));
-                    localStorage.setItem('sat_final_agency', JSON.stringify(agency));
+                    if (d.agency && d.agency.lastPoke) lastPokeTime = d.agency.lastPoke.time; // Atualiza a linha do tempo do poke
+
+                    try {
+                        localStorage.setItem('sat_final_cli', JSON.stringify(clients));
+                        localStorage.setItem('sat_final_tsk', JSON.stringify(tasks));
+                        localStorage.setItem('sat_final_freelas', JSON.stringify(freelas));
+                        localStorage.setItem('sat_final_meetings', JSON.stringify(meetings));
+                        localStorage.setItem('sat_final_team', JSON.stringify(team));
+                        localStorage.setItem('sat_final_subs', JSON.stringify(subs));
+                        localStorage.setItem('sat_final_reports', JSON.stringify(reports));
+                        localStorage.setItem('sat_final_agency', JSON.stringify(agency));
+                    } catch(e) {}
                 }
             } catch (err) {
                 console.error("Modo offline ativo: ", err);
             }
 
+            // Esconde a tela de carregamento suavemente
+            const loader = document.getElementById('loader');
+            loader.style.opacity = '0';
+            setTimeout(() => loader.style.display = 'none', 500);
+
             supabaseClient.channel('custom-all-channel')
                 .on('postgres_changes', { event: '*', schema: 'public', table: 'app_data' }, (payloadDB) => {
                     if (payloadDB.new && payloadDB.new.id === 'hub_operacional') {
                         const d = payloadDB.new.payload;
+                        
+                        // Lógica para tocar o Som se houver um cutucão novo
+                        if (d.agency && d.agency.lastPoke && d.agency.lastPoke.time > lastPokeTime) {
+                            lastPokeTime = d.agency.lastPoke.time;
+                            playBeep();
+                            showToast(`🔔 CHAMADO PARA: ${d.agency.lastPoke.target}!`);
+                        }
+
                         clients = d.clients || [];
                         tasks = d.tasks || [];
                         freelas = d.freelas || [];
                         meetings = d.meetings || [];
                         team = d.team || [];
                         subs = d.subs || [];
+                        reports = d.reports || [];
                         agency = d.agency || { name: 'Saturno Studio', logo: '' };
                         
                         populateTeamSelects();
@@ -1623,6 +1290,7 @@
             routeView();
         }
         
+        // Dá o pontapé inicial no sistema
         initApp();
     </script>
 </body>
