@@ -83,13 +83,13 @@
         
         .btn-primary { background-color: var(--accent); color: #fff; border: none; padding: 10px 18px; border-radius: 8px; font-weight: 600; cursor: pointer; transition: 0.2s; display: inline-flex; align-items: center; gap: 8px; justify-content: center; white-space: nowrap;}
         .btn-primary:hover { background-color: var(--accent-hover); transform: translateY(-1px); box-shadow: 0 4px 12px rgba(138,43,226,0.3); }
-        .btn-whatsapp { background-color: var(--whatsapp); color: #fff; border: none; padding: 10px; border-radius: 8px; font-weight: 600; font-size: 0.85rem; display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; text-decoration: none; transition: 0.2s; cursor: pointer; }
-        .btn-whatsapp:hover { opacity: 0.9; transform: translateY(-1px); box-shadow: 0 4px 12px rgba(37, 211, 102, 0.3); }
         .btn-danger { background-color: var(--danger); color: #fff; border: none; padding: 10px 18px; border-radius: 8px; font-weight: 600; cursor: pointer; transition: 0.2s; white-space: nowrap;}
         .btn-danger:hover { background-color: #dc2626; transform: translateY(-1px); box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3); }
+        .btn-whatsapp { background-color: var(--whatsapp); color: #fff; border: none; padding: 10px; border-radius: 8px; font-weight: 600; font-size: 0.85rem; display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; text-decoration: none; transition: 0.2s; cursor: pointer; }
+        .btn-whatsapp:hover { opacity: 0.9; transform: translateY(-1px); box-shadow: 0 4px 12px rgba(37, 211, 102, 0.3); }
 
-        /* SIDEBAR E MENU MOBILE */
-        .sidebar { width: 320px; background-color: var(--bg-sidebar); border-right: 1px solid var(--border); display: flex; flex-direction: column; flex-shrink: 0; z-index: 10000; overflow-y: auto; }
+        /* SIDEBAR */
+        .sidebar { width: 320px; background-color: var(--bg-sidebar); border-right: 1px solid var(--border); display: flex; flex-direction: column; flex-shrink: 0; z-index: 10000; overflow-y: auto; transition: left 0.3s ease;}
         .sidebar-header { padding: 24px; border-bottom: 1px solid var(--border); }
         .agency-profile { display: flex; align-items: center; gap: 12px; margin-bottom: 20px; padding: 10px; border-radius: 12px; cursor: pointer; transition: 0.2s; border: 1px solid transparent; }
         .agency-profile:hover { background: var(--bg-card); border-color: var(--border); }
@@ -98,6 +98,7 @@
         .agency-info h1 { font-size: 1.1rem; letter-spacing: -0.5px; margin-bottom: 2px; color: var(--text-main); }
         .agency-info span { font-size: 0.7rem; color: var(--text-muted); display: block; }
         
+        /* ICONS E MENU GLOBAL */
         .global-nav { padding: 16px 12px; border-bottom: 1px solid var(--border); display: flex; flex-direction: column; gap: 4px; flex-shrink: 0; }
         .nav-item { display: flex; align-items: center; justify-content: space-between; padding: 10px 14px; border-radius: 10px; cursor: pointer; color: var(--text-muted); font-weight: 600; font-size: 0.85rem; transition: 0.2s; border: 1px solid transparent;}
         .nav-item:hover { color: var(--text-main); background: var(--bg-card); }
@@ -116,12 +117,12 @@
         .client-item h4 { font-size: 0.85rem; font-weight: 600; color: var(--text-main); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;}
 
         /* MAIN WORKSPACE E GRIDS */
-        .main-workspace { flex: 1; display: flex; flex-direction: column; overflow-y: auto; background-color: var(--bg-main); position: relative; }
+        .main-workspace { flex: 1; display: flex; flex-direction: column; overflow-y: auto; background-color: var(--bg-main); position: relative; width: 100%; }
         .workspace-header { padding: 24px 32px; background-color: var(--bg-card); border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: flex-start; flex-shrink: 0; }
         
-        /* Botão Mobile */
-        .mobile-toggle { display: none; background: transparent; border: none; color: var(--text-main); font-size: 1.5rem; cursor: pointer; margin-right: 12px; }
-        .header-left-wrap { display: flex; align-items: flex-start; }
+        /* Botão Mobile Hamburger */
+        .mobile-toggle { display: none; background: transparent; border: none; color: var(--text-main); font-size: 1.5rem; cursor: pointer; margin-right: 12px; padding: 0;}
+        .header-left-wrap { display: flex; align-items: center; }
 
         .client-meta h2 { font-size: 1.6rem; font-weight: 700; color: var(--text-main); margin-bottom: 12px; display: flex; align-items: center; gap: 12px; transition: 0.2s; }
         .client-meta h2:hover { opacity: 0.8; cursor:pointer;}
@@ -181,6 +182,7 @@
         .post-card { background-color: var(--bg-card); border: 1px solid var(--border); border-radius: 10px; padding: 14px; margin-bottom: 12px; transition: 0.2s; position: relative; box-shadow: 0 2px 5px var(--shadow-sm); }
         .post-card:hover { border-color: var(--accent); transform: translateY(-2px); }
         
+        /* Modificadores Visuais de Alerta e Aprovação */
         .due-alert { border-color: var(--danger); animation: pulseAlert 2s infinite; }
         .freela-todo { border-color: var(--danger); box-shadow: inset 0 0 10px rgba(239, 68, 68, 0.1); }
         .freela-doing { border-color: var(--gold); box-shadow: inset 0 0 10px rgba(250, 204, 21, 0.1); }
@@ -195,16 +197,20 @@
 
         .post-card h5 { font-size: 0.9rem; margin-bottom: 6px; color: var(--text-main); line-height: 1.3; cursor: pointer; }
         .post-card h5:hover { color: var(--accent); }
+        
+        /* ESTILO PARA O TEXTO CORRIDO DENTRO DO CARD */
         .card-desc-text { font-size: 0.75rem; color: var(--text-muted); line-height: 1.4; margin-bottom: 10px; white-space: pre-wrap; word-break: break-word; }
 
         .post-date { font-size: 0.7rem; color: var(--text-muted); display: flex; align-items: center; gap: 4px; margin-bottom: 10px; background: var(--bg-input); padding: 4px 8px; border-radius: 4px; display: inline-flex;}
         .post-val { display: inline-block; background: rgba(16, 185, 129, 0.15); color: #10b981; font-weight: 700; font-size: 0.75rem; padding: 2px 6px; border-radius: 4px; margin-bottom: 8px; }
 
+        /* PREVIEW MINIATURA (THUMBNAIL PROPORCIONAL) */
         .post-preview-img { width: 56px; height: 56px; border-radius: 8px; border: 1px solid var(--border); display: block; cursor: pointer; transition: 0.2s; overflow: hidden; margin-bottom: 10px;}
         .post-preview-img img { width: 100%; height: 100%; object-fit: cover; }
         .post-preview-img:hover { opacity: 0.8; border-color: var(--accent); transform: scale(1.05); }
         
         .post-attachment { display: inline-flex; align-items: center; gap: 4px; font-size: 0.75rem; color: var(--accent); text-decoration: none; margin-bottom: 12px; background: rgba(138,43,226,0.1); padding: 4px 8px; border-radius: 6px; }
+
         .post-footer { display: flex; justify-content: space-between; align-items: center; border-top: 1px dashed var(--border); padding-top: 12px; margin-top: 12px;}
         .assignee { display: flex; align-items: center; gap: 8px; font-size: 0.75rem; color: var(--text-muted); font-weight: 500;}
         .assignee .avatar { width: 24px; height: 24px; font-size: 0.65rem; background: var(--border); }
@@ -216,7 +222,7 @@
         .dash-metrics { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 20px; }
         .metric-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 16px; padding: 24px; position: relative; overflow: hidden; box-shadow: 0 2px 10px var(--shadow-sm); }
         .metric-card span { font-size: 0.75rem; font-weight: 700; text-transform: uppercase; color: var(--text-muted); letter-spacing: 0.5px; display: block; margin-bottom: 8px;}
-        .metric-card h3 { font-size: 1.8rem; color: var(--text-main); }
+        .metric-card h3 { font-size: 2rem; color: var(--text-main); }
         .metric-card.gold h3 { color: var(--gold); }
         
         .dash-tables-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: 24px; }
@@ -436,7 +442,7 @@
         </div>
     </div>
 
-    <!-- Modais Restantes -->
+    <!-- Modais de Formulários -->
     <div class="modal-overlay" id="teamModal">
         <div class="modal">
             <h2>Cadastrar Colaborador</h2>
@@ -683,7 +689,7 @@
         let team = JSON.parse(localStorage.getItem('sat_final_team')) || [];
         let subs = JSON.parse(localStorage.getItem('sat_final_subs')) || []; 
         let reports = JSON.parse(localStorage.getItem('sat_final_reports')) || [];
-        let leads = JSON.parse(localStorage.getItem('sat_final_leads')) || []; // NOVO: Leads
+        let leads = JSON.parse(localStorage.getItem('sat_final_leads')) || []; 
         let agency = JSON.parse(localStorage.getItem('sat_final_agency')) || { name: 'Saturno Studio', logo: '' };
         let currentTheme = localStorage.getItem('sat_theme') || 'dark';
         
@@ -693,7 +699,7 @@
         let chartInstance = null; 
         let financeUnlocked = false;
         let lastPokeTime = 0; 
-        let abaAtivaLead = 'todos'; // Controle das abas do CRM
+        let abaAtivaLead = 'todos'; 
 
         // TEMA
         document.body.setAttribute('data-theme', currentTheme);
@@ -846,7 +852,7 @@
                 localStorage.setItem('sat_final_team', JSON.stringify(team));
                 localStorage.setItem('sat_final_subs', JSON.stringify(subs));
                 localStorage.setItem('sat_final_reports', JSON.stringify(reports)); 
-                localStorage.setItem('sat_final_leads', JSON.stringify(leads)); // NOVO: Leads CRM
+                localStorage.setItem('sat_final_leads', JSON.stringify(leads)); 
                 const dadosAgenciaLimpos = { name: agency.name || 'Saturno Studio', logo: agency.logo || '', lastPoke: agency.lastPoke || null };
                 localStorage.setItem('sat_final_agency', JSON.stringify(dadosAgenciaLimpos));
             } catch (e) {
@@ -854,7 +860,7 @@
             }
             
             const dadosAgenciaLimpos = { name: agency.name || 'Saturno Studio', logo: agency.logo || '', lastPoke: agency.lastPoke || null };
-            const payloadData = { clients, tasks, freelas, meetings, team, subs, reports, leads, agency: dadosAgenciaLimpos }; // Leads incluídos
+            const payloadData = { clients, tasks, freelas, meetings, team, subs, reports, leads, agency: dadosAgenciaLimpos }; 
             
             const { error } = await supabaseClient.from('app_data').upsert({ id: 'hub_operacional', payload: payloadData });
 
@@ -889,7 +895,15 @@
             if(view !== 'client') activeClient = null;
             document.querySelectorAll('.nav-item').forEach(e => e.classList.remove('active'));
             if(document.getElementById(`nav-${view}`)) document.getElementById(`nav-${view}`).classList.add('active');
-            renderSidebar(); routeView();
+            renderSidebar(); 
+            routeView();
+            
+            const sidebar = document.getElementById('mainSidebar');
+            const backdrop = document.getElementById('sidebarBackdrop');
+            if (sidebar && sidebar.classList.contains('open')) {
+                sidebar.classList.remove('open');
+                backdrop.classList.remove('open');
+            }
         }
 
         function routeView() {
@@ -899,7 +913,7 @@
             setTimeout(()=>area.classList.remove('fade-in'), 400);
 
             if(mainView === 'dashboard') renderDashboard(area);
-            else if(mainView === 'leads') renderLeads(area); // NOVO: Renderiza a tela de CRM
+            else if(mainView === 'leads') renderLeads(area); 
             else if(mainView === 'reports') renderReports(area);
             else if(mainView === 'finance') renderFinance(area); 
             else if(mainView === 'freelas') renderFreelas(area);
@@ -955,9 +969,13 @@
                     document.querySelectorAll('.nav-item').forEach(e => e.classList.remove('active'));
                     mainView = 'client'; activeClient = c.id; 
                     renderSidebar(); routeView();
-                    // Fechar menu mobile se tiver aberto
-                    document.getElementById('mainSidebar').classList.remove('open');
-                    document.getElementById('sidebarBackdrop').classList.remove('open');
+                    
+                    const sidebar = document.getElementById('mainSidebar');
+                    const backdrop = document.getElementById('sidebarBackdrop');
+                    if (sidebar && sidebar.classList.contains('open')) {
+                        sidebar.classList.remove('open');
+                        backdrop.classList.remove('open');
+                    }
                 };
                 
                 item.innerHTML = `
@@ -1065,20 +1083,20 @@
             let tituloTb = 'Pipeline Recente (Todos)';
             if (abaAtivaLead === 'prospeccao') tituloTb = 'Apenas Prospecções';
             if (abaAtivaLead === 'negociacao') tituloTb = 'Em Negociação';
-            if (abaAtivaLead === 'fechado') tituloTb = 'Contratos Fechados';
+            if (abaAtivaLead === 'fechado') tituloTb = 'Contratos Fechados (Comissões)';
 
             let leadsHTML = leadsFiltrados.sort((a,b) => new Date(b.followup) - new Date(a.followup)).map(l => {
                 let statusLabel = l.status === 'prospeccao' ? 'Prospecção' : (l.status === 'negociacao' ? 'Negociação' : 'Fechado');
                 return `
-                <tr>
+                <tr class="slide-up">
                     <td><strong>${l.nome}</strong><br><span style="color:var(--text-muted); font-size:0.8rem;">${l.contato}</span></td>
                     <td>${l.metodo}</td>
                     <td style="white-space:nowrap;">📅 ${formatarDataBR(l.followup)}</td>
-                    <td style="font-weight:600;">${formatarMoeda(l.valor)}</td>
+                    <td style="font-weight:600;">${formatBRL(l.valor)}</td>
                     <td><span class="status-badge crm-${l.status}">${statusLabel}</span></td>
                     <td class="action-icons">
-                        <span onclick="openLeadModal('${l.id}')" title="Editar / Ver Anotações" style="color:var(--color-design);">&#9998;</span>
-                        <span onclick="deleteLead('${l.id}')" title="Excluir" style="color:var(--danger);">&#128465;</span>
+                        <span onclick="openLeadModal('${l.id}')" title="Editar / Ver Anotações" style="color:var(--color-design); cursor:pointer;">&#9998;</span>
+                        <span onclick="deleteLead('${l.id}')" title="Excluir" style="color:var(--danger); margin-left:12px; cursor:pointer;">&#128465;</span>
                     </td>
                 </tr>`;
             }).join('');
@@ -1087,10 +1105,10 @@
                 <div class="workspace-header">
                     <div class="header-left-wrap">
                         <button class="mobile-toggle" onclick="toggleSidebar()">☰</button>
-                        <div class="client-meta"><h2>💼 Leads & CRM</h2><span style="color:var(--text-muted); font-size:0.9rem;">Área de prospecção e fechamentos da Carol.</span></div>
+                        <div class="client-meta"><h2>💼 Leads & CRM</h2><span style="color:var(--text-muted); font-size:0.9rem;">Área de prospecção e fechamentos.</span></div>
                     </div>
-                    <div class="header-actions">
-                        <button class="btn-danger" onclick="clearAllLeads()">🗑 Zerar Tudo</button>
+                    <div class="header-actions" style="display:flex; gap:12px;">
+                        <button class="btn-cancel" style="color:var(--danger); border-color:var(--danger);" onclick="clearAllLeads()">🗑 Zerar Tudo</button>
                         <button class="btn-primary" onclick="openLeadModal()">+ Novo Contato</button>
                     </div>
                 </div>
@@ -1107,7 +1125,7 @@
                         <div class="metric-card" style="border-left: 4px solid var(--accent);"><span>Prospecções Ativas</span><h3>${prospeccoes}</h3></div>
                         <div class="metric-card" style="border-left: 4px solid var(--color-design);"><span>Em Negociação</span><h3>${negociacoes}</h3></div>
                         <div class="metric-card" style="border-left: 4px solid var(--color-sched);"><span>Contratos Fechados</span><h3>${fechados}</h3></div>
-                        <div class="metric-card"><span>Comissão Estimada (50%)</span><h3 style="color:var(--gold)">${formatarMoeda(comissao)}</h3></div>
+                        <div class="metric-card"><span>Comissão Estimada (50%)</span><h3 style="color:var(--gold)">${formatBRL(comissao)}</h3></div>
                     </div>
 
                     <div class="dash-tables-grid slide-up" style="animation-delay: 0.1s;">
@@ -1425,7 +1443,7 @@
                             ${descHTML}
                             ${dateBadge} ${refHTML}
                             <div class="post-footer">
-                                <div class="assignee"><div class="avatar" style="background:${ownerColor}">${ownerAvatar}</div> <span style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:80px;">${ownerName}</span></div>
+                                <div class="assignee"><div class="avatar" style="background:${ownerColor}">${ownerAvatar}</div> ${ownerName}</div>
                                 <select class="stage-select" onchange="moveFreela('${f.id}', this.value, '${f.title}')">${opts}</select>
                             </div>
                             <div style="text-align:right; margin-top:8px;"><button onclick="deleteFreela('${f.id}')" style="background:none; border:none; color:var(--danger); cursor:pointer; font-size:0.75rem;">Excluir</button></div>
@@ -1436,42 +1454,441 @@
             });
         }
 
-        /* --- REUNIÕES --- */
-        function renderMeetings(container) {
-            const todayStr = new Date().toISOString().split('T')[0];
-            const up = meetings.filter(m => m.date >= todayStr).sort((a,b) => new Date(a.date) - new Date(b.date));
-            
-            let upHTML = up.map(m => {
-                let cName = m.client ? (clients.find(c=>c.id===m.client)?.name || 'Interna') : 'Interna';
+        /* --- EQUIPE / COLABORADORES --- */
+        function renderTeam(container) {
+            let teamHTML = team.map(t => {
+                const myTasks = tasks.filter(tsk => tsk.owner === t.id && (tsk.stage === 'copy' || tsk.stage === 'design'));
+                const myFreelas = freelas.filter(fr => fr.owner === t.id && (fr.stage === 'todo' || fr.stage === 'doing'));
+                const pendingCount = myTasks.length + myFreelas.length;
+                
+                let notificationsHTML = '';
+                if (pendingCount > 0) {
+                    notificationsHTML = `
+                        <div style="margin-top:16px; border-top:1px solid var(--border); padding-top:12px; text-align:left;">
+                            <span style="font-size:0.75rem; color:var(--text-main); font-weight:600;">Demandas Ativas <span style="background:var(--danger); color:#fff; padding:2px 6px; border-radius:10px; font-size:0.6rem; margin-left:4px;">${pendingCount}</span></span>
+                            <div style="max-height: 120px; overflow-y:auto; margin-top:8px; display:flex; flex-direction:column; gap:6px; padding-right:4px;">
+                                ${myTasks.map(tsk => `<div style="font-size:0.75rem; background:var(--bg-input); padding:6px 8px; border-radius:6px; cursor:pointer; color:var(--text-muted); border:1px solid transparent; transition:0.2s;" onmouseover="this.style.borderColor='var(--accent)'" onmouseout="this.style.borderColor='transparent'" onclick="goToClient('${tsk.clientId}')">📌 ${tsk.title}</div>`).join('')}
+                                ${myFreelas.map(fr => `<div style="font-size:0.75rem; background:var(--bg-input); padding:6px 8px; border-radius:6px; cursor:pointer; color:var(--text-muted); border:1px solid transparent; transition:0.2s;" onmouseover="this.style.borderColor='var(--accent)'" onmouseout="this.style.borderColor='transparent'" onclick="switchMainView('freelas')">⚡ ${fr.title}</div>`).join('')}
+                            </div>
+                        </div>
+                    `;
+                } else {
+                    notificationsHTML = `<div style="margin-top:16px; border-top:1px solid var(--border); padding-top:12px; text-align:center; font-size:0.75rem; color:var(--text-muted);">Nenhuma demanda pendente</div>`;
+                }
+
                 return `
-                <div class="post-card slide-up" style="display:flex; justify-content:space-between; align-items:center;">
-                    <div>
-                        <div style="color:var(--accent); font-size:0.75rem; font-weight:700; margin-bottom:4px;">${cName}</div>
-                        <h4 style="color:var(--text-main); margin-bottom:4px;">${m.title}</h4>
-                        <div style="font-size:0.8rem; color:var(--text-muted);">📅 ${m.date.split('-').reverse().join('/')} às ⏰ ${m.time}</div>
+                <div class="team-card slide-up">
+                    <div class="team-card-actions">
+                        <!-- BOTÃO CUTUCAR -->
+                        <button class="btn-icon" style="color:var(--gold);" onclick="pokeMember('${t.name}')" title="Notificar / Chamar Atenção">
+                            <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path></svg>
+                        </button>
+                        <button class="btn-icon" onclick="openTeamModalPassword('${t.id}')" title="Editar">
+                            <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
+                        </button>
+                        <button class="btn-icon danger" onclick="deleteTeamPassword('${t.id}')" title="Excluir">
+                            <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                        </button>
                     </div>
-                    <div style="display:flex; gap:10px; align-items:center;">
-                        ${m.link ? `<a href="${m.link}" target="_blank" class="btn-outline" style="padding:6px 12px; font-size:0.8rem; color:var(--color-design); border-color:var(--color-design);">Entrar na Call</a>` : ''}
-                        <button class="btn-cancel" onclick="deleteMeeting('${m.id}')" style="padding:6px 12px; font-size:0.8rem; border-color:var(--danger); color:var(--danger);">✕</button>
-                    </div>
-                </div>`;
-            }).join('');
+                    <div class="avatar" style="width:80px; height:80px; margin:0 auto 16px auto; font-size:1.8rem; border: 3px solid ${t.color || 'transparent'};">${t.img ? `<img src="${t.img}">` : getInitials(t.name)}</div>
+                    <h4>${t.name}</h4>
+                    <span class="role" style="color: ${t.color || 'var(--accent)'}; border-color: ${t.color || 'var(--accent)'};">${t.role || 'Geral'}</span>
+                    
+                    ${notificationsHTML}
+                </div>
+            `}).join('');
 
             container.innerHTML = `
                 <div class="workspace-header">
                     <div class="header-left-wrap">
                         <button class="mobile-toggle" onclick="toggleSidebar()">☰</button>
-                        <div class="client-meta"><h2>📅 Reuniões & Calls</h2><span style="color:var(--text-muted); font-size:0.9rem;">Agenda da Agência.</span></div>
+                        <div class="client-meta"><h2>👥 Equipe e Colaboradores</h2><span style="color:var(--text-muted); font-size:0.9rem;">Gestão do seu time interno de produção.</span></div>
                     </div>
-                    <div style="display:flex; gap:12px;"><button class="btn-primary" onclick="openMeetingModal()">+ Agendar Reunião</button><button class="theme-toggle" onclick="toggleTheme()" title="Tema">🌓</button></div>
+                    <div style="display:flex; gap:12px;">
+                        <button class="btn-primary" onclick="openTeamModal()">+ Novo Colaborador</button>
+                        <button class="theme-toggle" onclick="toggleTheme()" title="Alterar Tema">🌓</button>
+                    </div>
                 </div>
-                <div class="workspace-body" style="flex-direction:column; overflow-y:auto; align-items:center;">
-                    <div style="max-width: 800px; width: 100%;">
-                        <h3 style="color:var(--text-main); margin-bottom:16px;">Próximas Reuniões</h3>
-                        ${upHTML || '<p style="color:var(--text-muted); text-align:center; font-size:0.9rem;">Nenhuma reunião futura agendada.</p>'}
+                <div class="dash-container"><div class="team-grid">${teamHTML || '<p style="color:var(--text-muted);">Nenhum colaborador cadastrado. Adicione sua equipe!</p>'}</div></div>
+            `;
+        }
+
+        /* --- CLIENT WORKSPACE --- */
+        function renderClientWorkspace(container) {
+            const c = clients.find(i => i.id === activeClient);
+            const target = (c.freq || 0) * 2;
+            
+            let schedPosts = tasks.filter(t => t.clientId === c.id && (t.stage === 'sched' || t.stage === 'review')).length;
+            let pct = target > 0 ? Math.min(Math.round((schedPosts / target)*100), 100) : 0;
+            
+            let colorBar = 'var(--danger)';
+            if (c.forceMeta) { pct = 100; colorBar = 'var(--color-sched)'; }
+            else if (pct >= 100) colorBar = 'var(--color-sched)';
+            else if (pct >= 50) colorBar = 'var(--color-review)';
+            else if (c.hideDelay === 'Sim') colorBar = 'var(--text-muted)'; 
+            
+            const avatarHTML = c.img ? `<img src="${c.img}">` : getInitials(c.name);
+            const whatsLink = c.finPhone ? `https://wa.me/55${c.finPhone.replace(/\D/g,'')}?text=Ol%C3%A1!%20Passando%20para%20lembrar%20da%20mensalidade%20da%20ag%C3%AAncia.` : '#';
+            const resp = team.find(t=>t.id===c.teamOwner);
+            const respHTML = resp ? `<div class="assignee"><div class="avatar" style="background:${resp.color || 'var(--accent)'}">${resp.img ? `<img src="${resp.img}">`: getInitials(resp.name)}</div> ${resp.name}</div>` : 'Equipe Geral';
+
+            container.innerHTML = `
+                <div class="workspace-header">
+                    <div class="header-left-wrap">
+                        <button class="mobile-toggle" onclick="toggleSidebar()">☰</button>
+                        <div class="client-meta">
+                            <h2 style="cursor:pointer;" onclick="openClientModal('${c.id}')" title="Editar Perfil do Cliente"><div class="avatar" style="width:48px;height:48px;font-size:1.3rem;">${avatarHTML}</div> ${c.name}</h2>
+                            <div class="client-info-badges">
+                                <div class="info-badge">Resp: <strong>${respHTML}</strong></div>
+                                <div class="info-badge">Instagram: <strong>${c.profile || '-'}</strong></div>
+                                <div class="info-badge">Postagem: <strong>${c.poster || 'Agência'}</strong></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div style="display:flex; align-items:center; gap:16px;">
+                        <div class="dropdown">
+                            <button class="btn-outline">
+                                <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 12h.01M12 12h.01M19 12h.01M6 12a1 1 0 11-2 0 1 1 0 012 0zm7 0a1 1 0 11-2 0 1 1 0 012 0zm7 0a1 1 0 11-2 0 1 1 0 012 0z"></path></svg> 
+                                Opções ▼
+                            </button>
+                            <div class="dropdown-content">
+                                <button onclick="openClientModal('${c.id}')"><svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg> Editar Perfil</button>
+                                <button onclick="deleteClient('${c.id}')" class="danger-btn" style="color:var(--danger);"><svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg> Excluir Cliente</button>
+                            </div>
+                        </div>
+                        
+                        <button class="btn-outline" onclick="toggleForceMeta('${c.id}')" style="padding: 10px; border-color: ${c.forceMeta ? 'var(--color-sched)' : 'var(--border)'}; color: ${c.forceMeta ? 'var(--color-sched)' : 'var(--text-muted)'};" title="${c.forceMeta ? 'Meta Forçada' : 'Marcar Meta como Concluída Manualmente'}">
+                            <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                        </button>
+
+                        <div class="buffer-meter-box">
+                            <div class="meter-label"><span>Meta de Frente (2 Sem.)</span><span style="color:${colorBar}">${pct}%</span></div>
+                            <div class="meter-bg"><div class="meter-bar" style="width:${pct}%; background:${colorBar}"></div></div>
+                        </div>
+                        <button class="theme-toggle" onclick="toggleTheme()" title="Alterar Tema">🌓</button>
+                    </div>
+                </div>
+
+                <div class="workspace-body slide-up">
+                    <div class="panel-left">
+                        <div class="box">
+                            <div class="box-header"><h3>🚀 Checklist Inicial</h3></div>
+                            <div class="checklist-group">
+                                <div class="chk-item ${c.chk?.group ? 'done':''}" onclick="toggleChk('group')"><div class="chk-circle"></div> 1. Grupo do WhatsApp</div>
+                                <div class="chk-item ${c.chk?.briefing ? 'done':''}" onclick="toggleChk('briefing')"><div class="chk-circle"></div> 2. Enviar Briefing</div>
+                                <div class="chk-item ${c.chk?.strategy ? 'done':''}" onclick="toggleChk('strategy')"><div class="chk-circle"></div> 3. Enviar Estratégia</div>
+                                <div class="chk-item ${c.chk?.pic ? 'done':''}" onclick="toggleChk('pic')"><div class="chk-circle"></div> 4. Foto de Perfil</div>
+                                <div class="chk-item ${c.chk?.bio ? 'done':''}" onclick="toggleChk('bio')"><div class="chk-circle"></div> 5. Criar Bio</div>
+                                <div class="chk-item ${c.chk?.highlights ? 'done':''}" onclick="toggleChk('highlights')"><div class="chk-circle"></div> 6. Capas Destaque</div>
+                            </div>
+                        </div>
+                        <div class="box">
+                            <div class="box-header"><h3>📝 Briefing / Diretrizes</h3></div>
+                            <div style="font-size:0.8rem; color:var(--text-main); line-height:1.5;">${c.notes || 'Sem anotações.'}</div>
+                        </div>
+                        <div class="box">
+                            <div class="box-header"><h3>💸 Financeiro Mensal</h3></div>
+                            <div class="fin-detail"><span>Plano</span> <strong>${c.finDesc || '-'}</strong></div>
+                            <div class="fin-detail"><span>Valor</span> <strong>${formatBRL(c.finValue || 0)}</strong></div>
+                            <div class="fin-detail"><span>Venc.</span> <strong>Dia ${c.finDay || '-'}</strong></div>
+                            <div class="fin-detail" style="border:none;"><span>Status</span> <span class="status-badge ${c.finStatus === 'Em Dia' ? 'status-ok' : 'status-late'}">${c.finStatus || '-'}</span></div>
+                            <a href="${whatsLink}" target="_blank" class="btn-whatsapp">
+                                <svg width="18" height="18" fill="currentColor" viewBox="0 0 24 24"><path d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.582 2.128 2.182-.573c.978.58 1.911.928 3.145.929 3.178 0 5.767-2.587 5.768-5.766.001-3.187-2.575-5.77-5.764-5.771zm3.392 8.244c-.144.405-.837.774-1.17.824-.299.045-.677.063-1.092-.069-.252-.08-.575-.187-.988-.365-1.739-.751-2.874-2.502-2.961-2.617-.087-.116-.708-.94-.708-1.793s.448-1.273.607-1.446c.159-.173.346-.217.462-.217l.332.006c.106.005.249-.04.39.298.144.347.491 1.2.534 1.287.043.087.072.188.014.304-.058.116-.087.188-.173.289l-.26.304c-.087.086-.177.18-.076.322.101.144.453.712 1.033 1.234.75.674 1.349.882 1.493.968.144.087.231.072.318-.029l.364-.428c.116-.144.231-.116.362-.072.13.044.837.398.981.47.144.072.241.109.276.166.035.058.035.341-.109.746z"/></svg>
+                                Cobrar Cliente
+                            </a>
+                        </div>
+                    </div>
+
+                    <div class="panel-right">
+                        <div class="kanban-header-actions">
+                            <span style="font-size:0.9rem; color:var(--text-muted); font-weight:600;">🔥 Esteira de Produção</span>
+                            <button class="btn-primary" onclick="openTaskModal()">+ Novo Post</button>
+                        </div>
+                        <div class="production-grid" id="kanban-area"></div>
                     </div>
                 </div>
             `;
+            renderClientKanban();
+        }
+
+        function renderClientKanban() {
+            const kArea = document.getElementById('kanban-area');
+            const clientTasks = tasks.filter(t => t.clientId === activeClient);
+            kArea.innerHTML = '';
+            const cols = [{ id: 'copy', title: '1. Roteiro/Copy', color: 'var(--color-copy)' }, { id: 'design', title: '2. Arte/Edição', color: 'var(--color-design)' }, { id: 'review', title: '3. Aprovação', color: 'var(--color-review)' }, { id: 'sched', title: '4. Programado', color: 'var(--color-sched)' }];
+
+            cols.forEach(col => {
+                const colTasks = clientTasks.filter(t => t.stage === col.id);
+                let cards = '';
+                
+                colTasks.forEach(t => {
+                    let pClass = t.priority === 'alta' ? 'p-alta' : t.priority === 'media' ? 'p-media' : 'p-baixa';
+                    let opts = cols.map(c => `<option value="${c.id}" ${t.stage === c.id ? 'selected':''}>${c.title}</option>`).join('');
+                    
+                    let refHTML = '';
+                    if(t.imgBase64) {
+                        refHTML = `<div style="margin-bottom:10px;"><img src="${t.imgBase64}" class="post-preview-img" onclick="openImageViewer('${t.imgBase64}')" title="Clique para ampliar"></div>`;
+                    } else if (t.link) {
+                        refHTML = `<a href="${t.link.includes('http') ? t.link : 'https://'+t.link}" class="post-attachment" target="_blank"><svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg> Link de Referência</a>`;
+                    }
+
+                    const dueClass = isDueSoon(t.date) && t.stage !== 'sched' ? 'due-alert' : '';
+                    let dateBadge = t.date ? `<div class="post-date" style="color: ${isDueSoon(t.date) && t.stage !== 'sched' ? 'var(--danger)' : ''}">📅 Entrega: ${t.date.split('-').reverse().join('/')}</div>` : '';
+                    let ownerObj = team.find(tm=>tm.id===t.owner);
+                    let ownerName = ownerObj ? ownerObj.name : 'Equipe';
+                    let ownerColor = ownerObj ? ownerObj.color : 'var(--border)';
+                    let ownerAvatar = ownerObj && ownerObj.img ? `<img src="${ownerObj.img}">` : getInitials(ownerName);
+
+                    let isApproved = (t.stage === 'review' && t.approved);
+                    let approvedClass = isApproved ? 'approved-card' : '';
+                    
+                    let approvalBtn = '';
+                    if (t.stage === 'review') {
+                        if (t.approved) {
+                            approvalBtn = `<button onclick="toggleApproval('${t.id}')" style="background:var(--color-sched); color:#fff; border:none; width:24px; height:24px; border-radius:6px; cursor:pointer; display:flex; align-items:center; justify-content:center;" title="Remover Aprovação"><svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg></button>`;
+                        } else {
+                            approvalBtn = `<button onclick="toggleApproval('${t.id}')" style="background:transparent; color:var(--text-muted); border:2px solid var(--text-muted); width:24px; height:24px; border-radius:6px; cursor:pointer; display:flex; align-items:center; justify-content:center; transition:0.2s;" onmouseover="this.style.borderColor='var(--color-sched)'; this.style.color='var(--color-sched)';" onmouseout="this.style.borderColor='var(--text-muted)'; this.style.color='var(--text-muted)';" title="Marcar como Aprovado"></button>`;
+                        }
+                    }
+
+                    let descHTML = t.desc ? `<div class="card-desc-text">${t.desc}</div>` : '';
+
+                    cards += `
+                        <div class="post-card ${dueClass} ${approvedClass}">
+                            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+                                <span class="priority-tag ${pClass}">${t.priority}</span>
+                                ${isDueSoon(t.date) && t.stage !== 'sched' ? '<span style="font-size:0.6rem; color:var(--danger); font-weight:bold; background:rgba(239,68,68,0.1); padding:2px 6px; border-radius:4px;">⚠️ PRAZO CURTO</span>' : ''}
+                            </div>
+                            <h5 onclick="openTaskModal('${t.id}')">${t.title}</h5>
+                            ${descHTML}
+                            ${dateBadge}
+                            ${refHTML}
+                            <div class="post-footer">
+                                <div style="display:flex; align-items:center; gap:8px;">
+                                    ${approvalBtn}
+                                    <div class="assignee"><div class="avatar" style="background:${ownerColor}">${ownerAvatar}</div> <span style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:80px;">${ownerName}</span></div>
+                                </div>
+                                <select class="stage-select" onchange="moveTask('${t.id}', this.value, '${t.title}')">${opts}</select>
+                            </div>
+                            <div style="text-align:right; margin-top:8px;">
+                                <button onclick="deleteTask('${t.id}')" style="background:none; border:none; color:var(--danger); cursor:pointer; font-size:0.75rem;">Excluir Post</button>
+                            </div>
+                        </div>
+                    `;
+                });
+                kArea.innerHTML += `<div class="prod-column"><div class="prod-column-header" style="color:${col.color}"><div style="display:flex; align-items:center; gap:8px;"><div class="dot" style="background:${col.color}"></div> ${col.title}</div><span style="background:var(--bg-card); padding:2px 8px; border-radius:10px; font-size:0.7rem; color:var(--text-main);">${colTasks.length}</span></div><div class="col-content">${cards}</div></div>`;
+            });
+        }
+
+        /* --- AÇÕES DE DADOS COM NOTIFICAÇÃO --- */
+        function toggleChk(field) { const c = clients.find(i => i.id === activeClient); if(!c.chk) c.chk = {}; c.chk[field] = !c.chk[field]; saveData(); }
+        
+        function toggleApproval(id) {
+            const t = tasks.find(i => i.id === id);
+            if(t) {
+                t.approved = !t.approved;
+                saveData();
+                if(t.approved) showToast(`✅ Post aprovado: ${t.title}`);
+            }
+        }
+
+        function moveTask(id, stage, title) { 
+            const t = tasks.find(i => i.id === id); 
+            t.stage = stage; 
+            if (stage !== 'review') t.approved = false; 
+            if(stage === 'design' || stage === 'copy') showToast(`🚀 Produção iniciada: ${title}`);
+            if(stage === 'sched') showToast(`✅ Peça Programada: ${title}`);
+            saveData(); 
+        }
+
+        function moveFreela(id, stage, title) { 
+            const f = freelas.find(i => i.id === id); 
+            f.stage = stage; 
+            if(stage === 'doing') showToast(`⚡ Freela em andamento: ${title}`);
+            if(stage === 'done') showToast(`💸 Freela Entregue: ${title}`);
+            saveData(); 
+        }
+
+        /* --- MODAL CLIENTE --- */
+        function openClientModal(id=null) {
+            populateTeamSelects();
+            document.getElementById('clientModal').style.display='flex';
+            document.getElementById('client-form').reset();
+            const p = document.getElementById('c-preview'); p.style.display = 'none'; p.src = ''; document.getElementById('c-img-b64').value = '';
+
+            if(id) {
+                const c = clients.find(i=>i.id===id);
+                document.getElementById('client-id').value = c.id;
+                document.getElementById('c-name').value = c.name;
+                document.getElementById('c-profile').value = c.profile || '';
+                document.getElementById('c-login').value = c.login || '';
+                document.getElementById('c-freq').value = c.freq || 3;
+                document.getElementById('c-poster').value = c.poster || 'Agência Saturno';
+                document.getElementById('c-team-owner').value = c.teamOwner || ''; 
+                
+                document.getElementById('c-hide-delay').value = c.hideDelay || 'Nao';
+                
+                document.getElementById('c-notes').value = c.notes || '';
+                document.getElementById('c-fin-desc').value = c.finDesc || '';
+                document.getElementById('c-fin-value').value = c.finValue || '';
+                document.getElementById('c-fin-day').value = c.finDay || '';
+                document.getElementById('c-fin-phone').value = c.finPhone || '';
+                document.getElementById('c-fin-status').value = c.finStatus || 'Em Dia';
+                document.getElementById('c-needs-nf').value = c.needsNf || 'Nao';
+                document.getElementById('c-cnpj').value = c.cnpj || '';
+                
+                if(c.img) { document.getElementById('c-img-b64').value = c.img; p.src = c.img; p.style.display = 'block'; }
+                document.getElementById('client-modal-title').innerText = 'Editar Cliente';
+            } else {
+                document.getElementById('client-id').value = '';
+                document.getElementById('client-modal-title').innerText = 'Novo Cliente';
+                document.getElementById('c-hide-delay').value = 'Nao';
+            }
+        }
+
+        function saveClient(e) {
+            e.preventDefault();
+            const id = document.getElementById('client-id').value || 'c'+Date.now();
+            const cData = {
+                id, name: document.getElementById('c-name').value, img: document.getElementById('c-img-b64').value,
+                profile: document.getElementById('c-profile').value, login: document.getElementById('c-login').value, freq: parseInt(document.getElementById('c-freq').value),
+                poster: document.getElementById('c-poster').value, teamOwner: document.getElementById('c-team-owner').value, 
+                hideDelay: document.getElementById('c-hide-delay').value, forceMeta: clients.find(i=>i.id===id)?.forceMeta || false,
+                notes: document.getElementById('c-notes').value,
+                finDesc: document.getElementById('c-fin-desc').value, finValue: document.getElementById('c-fin-value').value, finDay: document.getElementById('c-fin-day').value, 
+                finPhone: document.getElementById('c-fin-phone').value, finStatus: document.getElementById('c-fin-status').value, needsNf: document.getElementById('c-needs-nf').value, cnpj: document.getElementById('c-cnpj').value,
+                nfStatus: clients.find(i=>i.id===id)?.nfStatus || 'Pendente', chk: clients.find(i=>i.id===id)?.chk || { group:false, briefing:false, strategy:false, pic:false, bio:false, highlights:false }
+            };
+            const idx = clients.findIndex(i=>i.id===id);
+            if(idx > -1) clients[idx] = cData; else { clients.push(cData); activeClient = id; mainView = 'client'; }
+            closeModal('clientModal'); saveData(); showToast(`Cliente ${cData.name} salvo!`);
+        }
+        function deleteClient(id) { if(confirm("Apagar cliente e todas as suas peças?")) { clients = clients.filter(c=>c.id!==id); tasks = tasks.filter(t=>t.clientId!==id); activeClient = null; mainView = 'dashboard'; saveData(); } }
+
+        /* --- MODAL TAREFA (ESTEIRA) --- */
+        function openTaskModal(id=null) {
+            document.getElementById('taskModal').style.display='flex';
+            document.getElementById('task-form').reset();
+            const p = document.getElementById('t-preview'); p.style.display = 'none'; p.src = ''; document.getElementById('t-img-b64').value = '';
+
+            if(id) {
+                const t = tasks.find(i=>i.id===id);
+                document.getElementById('t-id').value = t.id; document.getElementById('t-title').value = t.title;
+                
+                document.getElementById('t-desc').value = t.desc || '';
+                
+                document.getElementById('t-owner').value = t.owner; document.getElementById('t-priority').value = t.priority;
+                document.getElementById('t-date').value = t.date || '';
+                document.getElementById('t-link').value = t.link || ''; document.getElementById('t-stage').value = t.stage;
+                if(t.imgBase64) { document.getElementById('t-img-b64').value = t.imgBase64; p.src = t.imgBase64; p.style.display = 'block'; }
+            } else {
+                document.getElementById('t-id').value = '';
+            }
+        }
+        function saveTask(e) {
+            e.preventDefault();
+            const id = document.getElementById('t-id').value || 't'+Date.now();
+            const tData = { 
+                id, clientId: activeClient, title: document.getElementById('t-title').value, 
+                desc: document.getElementById('t-desc').value,
+                owner: document.getElementById('t-owner').value, priority: document.getElementById('t-priority').value, 
+                date: document.getElementById('t-date').value, imgBase64: document.getElementById('t-img-b64').value,
+                link: document.getElementById('t-link').value, stage: document.getElementById('t-stage').value,
+                approved: tasks.find(i=>i.id===id)?.approved || false 
+            };
+            const idx = tasks.findIndex(i=>i.id===id);
+            if(idx>-1) tasks[idx]=tData; else { tasks.push(tData); showToast(`📌 Tarefa Adicionada: ${tData.title}`); }
+            closeModal('taskModal'); saveData();
+        }
+        function deleteTask(id) { if(confirm("Excluir peça de conteúdo?")){ tasks = tasks.filter(t=>t.id!==id); saveData(); } }
+
+        /* --- MODAL FREELA --- */
+        function openFreelaModal(id=null) {
+            document.getElementById('freelaModal').style.display='flex';
+            document.getElementById('freela-form').reset();
+            const p = document.getElementById('f-preview'); p.style.display = 'none'; p.src = ''; document.getElementById('f-img-b64').value = '';
+
+            if(id) {
+                const f = freelas.find(i=>i.id===id);
+                document.getElementById('f-id').value = f.id; document.getElementById('f-title').value = f.title;
+                
+                document.getElementById('f-desc').value = f.desc || '';
+                
+                document.getElementById('f-val').value = f.val; document.getElementById('f-owner').value = f.owner;
+                document.getElementById('f-date').value = f.date || '';
+                document.getElementById('f-link').value = f.link || ''; document.getElementById('f-stage').value = f.stage;
+                if(f.imgBase64) { document.getElementById('f-img-b64').value = f.imgBase64; p.src = f.imgBase64; p.style.display = 'block'; }
+            } else {
+                document.getElementById('f-id').value = '';
+            }
+        }
+        function saveFreela(e) {
+            e.preventDefault();
+            const id = document.getElementById('f-id').value || 'f'+Date.now();
+            const fData = { 
+                id, title: document.getElementById('f-title').value, 
+                desc: document.getElementById('f-desc').value,
+                val: document.getElementById('f-val').value, 
+                owner: document.getElementById('f-owner').value, date: document.getElementById('f-date').value,
+                imgBase64: document.getElementById('f-img-b64').value, link: document.getElementById('f-link').value, stage: document.getElementById('f-stage').value 
+            };
+            const idx = freelas.findIndex(i=>i.id===id);
+            if(idx>-1) freelas[idx]=fData; else { freelas.push(fData); showToast(`⚡ Novo Freela: ${fData.title}`); }
+            closeModal('freelaModal'); saveData();
+        }
+        function deleteFreela(id) { if(confirm("Excluir Freela?")){ freelas = freelas.filter(f=>f.id!==id); saveData(); } }
+
+        /* --- MODAL REUNIÕES --- */
+        function openMeetingModal(id=null) {
+            document.getElementById('meetingModal').style.display='flex';
+            document.getElementById('meeting-form').reset();
+            
+            const sel = document.getElementById('m-client');
+            sel.innerHTML = '<option value="">Nenhum / Reunião Interna</option>';
+            clients.forEach(c => sel.innerHTML += `<option value="${c.id}">${c.name}</option>`);
+
+            if(id) {
+                const m = meetings.find(i=>i.id===id);
+                document.getElementById('m-id').value = m.id; document.getElementById('m-title').value = m.title;
+                document.getElementById('m-date').value = m.date; document.getElementById('m-time').value = m.time;
+                document.getElementById('m-client').value = m.client || ''; document.getElementById('m-link').value = m.link || '';
+            } else { document.getElementById('m-id').value = ''; }
+        }
+        function saveMeeting(e) {
+            e.preventDefault();
+            const id = document.getElementById('m-id').value || 'm'+Date.now();
+            const mData = { id, title: document.getElementById('m-title').value, date: document.getElementById('m-date').value, time: document.getElementById('m-time').value, client: document.getElementById('m-client').value, link: document.getElementById('m-link').value };
+            const idx = meetings.findIndex(i=>i.id===id);
+            if(idx>-1) meetings[idx]=mData; else { meetings.push(mData); showToast(`📅 Reunião Marcada: ${mData.title}`); }
+            closeModal('meetingModal'); saveData();
+        }
+        function deleteMeeting(id) { if(confirm("Excluir Reunião?")){ meetings = meetings.filter(m=>m.id!==id); saveData(); } }
+
+        function closeModal(id) { document.getElementById(id).style.display='none'; }
+
+        /* --- AGÊNCIA --- */
+        function openAgencyModal() {
+            document.getElementById('agencyModal').style.display='flex';
+            document.getElementById('ag-name').value = agency.name || '';
+            const p = document.getElementById('ag-preview');
+            if (agency.logo) {
+                document.getElementById('ag-logo-b64').value = agency.logo;
+                p.src = agency.logo;
+                p.style.display = 'block';
+            } else {
+                document.getElementById('ag-logo-b64').value = '';
+                p.src = '';
+                p.style.display = 'none';
+            }
+        }
+
+        function saveAgency(e) {
+            e.preventDefault();
+            agency.name = document.getElementById('ag-name').value || 'Saturno Studio';
+            agency.logo = document.getElementById('ag-logo-b64').value || '';
+            closeModal('agencyModal');
+            saveData();
+            showToast('Perfil da Agência atualizado!');
         }
 
         /* --- INICIALIZAÇÃO COM SUPABASE --- */
@@ -1492,7 +1909,7 @@
                     team = d.team || [];
                     subs = d.subs || [];
                     reports = d.reports || []; 
-                    leads = d.leads || []; 
+                    leads = d.leads || [];
                     agency = d.agency || { name: 'Saturno Studio', logo: '' };
                     
                     if (d.agency && d.agency.lastPoke) lastPokeTime = d.agency.lastPoke.time; 
@@ -1522,7 +1939,6 @@
                     if (payloadDB.new && payloadDB.new.id === 'hub_operacional') {
                         const d = payloadDB.new.payload;
                         
-                        // LÓGICA DE DETECÇÃO DO CUTUCAR
                         if (d.agency && d.agency.lastPoke && d.agency.lastPoke.time > lastPokeTime) {
                             if (Date.now() - d.agency.lastPoke.time < 60000) {
                                 triggerNudge(d.agency.lastPoke.from, d.agency.lastPoke.target);
@@ -1553,7 +1969,6 @@
             renderSidebar();
             routeView();
             
-            // Checa no carregamento inicial se alguém foi cutucado recentemente
             if (agency && agency.lastPoke && Date.now() - agency.lastPoke.time < 60000) {
                  showToast(`🔔 Notificação Recente: ${agency.lastPoke.from} chamou ${agency.lastPoke.target}!`);
                  lastPokeTime = agency.lastPoke.time;
