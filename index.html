@@ -36,7 +36,7 @@
             --shadow: rgba(0,0,0,0.08); --shadow-sm: rgba(0,0,0,0.04);
         }
 
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Plus Jakarta Sans', sans-serif; transition: background-color 0.1s, border-color 0.1s; }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Plus Jakarta Sans', sans-serif; transition: background-color 0.3s, border-color 0.3s; }
         body { background-color: var(--bg-main); color: var(--text-main); height: 100vh; display: flex; overflow: hidden; }
         svg { flex-shrink: 0; }
 
@@ -46,29 +46,36 @@
         ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
         ::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
 
-        /* ANIMAÇÃO MSN SHAKE */
+        /* ANIMAÇÕES GERAIS E MSN SHAKE */
+        .fade-in { animation: fadeIn 0.3s ease forwards; }
+        .slide-up { animation: slideUp 0.3s ease forwards; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes slideUp { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
+
         @keyframes msnShake {
-            0% { transform: translate(2px, 2px) rotate(0deg); }
-            10% { transform: translate(-2px, -3px) rotate(-1deg); }
-            20% { transform: translate(-4px, 0px) rotate(1deg); }
-            30% { transform: translate(4px, 3px) rotate(0deg); }
-            40% { transform: translate(2px, -2px) rotate(1deg); }
-            50% { transform: translate(-2px, 3px) rotate(-1deg); }
-            60% { transform: translate(-4px, 2px) rotate(0deg); }
-            70% { transform: translate(4px, 2px) rotate(-1deg); }
-            80% { transform: translate(-2px, -2px) rotate(1deg); }
-            90% { transform: translate(2px, 3px) rotate(0deg); }
-            100% { transform: translate(2px, -3px) rotate(-1deg); }
+            0% { transform: translate(1px, 1px) rotate(0deg); }
+            10% { transform: translate(-1px, -2px) rotate(-1deg); }
+            20% { transform: translate(-3px, 0px) rotate(1deg); }
+            30% { transform: translate(3px, 2px) rotate(0deg); }
+            40% { transform: translate(1px, -1px) rotate(1deg); }
+            50% { transform: translate(-1px, 2px) rotate(-1deg); }
+            60% { transform: translate(-3px, 1px) rotate(0deg); }
+            70% { transform: translate(3px, 1px) rotate(-1deg); }
+            80% { transform: translate(-1px, -1px) rotate(1deg); }
+            90% { transform: translate(1px, 2px) rotate(0deg); }
+            100% { transform: translate(1px, -2px) rotate(-1deg); }
         }
         .msn-shake { animation: msnShake 0.5s; animation-iteration-count: 2; }
 
         /* TELA DE CARREGAMENTO (PERFORMANCE) */
-        #loader { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background-color: var(--bg-main); z-index: 999999; display: flex; flex-direction: column; align-items: center; justify-content: center; }
-        .spinner-logo { width: 60px; height: 60px; background: linear-gradient(135deg, var(--accent), #4a00e0); border-radius: 16px; display: flex; align-items: center; justify-content: center; font-weight: 700; color: #fff; font-size: 1.5rem; margin-bottom: 20px; }
+        #loader { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background-color: var(--bg-main); z-index: 999999; display: flex; flex-direction: column; align-items: center; justify-content: center; transition: opacity 0.4s; }
+        .spinner-logo { width: 60px; height: 60px; background: linear-gradient(135deg, var(--accent), #4a00e0); border-radius: 16px; display: flex; align-items: center; justify-content: center; font-weight: 700; color: #fff; font-size: 1.5rem; margin-bottom: 20px; animation: pulseAlert 1.5s infinite; }
 
         /* TOAST */
         #toast-container { position: fixed; top: 20px; right: 20px; z-index: 9999; display: flex; flex-direction: column; gap: 10px; }
-        .toast { background: var(--color-sched); color: white; padding: 12px 20px; border-radius: 8px; font-size: 0.85rem; font-weight: 600; box-shadow: 0 4px 12px var(--shadow); }
+        .toast { background: var(--color-sched); color: white; padding: 12px 20px; border-radius: 8px; font-size: 0.85rem; font-weight: 600; box-shadow: 0 4px 12px var(--shadow); animation: slideIn 0.3s forwards, fadeOut 0.3s 3s forwards; }
+        @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+        @keyframes fadeOut { from { transform: translateX(0); opacity: 1; } to { transform: translateX(100%); opacity: 0; } }
 
         /* AVATARS E BOTOES */
         .avatar { display: flex; align-items: center; justify-content: center; background: linear-gradient(135deg, var(--border), #3b4252); color: #fff; border-radius: 50%; font-weight: 700; font-size: 0.8rem; text-transform: uppercase; flex-shrink: 0; overflow: hidden; }
@@ -161,7 +168,7 @@
         .dropdown-content button { color: var(--text-main); padding: 10px 14px; text-decoration: none; display: flex; align-items: center; gap: 8px; background: transparent; border: none; width: 100%; text-align: left; cursor: pointer; font-size: 0.85rem; border-radius: 8px; font-weight: 500; transition: 0.2s; }
         .dropdown-content button:hover { background-color: var(--bg-input); color: var(--accent); }
         .dropdown-content button.danger-btn:hover { background-color: rgba(239, 68, 68, 0.1); color: var(--danger); }
-        .dropdown:hover .dropdown-content { display: block; }
+        .dropdown:hover .dropdown-content { display: block; animation: slideUp 0.2s ease forwards; }
 
         /* Kanban Area */
         .panel-right { flex: 1; display: flex; flex-direction: column; overflow: hidden; background: var(--bg-card); border-radius: 16px; border: 1px solid var(--border); box-shadow: 0 2px 10px var(--shadow-sm); }
@@ -175,10 +182,12 @@
         .post-card { background-color: var(--bg-card); border: 1px solid var(--border); border-radius: 10px; padding: 14px; margin-bottom: 12px; transition: 0.2s; position: relative; box-shadow: 0 2px 5px var(--shadow-sm); }
         .post-card:hover { border-color: var(--accent); transform: translateY(-2px); }
         
-        .due-alert { border-color: var(--danger); }
+        .due-alert { border-color: var(--danger); animation: pulseAlert 2s infinite; }
         .freela-todo { border-color: var(--danger); box-shadow: inset 0 0 10px rgba(239, 68, 68, 0.1); }
         .freela-doing { border-color: var(--gold); box-shadow: inset 0 0 10px rgba(250, 204, 21, 0.1); }
         .approved-card { border-color: var(--color-sched) !important; box-shadow: 0 0 10px rgba(16, 185, 129, 0.15) !important; }
+
+        @keyframes pulseAlert { 0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4); } 70% { box-shadow: 0 0 0 6px rgba(239, 68, 68, 0); } 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); } }
 
         .priority-tag { font-size: 0.65rem; padding: 2px 6px; border-radius: 4px; font-weight: 700; text-transform: uppercase; margin-bottom: 8px; display: inline-block; }
         .p-alta { background: rgba(239, 68, 68, 0.2); color: #ef4444; }
@@ -244,8 +253,8 @@
         .btn-icon:hover { color: var(--accent); }
         .btn-icon.danger:hover { color: var(--danger); }
 
-        /* MODAIS OTIMIZADOS (SEM BLUR) */
-        .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0, 0, 0, 0.8); display: none; align-items: center; justify-content: center; z-index: 1000; padding: 20px; overflow-y: auto; }
+        /* MODAIS OTIMIZADOS (SEM BLUR NA TELA PRETA PARA SER DIRETO) */
+        .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0, 0, 0, 0.85); display: none; align-items: center; justify-content: center; z-index: 1000; padding: 20px; overflow-y: auto; }
         .modal { background-color: var(--bg-card); border: 1px solid var(--border); border-radius: 16px; width: 100%; max-width: 600px; padding: 32px; box-shadow: 0 10px 40px rgba(0,0,0,0.5); margin: auto; }
         .modal h2 { font-size: 1.3rem; margin-bottom: 24px; border-bottom: 1px solid var(--border); padding-bottom: 12px; display:flex; justify-content:space-between; align-items:center; color: var(--text-main);}
         .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
@@ -265,9 +274,9 @@
 
         /* RESPONSIVIDADE (MOBILE) */
         .sidebar-backdrop { display: none; position: fixed; top:0; left:0; right:0; bottom:0; background: rgba(0,0,0,0.8); z-index: 9998; }
-        .sidebar-backdrop.open { display: block; }
         
         @media (max-width: 768px) {
+            .sidebar-backdrop.open { display: block; }
             .mobile-toggle { display: block; }
             .sidebar { position: fixed; left: -320px; top: 0; bottom: 0; transition: 0.3s ease; z-index: 9999; box-shadow: 2px 0 10px rgba(0,0,0,0.5); }
             .sidebar.open { left: 0; }
@@ -297,7 +306,9 @@
     </div>
 
     <div id="toast-container"></div>
-    <div class="sidebar-backdrop" id="sidebarBackdrop" onclick="toggleSidebar()"></div>
+    
+    <!-- Cortina de fundo para mobile -->
+    <div class="sidebar-backdrop" id="sidebarBackdrop" onclick="closeSidebarMobile()"></div>
 
     <aside class="sidebar" id="mainSidebar">
         <div class="sidebar-header">
@@ -308,50 +319,51 @@
                     <span>Centro de Comando</span>
                 </div>
             </div>
-            <button class="btn-primary" style="width: 100%;" onclick="openClientModal(); toggleSidebar();">
+            <button class="btn-primary" style="width: 100%;" onclick="openClientModal(); closeSidebarMobile();">
                 <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg> Cadastrar Cliente
             </button>
         </div>
         
         <div class="global-nav">
-            <div class="nav-item active" id="nav-dash" onclick="switchMainView('dashboard'); toggleSidebar();">
+            <div class="nav-item active" id="nav-dash" onclick="switchMainView('dashboard'); closeSidebarMobile();">
                 <div style="display:flex; align-items:center; gap:12px;">
                     <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path></svg> Dashboard Geral
                 </div>
             </div>
-            <div class="nav-item" id="nav-leads" onclick="switchMainView('leads'); toggleSidebar();">
+            <!-- NOVA ABA: LEADS & CRM -->
+            <div class="nav-item" id="nav-leads" onclick="switchMainView('leads'); closeSidebarMobile();">
                 <div style="display:flex; align-items:center; gap:12px;">
-                    <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path></svg> Leads & CRM
+                    <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg> Leads & CRM
                 </div>
             </div>
-            <div class="nav-item" id="nav-reports" onclick="switchMainView('reports'); toggleSidebar();">
+            <div class="nav-item" id="nav-reports" onclick="switchMainView('reports'); closeSidebarMobile();">
                 <div style="display:flex; align-items:center; gap:12px;">
                     <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg> Relatórios Diários
                 </div>
             </div>
-            <div class="nav-item" id="nav-finance" onclick="switchMainView('finance'); toggleSidebar();">
+            <div class="nav-item" id="nav-finance" onclick="switchMainView('finance'); closeSidebarMobile();">
                 <div style="display:flex; align-items:center; gap:12px;">
                     <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg> Balanço Restrito
                 </div>
             </div>
-            <div class="nav-item" id="nav-freela" onclick="switchMainView('freelas'); toggleSidebar();">
+            <div class="nav-item" id="nav-freela" onclick="switchMainView('freelas'); closeSidebarMobile();">
                 <div style="display:flex; align-items:center; gap:12px;">
                     <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg> Freelas / Avulsos
                 </div>
                 <span class="nav-badge" id="badge-freela">0</span>
             </div>
-            <div class="nav-item" id="nav-team" onclick="switchMainView('team'); toggleSidebar();">
+            <div class="nav-item" id="nav-team" onclick="switchMainView('team'); closeSidebarMobile();">
                 <div style="display:flex; align-items:center; gap:12px;">
                     <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path></svg> Equipe & Time
                 </div>
             </div>
-            <div class="nav-item" id="nav-meetings" onclick="switchMainView('meetings'); toggleSidebar();">
+            <div class="nav-item" id="nav-meetings" onclick="switchMainView('meetings'); closeSidebarMobile();">
                 <div style="display:flex; align-items:center; gap:12px;">
                     <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg> Agenda de Reuniões
                 </div>
                 <span class="nav-badge" id="badge-meetings">0</span>
             </div>
-            <div class="nav-item" id="nav-nf" onclick="switchMainView('nf'); toggleSidebar();">
+            <div class="nav-item" id="nav-nf" onclick="switchMainView('nf'); closeSidebarMobile();">
                 <div style="display:flex; align-items:center; gap:12px;">
                     <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg> Notas Fiscais
                 </div>
@@ -826,6 +838,13 @@
             document.getElementById('sidebarBackdrop').classList.toggle('open');
         }
 
+        function closeSidebarMobile() {
+            if(window.innerWidth <= 768) {
+                document.getElementById('mainSidebar').classList.remove('open');
+                document.getElementById('sidebarBackdrop').classList.remove('open');
+            }
+        }
+
         /* --- SALVAR DADOS NO SUPABASE --- */
         async function saveData() {
             try {
@@ -881,19 +900,12 @@
             if(document.getElementById(`nav-${view}`)) document.getElementById(`nav-${view}`).classList.add('active');
             renderSidebar(); 
             routeView();
-            
-            const sidebar = document.getElementById('mainSidebar');
-            const backdrop = document.getElementById('sidebarBackdrop');
-            if (sidebar && sidebar.classList.contains('open')) {
-                sidebar.classList.remove('open');
-                backdrop.classList.remove('open');
-            }
         }
 
         function routeView() {
             const area = document.getElementById('workspace-area');
             area.innerHTML = '';
-            area.className = 'main-workspace'; // Sem classe de animação para transição instântanea (Zero Blur)
+            area.className = 'main-workspace'; // Animação de fade retirada para transição instantânea sem fundo preto
 
             if(mainView === 'dashboard') renderDashboard(area);
             else if(mainView === 'leads') renderLeads(area); 
@@ -952,13 +964,7 @@
                     document.querySelectorAll('.nav-item').forEach(e => e.classList.remove('active'));
                     mainView = 'client'; activeClient = c.id; 
                     renderSidebar(); routeView();
-                    
-                    const sidebar = document.getElementById('mainSidebar');
-                    const backdrop = document.getElementById('sidebarBackdrop');
-                    if (sidebar && sidebar.classList.contains('open')) {
-                        sidebar.classList.remove('open');
-                        backdrop.classList.remove('open');
-                    }
+                    closeSidebarMobile();
                 };
                 
                 item.innerHTML = `
@@ -1439,15 +1445,19 @@
 
         /* --- REUNIÕES --- */
         function renderMeetings(container) {
+            // Removemos o filtro que apagava as passadas; agora lista todas, marcando visualmente as que já foram.
             const todayStr = new Date().toISOString().split('T')[0];
-            const up = meetings.filter(m => m.date >= todayStr).sort((a,b) => new Date(a.date) - new Date(b.date));
+            const up = [...meetings].sort((a,b) => new Date(b.date) - new Date(a.date));
             
             let upHTML = up.map(m => {
                 let cName = m.client ? (clients.find(c=>c.id===m.client)?.name || 'Interna') : 'Interna';
+                let isPast = m.date < todayStr;
+                let pastBadge = isPast ? `<span style="background:var(--danger); color:#fff; font-size:0.6rem; padding:2px 6px; border-radius:4px; margin-left:8px;">Já Realizada</span>` : '';
+                
                 return `
-                <div class="post-card" style="display:flex; justify-content:space-between; align-items:center;">
+                <div class="post-card" style="display:flex; justify-content:space-between; align-items:center; opacity: ${isPast ? '0.6' : '1'};">
                     <div>
-                        <div style="color:var(--accent); font-size:0.75rem; font-weight:700; margin-bottom:4px;">${cName}</div>
+                        <div style="color:var(--accent); font-size:0.75rem; font-weight:700; margin-bottom:4px; display:flex; align-items:center;">${cName} ${pastBadge}</div>
                         <h4 style="color:var(--text-main); margin-bottom:4px;">${m.title}</h4>
                         <div style="font-size:0.8rem; color:var(--text-muted);">📅 ${m.date.split('-').reverse().join('/')} às ⏰ ${m.time}</div>
                     </div>
@@ -1468,8 +1478,8 @@
                 </div>
                 <div class="workspace-body" style="flex-direction:column; overflow-y:auto; align-items:center;">
                     <div style="max-width: 800px; width: 100%;">
-                        <h3 style="color:var(--text-main); margin-bottom:16px;">Próximas Reuniões</h3>
-                        ${upHTML || '<p style="color:var(--text-muted); text-align:center; font-size:0.9rem;">Nenhuma reunião futura agendada.</p>'}
+                        <h3 style="color:var(--text-main); margin-bottom:16px;">Todas as Reuniões</h3>
+                        ${upHTML || '<p style="color:var(--text-muted); text-align:center; font-size:0.9rem;">Nenhuma reunião agendada.</p>'}
                     </div>
                 </div>
             `;
@@ -1991,7 +2001,7 @@
 
             const loader = document.getElementById('loader');
             loader.style.opacity = '0';
-            setTimeout(() => loader.style.display = 'none', 500);
+            setTimeout(() => loader.style.display = 'none', 400);
 
             supabaseClient.channel('custom-all-channel')
                 .on('postgres_changes', { event: '*', schema: 'public', table: 'app_data' }, (payloadDB) => {
@@ -2000,6 +2010,7 @@
                         
                         // LÓGICA DE DETECÇÃO DO CUTUCAR
                         if (d.agency && d.agency.lastPoke && d.agency.lastPoke.time > lastPokeTime) {
+                            // Se a notificação foi enviada há menos de 1 minuto, exibe na tela para todo mundo!
                             if (Date.now() - d.agency.lastPoke.time < 60000) {
                                 triggerNudge(d.agency.lastPoke.from, d.agency.lastPoke.target);
                             }
